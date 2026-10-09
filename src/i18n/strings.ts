@@ -157,6 +157,9 @@ const en = {
   settings_disclaimer:
     'SkimCare is a document comprehension and legal-information aid. It is not legal advice, a licensed attorney, a contract certification service, or an instruction to sign or refuse any document.',
   settings_diagnostics: 'Inference diagnostics',
+  settings_storage_encrypted: 'Reviews are saved encrypted on this phone and stay until you delete them.',
+  settings_storage_unavailable: "Reviews can't be saved on this phone right now. They will be gone when you close the app.",
+  settings_storage_web: 'On the web, reviews are kept only until you close the tab.',
 
   demo_banner: 'Demo engine — showing sample findings, not your document.',
   cancel: 'Cancel',
@@ -220,6 +223,11 @@ const fil: Partial<Record<StringKey, string>> = {
   questions_title: 'Mga tanong bago pumirma',
   docs_title: 'Aking mga dokumento',
   settings_title: 'Mga setting',
+  settings_storage_encrypted:
+    'Naka-encrypt ang mga naka-save na review sa phone na ito at mananatili hanggang burahin mo.',
+  settings_storage_unavailable:
+    'Hindi pa maise-save ang mga review sa phone na ito ngayon. Mawawala ang mga ito pagsara mo ng app.',
+  settings_storage_web: 'Sa web, nananatili lang ang mga review hanggang isara mo ang tab.',
   demo_banner: 'Demo engine — halimbawang resulta, hindi ang iyong dokumento.',
   cancel: 'Kanselahin',
   save: 'I-save',
