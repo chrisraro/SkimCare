@@ -7,12 +7,12 @@
 import type { CompletionRunner } from './localLlmEngine';
 import type { ModelSpec } from './models';
 import type { ReadinessProbe } from './readiness';
-
-export const CONTEXT_TOKENS = 2048;
-
 // Type-only re-exports are erased at bundle time, so they never pull llama.rn in.
 import type { BenchRow, CpuSettings } from './llamaRuntime';
+
 export type { BenchRow, CpuSettings } from './llamaRuntime';
+
+export const CONTEXT_TOKENS = 2048;
 
 export const CPU_SETTINGS: CpuSettings = {};
 
