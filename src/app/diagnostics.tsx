@@ -1,3 +1,5 @@
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
@@ -22,6 +24,15 @@ function Row({ k, v }: { k: string; v: string }) {
 export default function Diagnostics() {
   const t = useT();
   const info = getEngine().info;
+  const { bench } = useLocalSearchParams<{ bench?: string }>();
+
+  // Dev-only speed test (src/ai/llm/devBench.ts): `pirmabago://diagnostics?bench=1`. Lazy, so llama.rn never loads otherwise.
+  useEffect(() => {
+    if (!__DEV__ || bench !== '1' || info.kind !== 'local') return;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- intentional lazy dev-only load
+    const { runDevBench } = require('@/ai/llm/devBench') as typeof import('@/ai/llm/devBench');
+    runDevBench().catch((e: unknown) => console.log(`[bench] failed: ${e instanceof Error ? e.message : 'unknown error'}`));
+  }, [bench, info.kind]);
   const lastRun = useDocuments((s) => {
     const id = s.order[0];
     return id ? s.byId[id]?.analysis : undefined;
