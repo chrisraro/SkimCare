@@ -303,7 +303,9 @@ to{transform:none}
 .person div span{font-size:15px;line-height:1.45;color:#3D4A5A}
 .mono{width:56px;height:56px;border-radius:50%;background:#14273E;color:#FFFBF2;display:grid;place-items:center;font-family:'Newsreader',Georgia,serif;font-size:26px;flex:none}
 @media (max-width: 1060px){.demo-stage{grid-template-columns:270px minmax(0,1fr);gap:32px}.phone{transform:scale(.88);transform-origin:top center;margin-bottom:-75px}}
-@media (max-width: 860px){.demo-stage{grid-template-columns:minmax(0,1fr);gap:0}.demo-phone-col{top:0;z-index:2;padding:10px 0 8px;background:#FFFBF2}.phone{transform:scale(.6);transform-origin:top center;margin-bottom:-250px}.demo-step{min-height:62vh;align-items:flex-start;padding-top:12px}.demo-cap{opacity:1}.demo-cap p{font-size:17px}}
+@media (max-width: 860px){.demo-stage{grid-template-columns:minmax(0,1fr);gap:0}.demo-phone-col{top:0;z-index:2;padding:10px 0 8px;background:#FFFBF2}.phone{transform:scale(.8);transform-origin:top center;margin-bottom:-125px}.demo-dots{margin-top:-6px}.demo-step{min-height:56vh;align-items:flex-start;padding-top:12px}.demo-cap{opacity:1}.demo-cap p{font-size:17px}}
+/* short phones (e.g. 667px tall): keep room for the caption under the pinned phone */
+@media (max-width: 860px) and (max-height: 760px){.phone{transform:scale(.66);margin-bottom:-213px}}
 @media (prefers-reduced-motion: reduce){.scr,.scr.is-on,.demo-cap,.demo-dot::before{transition:none}.a-spin{animation:none}}
 .a-left-note{display:none}
 .scr.pre-verify .a-left-note{display:block}

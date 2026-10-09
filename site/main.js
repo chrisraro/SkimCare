@@ -270,19 +270,35 @@
     running.forEach((a) => (document.hidden ? a.pause() : a.play()));
   });
 
-  if (!('IntersectionObserver' in window)) {
-    show(0);
-    return;
+  // The active step is the last one whose top has passed a reading line: just
+  // under the pinned phone on narrow screens, mid-screen otherwise. Checked once
+  // per frame while scrolling, so the caption you can read always matches the
+  // screen, even after a fast flick.
+  const pinned = demo.querySelector('.demo-phone-col');
+  const narrowQuery = window.matchMedia('(max-width: 860px)');
+  const readingLine = () =>
+    narrowQuery.matches && pinned
+      ? Math.min(pinned.getBoundingClientRect().height + 40, window.innerHeight * 0.85)
+      : window.innerHeight * 0.5;
+  let queued = false;
+  function pickStep() {
+    queued = false;
+    const box = demo.getBoundingClientRect();
+    if (box.bottom < 0 || box.top > window.innerHeight) return;
+    const line = readingLine();
+    let active = 0;
+    steps.forEach((s, i) => {
+      if (s.getBoundingClientRect().top <= line) active = i;
+    });
+    show(active);
   }
-  const narrow = window.matchMedia('(max-width: 860px)').matches;
-  const stepObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) show(Number(e.target.dataset.step));
-      });
-    },
-    // The active step is the one crossing a line through the caption area.
-    { rootMargin: narrow ? '-62% 0px -30% 0px' : '-45% 0px -45% 0px' }
-  );
-  steps.forEach((s) => stepObserver.observe(s));
+  const queue = () => {
+    if (!queued) {
+      queued = true;
+      requestAnimationFrame(pickStep);
+    }
+  };
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  queue();
 })();

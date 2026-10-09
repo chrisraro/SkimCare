@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Landing page: bigger phone mockup on mobile, caption/screen sync
+- `site/styles.css`: on screens ≤860px wide the pinned phone is now 80% of full size (240px wide on a 390px phone, was 60% / 180px); on short phones (≤760px tall) 66% (198px) so the caption still fits underneath. Steps are 56vh tall.
+- `site/main.js`: Exhibit A no longer uses an IntersectionObserver band to pick the screen. Each scroll frame (rAF-throttled, passive listener) picks the last step whose top has passed a reading line: just under the pinned phone on narrow screens (measured), mid-screen on desktop. Fixes a mismatch where the caption visible under the phone was one step ahead of the screen, and keeps fast flicks in sync.
+- Verified locally (headless Chrome): 390×844 and 375×667 slow scroll and fast flick go 0→6 in order; at each step the caption under the phone matches the screen (on 375×667 the 3–4 line captions need a little extra scroll, still active); 1440×900 unchanged; no horizontal overflow; `npx eslint site/main.js` ✅.
+
 ### 2026-10-10 — Claude (with Chris) — Web crash fix; merged Glenn's AI items, encrypted storage (Milestone 4), offline PWA
 - **Web crash fixed** (https://skimcare-app.vercel.app showed a blank page: `Cannot read properties of undefined (reading 'get')`): llama.rn runs `TurboModuleRegistry.get('RNLlama')` on import, and the web bundle pulled it in via `jobStore → demoEngine → localEngine → llamaRuntime`. New `src/ai/llm/llamaRuntime.web.ts` (same exports, never loads llama.rn). Clean `expo export -p web`: 0 RNLlama references. Dev tip: Metro only notices a new `*.web.ts` after a restart with `--clear`.
 - **Glenn #4 — document-type guess** (`guessDocumentType` in `src/ai/localEngine.ts`): weighted keyword hits per type, highest wins, tie/none → `other`; negations like "no employer-employee relationship" don't count for employment. `tests/documentType.test.ts`.
