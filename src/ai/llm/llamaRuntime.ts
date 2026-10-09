@@ -21,30 +21,37 @@ export function modelFile(spec: ModelSpec): File {
 }
 
 let loaded: { path: string; context: LlamaContext } | null = null;
-let loading: Promise<LlamaContext> | null = null;
 
-/** Loads the model once and reuses the context; a different path releases the old one first. */
-async function contextFor(path: string): Promise<LlamaContext> {
-  if (loaded?.path === path) return loaded.context;
-  if (loading) return loading;
-  loading = (async () => {
-    if (loaded) await releaseModel();
-    const context = await initLlama({ model: path, n_ctx: CONTEXT_TOKENS, n_gpu_layers: 0, use_mlock: false });
-    loaded = { path, context };
-    return context;
-  })();
-  try {
-    return await loading;
-  } finally {
-    loading = null;
-  }
+/**
+ * A llama.rn context is not safe for concurrent use: two completions at once crash
+ * natively (seen on the emulator when "Run checks again" was tapped while the check
+ * ran). Every model operation — load, completion, release — waits its turn here.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task, task);
+  queue = run.catch(() => undefined);
+  return run;
 }
 
-/** Frees model memory (PRD §12: low memory → release model, keep the document). */
-export async function releaseModel(): Promise<void> {
+/** Loads the model once and reuses the context; a different path releases the old one first. Call inside `serial`. */
+async function contextFor(path: string): Promise<LlamaContext> {
+  if (loaded?.path === path) return loaded.context;
+  if (loaded) await release();
+  const context = await initLlama({ model: path, n_ctx: CONTEXT_TOKENS, n_gpu_layers: 0, use_mlock: false });
+  loaded = { path, context };
+  return context;
+}
+
+async function release(): Promise<void> {
   const current = loaded;
   loaded = null;
   await current?.context.release();
+}
+
+/** Frees model memory (PRD §12: low memory → release model, keep the document). */
+export function releaseModel(): Promise<void> {
+  return serial(release);
 }
 
 async function complete(context: LlamaContext, req: Omit<CompletionRequest, 'jsonSchema'> & { jsonSchema?: object }) {
@@ -67,14 +74,14 @@ async function complete(context: LlamaContext, req: Omit<CompletionRequest, 'jso
 }
 
 export function createLlamaRunner(spec: ModelSpec): CompletionRunner {
-  return async (req) => {
-    const context = await contextFor(modelFile(spec).uri);
-    const result = await complete(context, req);
-    return result.content || result.text;
-  };
+  return (req) =>
+    serial(async () => {
+      const result = await complete(await contextFor(modelFile(spec).uri), req);
+      return result.content || result.text;
+    });
 }
 
-export function createLlamaProbe(spec: ModelSpec, ocrAvailable: () => boolean): ReadinessProbe {
+export function createLlamaProbe(spec: ModelSpec, ocrAvailable: () => Promise<boolean>): ReadinessProbe {
   return {
     async modelFile() {
       const file = modelFile(spec);
@@ -94,8 +101,7 @@ export function createLlamaProbe(spec: ModelSpec, ocrAvailable: () => boolean): 
       return ocrAvailable();
     },
     async smokeTest(path) {
-      const context = await contextFor(path);
-      const result = await complete(context, { messages: SMOKE_TEST_MESSAGES, maxTokens: 32 });
+      const result = await serial(async () => complete(await contextFor(path), { messages: SMOKE_TEST_MESSAGES, maxTokens: 32 }));
       const text = result.content || result.text;
       return {
         ok: isSmokeTestReply(text),

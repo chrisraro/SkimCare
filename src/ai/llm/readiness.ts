@@ -23,6 +23,7 @@ export interface ReadinessProbe {
   hash(path: string): Promise<{ algorithm: 'sha256' | 'md5'; hex: string }>;
   /** Free app storage in bytes, or undefined when the OS will not say. */
   freeStorageBytes(): Promise<number | undefined>;
+  /** True only when bundled OCR read a fixed test image (no document text) on this phone. */
   ocrAvailable(): Promise<boolean>;
   /** Load the model and run `SMOKE_TEST_MESSAGES` (no document text). */
   smokeTest(path: string): Promise<SmokeTestResult>;
@@ -107,7 +108,9 @@ export async function checkLocalReadiness(spec: ModelSpec, probe: ReadinessProbe
     id: 'ocr',
     label: 'On-device text recognition',
     status: ocr.value ? 'pass' : 'fail',
-    detail: ocr.value ? 'Bundled text recognition is linked.' : 'Bundled text recognition is not available. Photos cannot be read.',
+    detail: ocr.value
+      ? 'Bundled text recognition read a test image on this phone.'
+      : 'Bundled text recognition is missing or failed its test. Photos and scanned PDFs cannot be read.',
   });
 
   // Never load a file that failed verification.

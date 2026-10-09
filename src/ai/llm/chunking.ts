@@ -20,7 +20,9 @@ export interface ExtractionUnit {
 export function isTrivialBlock(text: string): boolean {
   const t = text.trim();
   if (t.length < 12) return true;
-  const isHeading = t.length <= 80 && /[A-Z]/.test(t) && t === t.toUpperCase() && !/\d/.test(t);
+  // A section number ("2.", "3.1") doesn't make a heading a term; other digits (amounts, lot numbers) might.
+  const words = t.replace(/^\(?\d{1,2}(?:\.\d{1,2})*[.)]?\s+/, '');
+  const isHeading = t.length <= 80 && /[A-Z]/.test(words) && words === words.toUpperCase() && !/\d/.test(words);
   return isHeading;
 }
 

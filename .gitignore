@@ -42,3 +42,8 @@ yarn-error.*
 
 # design-tool cache
 .impeccable/
+
+# Local Expo modules: Gradle/Xcode build output
+modules/*/android/build/
+modules/*/android/.cxx/
+modules/*/ios/build/

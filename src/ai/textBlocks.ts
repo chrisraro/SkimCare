@@ -20,7 +20,8 @@ export function isCriticalText(text: string): boolean {
 }
 
 const ENDS_SENTENCE = /[.;:!?]["'”’)]*$/;
-const isHeading = (line: string) => line.length <= 80 && /[A-Z]/.test(line) && line === line.toUpperCase() && !ENDS_SENTENCE.test(line);
+export const endsSentence = (line: string) => ENDS_SENTENCE.test(line);
+export const isHeading = (line: string) => line.length <= 80 && /[A-Z]/.test(line) && line === line.toUpperCase() && !ENDS_SENTENCE.test(line);
 
 export function pageTextToBlocks(page: number, raw: string): OcrBlock[] {
   const texts: string[] = [];

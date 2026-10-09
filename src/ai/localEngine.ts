@@ -3,18 +3,20 @@
  *
  * Honesty rules: info.kind is 'local' only because the output really comes from
  * the local model; readiness reports offline-ready only when every check passes.
- * OCR is not bundled yet (modules/local-ocr), so photos are refused with a clear
- * message instead of falling back to sample text. Digital PDFs work via their
- * text layer (src/ai/recognize.ts).
+ * Photos and scanned PDFs use bundled ML Kit (modules/local-ocr); in a build
+ * without it they are refused with a clear message, never given sample text.
+ * Digital PDFs use their text layer (src/ai/recognize.ts).
  */
 import type { DocumentPage, DocumentType } from '@/domain/schema';
+import { getLocalOcr, type LocalOcrModule } from '../../modules/local-ocr';
 import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLlamaProbe, createLlamaRunner } from './llm/llamaRuntime';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { checkLocalReadiness } from './llm/readiness';
-import type { InferenceEngine } from './engines';
+import type { InferenceEngine, OcrEngine } from './engines';
+import { createMlKitOcr } from './ocr/mlKitOcr';
 import { RecognizeError } from './recognize';
 
 /** Keyword guess only; the user confirms or changes the type on S09. */
@@ -31,15 +33,21 @@ export function guessDocumentType(pages: DocumentPage[]): { type: DocumentType; 
   return hit ? { type: hit[0], confidence: 0.6 } : { type: 'other', confidence: 0.3 };
 }
 
-export function createLocalEngine(spec: ModelSpec): InferenceEngine {
-  const ocrAvailable = () => false; // TODO(local-ocr): report the bundled ML Kit module
-  const probe = createLlamaProbe(spec, ocrAvailable);
+const NO_OCR: OcrEngine = {
+  async recognize() {
+    throw new RecognizeError('On-device text recognition is not in this build. Import a digital PDF instead.');
+  },
+};
+
+export function createLocalEngine(spec: ModelSpec, nativeOcr: LocalOcrModule | null = getLocalOcr()): InferenceEngine {
+  // Readiness needs ML Kit to actually read a test image on this phone, not just be linked.
+  const probe = createLlamaProbe(spec, async () => (nativeOcr ? nativeOcr.selfTest() : false));
   return {
     info: {
       kind: 'local',
       name: `${spec.name} on this phone`,
       runtime: 'llama.rn 0.12.9 (llama.cpp, CPU)',
-      ocrModel: 'Not installed yet — digital PDFs only',
+      ocrModel: nativeOcr ? 'ML Kit Text Recognition v2 (Latin, bundled)' : 'Not in this build — digital PDFs only',
       llmModel: `${spec.name} ${spec.quantization}`,
       quantization: spec.quantization,
       checksum: spec.sha256,
@@ -48,11 +56,7 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
     },
     checkReadiness: () => checkLocalReadiness(spec, probe),
     classify: async (pages) => guessDocumentType(pages),
-    ocr: {
-      async recognize() {
-        throw new RecognizeError('On-device text recognition for photos is not installed yet. Import a digital PDF instead.');
-      },
-    },
+    ocr: nativeOcr ? createMlKitOcr(nativeOcr) : NO_OCR,
     llm: createLocalLlmEngine(createLlamaRunner(spec)),
   };
 }

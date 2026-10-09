@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'ph.appbuilders.pirmabago'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.localocr"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Bundled model: ships inside the APK and works offline on first run.
+  // Do not switch to play-services-mlkit-text-recognition (downloads the model through Play services).
+  implementation 'com.google.mlkit:text-recognition:16.0.1'
+}

@@ -51,7 +51,7 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 |---|-----------|--------|-------|
 | 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine; Liquid Glass UI (floating tab bar, glass header, real Android blur); landing page in `site/` |
 | 1 | Prove local AI — llama.rn + GGUF extraction offline on device | 🟨 Partial | Runtime-independent engine done (`src/ai/llm/`: extraction + quiz prompts, JSON schemas, parsers, retry, readiness, pinned GGUF candidates); 30-contract eval set + scorer; llama.rn 0.12.9 adapter + local engine (opt-in `EXPO_PUBLIC_ENGINE=local`); **real Qwen3 0.6B inference passes on the emulator, also in airplane mode**; native prompt-token logging removed (patched source build); per-block `extract-v3` scores precision 79% / recall 75% / 0 injection citations on the 30-contract eval (`npm run eval:llm`); next: wrong-type errors, speed on the phone, 0.6B vs 1.7B on the real phone (`docs/LOCAL_LLM.md`) |
-| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; document scanner + digital-PDF text layer wired (untested on device); ML Kit text recognition bridge pending (`modules/local-ocr`) |
+| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; digital-PDF text layer ✅ on emulator; **bundled ML Kit OCR (`modules/local-ocr`) ✅ on emulator** for scanned PDFs (stable `p{page}_b{n}` blocks, bboxes, digit repair); still to verify: photos/scanner capture on device, real phone (arm64), real-world scans |
 | 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; local Understand-It-Back generation done (`src/ai/llm/comprehension.ts`); needs real model output |
 | 4 | Prove reliability — SQLCipher, encrypted files, airplane-mode rehearsal | ⬜ Not started | Store is in-memory today (`src/db/repository.ts` contract) |
 
@@ -61,11 +61,11 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 |----|--------|-------|--------|
 | S01 | Launch | `src/app/index.tsx` | ✅ UI |
 | S02 | Welcome & privacy | `src/app/welcome.tsx` | ✅ UI |
-| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design); real checks in `src/ai/llm/readiness.ts`, not wired yet |
+| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design); local engine runs real checks (model, MD5, storage, OCR self-test, inference) — all pass on the emulator |
 | S04 | Home | `src/app/(tabs)/index.tsx` | ✅ UI |
 | S05 | Add document | `src/app/review/new.tsx` | ✅ UI (scan / gallery / PDF wired) |
 | S06 | Capture | `src/app/review/capture.tsx` | ✅ ML Kit document scanner, camera fallback (device test pending) |
-| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI; digital PDFs read via text layer (scanned-PDF render + OCR pending) |
+| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI; digital PDFs via text layer, scanned/mixed PDFs via on-device OCR (local engine) |
 | S08 | OCR verification | `src/app/review/verify.tsx` | ✅ UI |
 | S09 | Analysis preferences | `src/app/review/preferences.tsx` | ✅ UI |
 | S10 | Processing | `src/app/review/processing.tsx` | ✅ UI |
@@ -83,6 +83,68 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 ---
 
 ## Log
+
+### 2026-10-10 — Claude (with Glenn) — Real-contract OCR benchmark, llama.rn concurrent-call crash fixed, dev OCR stats
+- **Crash fixed:** two model calls at once crash llama.rn natively (SIGSEGV, null dereference in `llm_graph_context::build_inp_out_ids`). Seen on the emulator when "Run checks again" was tapped while readiness was still running. The same would happen if readiness ran during a background review. `src/ai/llm/llamaRuntime.ts` now runs every model operation (load, completion, release) through one serial queue.
+  - `tests/llamaRuntime.test.ts` uses a fake llama.rn: at most 1 operation in flight, and the queue keeps working after a failed call. The test fails without the queue (4 overlapping).
+  - Emulator: double-tapping "Run checks again" gives no crash; the 3 smoke tests ran one after another.
+- **Dev-only OCR stats:** `src/ai/ocr/devStats.ts`, printed as one `[ocr-stats]` line in the Metro log by S07 in `__DEV__` builds. Counts and confidences only, never text, so real documents can be measured without their content showing up anywhere.
+- **Benchmark on a real document:** Glenn's 10-page signed services contract, an image-only scan. The file is kept outside the repo and never committed, and its text wasn't viewed during the test.
+  - 10/10 pages read, none empty; 203 blocks, ≈3,300 words.
+  - 74–92 s on the emulator (≈7–9 s/page with the PC under load); deterministic across two runs.
+  - 36 critical blocks (17 with PHP amounts).
+  - Confidence: median 0.86, mean 0.84, p10 0.74, min 0.36. 10 blocks below 0.7, none of them critical.
+  - 0 digit repairs; 11 tokens mixing letters and digits (possible misreads or codes); 0 blocks flagged as AI instructions (no false positives).
+  - 138 blocks would go to the model.
+  - **Type guess wrong:** "employment". `guessDocumentType` takes the first keyword match, and services contracts often say "no employer-employee relationship". Fix: count hits per type. The user can already correct it on S09.
+  - OCR accuracy against the paper still needs Glenn's own check on S08.
+- **Review speed problem:** a full 138-block review on the emulator slowed from ≈8 to 0.8 tok/s because the PC had 0.5 GB free and the emulator was swapping (≈1 GB). Not workable on the emulator. Planned optimizations:
+  1. `n_ctx` 4096 → 2048, saving ≈235 MB of KV cache.
+  2. Skip boilerplate and page headers/footers repeated on every page.
+  3. Shorter model answers (flatter JSON, one-sentence explanation, at most one question), checked with `npm run eval:llm`.
+  4. llama.rn parallel slots (`context.parallel`, `n_parallel`) on the phone.
+  5. Q4_0 on ARM.
+  6. Progressive results with critical blocks first (needs Chris for the UI).
+- Dev gotcha: editing code while a recognition runs makes Fast Refresh reload the JS, which drops the in-flight recognition (it stopped after page 5). Don't edit during device runs.
+- Verified: typecheck ✅, tests ✅ 160/160, lint ✅; emulator runs as above.
+
+### 2026-10-10 — Claude (with Glenn) — On-device OCR (bundled ML Kit), scanned & mixed PDFs, digit repair; second native log leak fixed
+- **`modules/local-ocr` (new Expo module, Android/Kotlin):** bundled ML Kit Text Recognition v2, Latin (`com.google.mlkit:text-recognition:16.0.1`). The model ships in the APK (≈13 MB per ABI: 11 MB `.so` + 2 MB models).
+  - `selfTest()` draws a test string and reads it back.
+  - `recognizeImage(uri, rotation)` applies EXIF orientation plus the user's rotation; the long side ends up between 1600 and 3200 px.
+  - `pdfPageCount` / `recognizePdfPage` render a page in memory with `PdfRenderer` (white background, 2400 px), never written to disk.
+  - Errors are codes only; recognized text is never logged. Contract and privacy notes are in the module README.
+  - `.gitignore` now ignores `modules/*/android/build/`, which Gradle creates inside local modules.
+- **`src/ai/ocr/layout.ts`** turns ML Kit lines into evidence blocks:
+  - Reading order: top to bottom; side-by-side regions (columns, signature blocks) left to right.
+  - Splits at sentence ends, headings and clause numbers (`1.`, `2.3`, `(a)`, but not "15 days"), and rejoins a sentence split across regions. Hyphenated breaks are joined.
+  - Normalized bbox; confidence is that of the weakest line; same `critical` rule as the PDF text layer.
+  - **Digit repair:** inside a token that is otherwise a number, look-alike letters become digits ("PHP 6,40o" → "PHP 6,400", "1oth" → "10th", "2o26" → "2026"). This happens only when the result is a well-formed number; words, codes and "4,000only" are never touched. A repaired block's confidence is capped at 0.5, so S08 always shows it as "Hard to read" and asks the user to check it. Found on the emulator: without the repair, "PHP 6,40o" parses as **PHP 640**.
+- **`src/ai/ocr/mlKitOcr.ts`** is the `OcrEngine`: page by page, cancel between pages, scanned PDFs over 30 pages refused, user messages without document text. New optional `OcrEngine.recognizePdf`.
+- **`src/ai/recognize.ts`:**
+  - Scanned PDF → on-device OCR.
+  - Mixed PDF → text layer plus OCR for the image-only pages only; source is reported as `ocr`.
+  - Pages with no readable text are named in the note.
+  - The Demo engine gets no "read on this phone" note.
+- **Local engine:** uses ML Kit when the module is linked, otherwise refuses photos and scans with a clear message. Readiness "On-device text recognition" is now a real self-test, not "is linked".
+- **Evidence gate fix:** a low-confidence critical block the user **confirmed** ("Matches the paper") no longer turns findings into "Cannot verify". The gate only checked `correctedAt`; `ARCHITECTURE.md` and the S08 copy already said "not verified". Test added.
+- **Extraction:** numbered section headings ("2. MONTHLY INSTALLMENTS") are skipped like other headings, saving one model call each.
+- UI copy (small): the S08 note banner is `info` (not `success`) when OCR was used; the S07 PDF banner mentions scanned pages only when the engine can read them.
+- **Emulator verification** (fictional 2-page installment contract, made with headless Chrome, never real data):
+  - **Readiness: every check passes → "Ready to work offline"**, the first time on any device.
+  - **Image-only PDF** (tilted 0.5–0.7°, slight blur, Georgia old-style numerals): OCR ≈2 s/page. Text exact except digit look-alikes, which the repair fixed and flagged. Type detected as installment. Full review after confirming the 5 details: 9 terms, 6 to clarify, 0 cannot verify, 1 discarded, 3 quiz items. Findings carry the repaired amounts correctly ("PHP 6,400 paid upon signing", "PHP 32,000 … PHP 4,000 each, due on the 10th").
+  - **Mixed PDF** (page 1 text, page 2 image): note "Page 2 is a scan…", page 1 exact. Full review: 9 terms, 3 quiz items.
+  - ML Kit logs only "OCR process succeeded" (no text).
+- ⚠️ **Second native privacy leak — fixed:** llama.rn's chat parser can't parse Qwen3's output (empty `<think></think>` prefix) and logged the **whole model reply at WARN on every call** (`cpp/common/chat.cpp:3566`): explanations with party names and amounts. `patches/llama.rn+0.12.9.patch` now covers `chat.cpp` too (lengths only; DEBUG lines with the full output and parsed message removed). Verified in the rebuilt APK (old strings absent) and at runtime: 16 calls, logcat shows only token/char counts. `docs/LOCAL_LLM.md` updated with a re-check procedure for upgrades.
+- **Speed:** llama.rn reuses the KV cache for the shared system prompt. Only the first call evaluates ≈690 prompt tokens (30 s); later blocks evaluate ≈60–70 (≈4 s). Generation (≈110 tokens at 8 tok/s on the emulator) dominates: ≈5 min for a 2-page contract on the emulator.
+- **ML Kit metrics:** inputs and outputs stay on the device (ML Kit terms), but when online ML Kit sends usage metrics (device/app info, sizes, error codes) to Google. The terms require disclosing this to users, so the privacy copy needs a line. Decision for Glenn/Chris: disclose only, or also try blocking it.
+- Notes for Chris:
+  - `pickPdf` (S05) doesn't catch `getDocumentAsync` rejections. After the system picker crashed once on the emulator, the next tap raised "Different document picking in progress" as an uncaught error.
+  - The Overview says "1 outputs were discarded" (plural).
+  - S05's "Import PDF — Digital PDFs are read exactly, no scanning needed" could now mention scans.
+  - The processing screen has no per-block progress, although `onProgress` exists.
+- Not done: photos/gallery and the document scanner through OCR on the device (only PDFs exercised); arm64 build on the real phone; OCR quality on real-world scans and photos. The user's signed contract is the planned benchmark, run on the device only and reported as counts, not text.
+- Verified: typecheck ✅, tests ✅ 158/158 (new `ocr` 16; `recognize` +3; gate, chunking and eval checks extended), lint ✅; Android debug build ✅ (x86_64); emulator runs as above.
 
 ### 2026-10-10 — Claude (with Glenn) — Extraction quality pass: per-block prompting, eval harness, injection skip (extract-v3)
 - **Why:** the first on-device review found 1 of 5 terms. Scored on all 30 fictional eval contracts, `extract-v1` (one call per page) had recall 12%.

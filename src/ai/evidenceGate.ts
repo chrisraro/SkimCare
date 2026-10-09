@@ -128,7 +128,8 @@ export function validateCandidates(candidates: unknown[], pages: DocumentPage[])
       return;
     }
 
-    if (source.critical && source.confidence < LOW_CONFIDENCE && !source.correctedAt) {
+    // Hard-to-read details count once the user has fixed them or confirmed they match the paper (S08).
+    if (source.critical && source.confidence < LOW_CONFIDENCE && !source.correctedAt && !source.verifiedAt) {
       accepted.push({
         ...finding,
         reviewStatus: 'unable_to_verify',

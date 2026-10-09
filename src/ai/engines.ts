@@ -42,6 +42,11 @@ export interface CapturedPage {
 
 export interface OcrEngine {
   recognize(pages: CapturedPage[], signal?: AbortSignal): Promise<DocumentPage[]>;
+  /**
+   * Scanned PDFs: render pages on the device and recognize them. `pages` are
+   * 1-based page numbers (all pages when omitted). Absent on engines without real OCR.
+   */
+  recognizePdf?(uri: string, opts?: { pages?: number[]; signal?: AbortSignal }): Promise<DocumentPage[]>;
 }
 
 export interface ExtractionRequest {

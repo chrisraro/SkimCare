@@ -37,6 +37,13 @@ describe('evidence gate (PRD §05 guardrails)', () => {
     };
     const result = validateCandidates([lowConf], serviceAgreement.pages);
     expect(result.accepted[0]?.reviewStatus).toBe('unable_to_verify');
+
+    // Once the user confirms the detail matches the paper (S08), it counts.
+    const confirmed = serviceAgreement.pages.map((p) => ({
+      ...p,
+      blocks: p.blocks.map((b) => (b.id === 'p2_b2' ? { ...b, verifiedAt: '2026-10-10T00:00:00.000Z' } : b)),
+    }));
+    expect(validateCandidates([lowConf], confirmed).accepted[0]?.reviewStatus).toBe('explained');
   });
 
   it('rejects a money value not present in the cited source', () => {

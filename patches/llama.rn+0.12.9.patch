@@ -1,3 +1,29 @@
+diff --git a/node_modules/llama.rn/cpp/common/chat.cpp b/node_modules/llama.rn/cpp/common/chat.cpp
+index 4e4811c..de8c4c9 100644
+--- a/node_modules/llama.rn/cpp/common/chat.cpp
++++ b/node_modules/llama.rn/cpp/common/chat.cpp
+@@ -3563,8 +3563,8 @@ common_chat_msg common_chat_peg_parse(const common_peg_arena &          src_pars
+             }
+             return msg;
+         }
+-        LOG_WRN("%s: unparsed %s output: %s\n", __func__, common_chat_format_name(params.format), effective_input.substr(result.end).c_str());
+-        LOG_DBG("%s: full %s output triggering error:\n=== BEGIN ===\n%s\n=== END ===\n", __func__, common_chat_format_name(params.format), effective_input.c_str());
++        // SkimCare privacy patch: model output paraphrases the user's document, so log lengths only.
++        LOG_WRN("%s: unparsed %s output (%zu of %zu chars)\n", __func__, common_chat_format_name(params.format), effective_input.size() - result.end, effective_input.size());
+         throw std::runtime_error(std::string("The model produced output that does not match the expected ") + common_chat_format_name(params.format) + " format");
+     }
+ 
+@@ -3586,9 +3586,7 @@ common_chat_msg common_chat_peg_parse(const common_peg_arena &          src_pars
+         fflush(stderr);
+     }
+ 
+-    if (!is_partial) {
+-        LOG_DBG("Parsed message: %s\n", common_chat_msgs_to_json_oaicompat({ msg }).at(0).dump().c_str());
+-    }
++    // SkimCare privacy patch: the parsed message (document-derived) is not logged.
+     return msg;
+ }
+ 
 diff --git a/node_modules/llama.rn/cpp/rn-completion.cpp b/node_modules/llama.rn/cpp/rn-completion.cpp
 index 030a522..82f7b19 100644
 --- a/node_modules/llama.rn/cpp/rn-completion.cpp

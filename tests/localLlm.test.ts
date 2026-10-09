@@ -48,6 +48,8 @@ describe('extraction units', () => {
     expect(unitFor('p1_b3').context).toBe(pages[0]!.blocks[1]!.text);
     expect(unitFor('p3_b12').context).toBeUndefined(); // first block on its page
     expect(isTrivialBlock('LOT 12, BLOCK 4')).toBe(false);
+    expect(isTrivialBlock('2. MONTHLY INSTALLMENTS')).toBe(true);
+    expect(isTrivialBlock('2.1 PHP 4,000 EVERY MONTH')).toBe(false);
   });
 
   it('never sends text addressed to AI tools to the model', () => {

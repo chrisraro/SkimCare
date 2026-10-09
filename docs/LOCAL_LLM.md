@@ -61,7 +61,16 @@ The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngi
 
 - **Model location for the demo build:** ship it inside the app (APK grows by roughly 400 MB to 1 GB) or place it separately as above. Readiness reports a missing file either way.
 - **Memory:** check peak RAM and `context.release()` behaviour on the demo phone (PRD §12 low-memory row).
-- **Native prompt logging — fixed:** the prebuilt `librnllama.so` logged every prompt's token IDs to logcat (`cpp/rn-completion.cpp:402`) and token text on eval failure (`:1011`). `patches/llama.rn+0.12.9.patch` removes both, and `plugins/withLlamaFromSource.js` sets `rnllamaBuildFromSource=true` so the patched source is compiled. The source build needs Python 3 on the build machine. When upgrading llama.rn, re-check these logs and regenerate the patch (`npx patch-package llama.rn --include "rn-completion\.cpp$"`).
+- **Native logging of document text — fixed (3 places):** `patches/llama.rn+0.12.9.patch` makes these lines log counts only. `plugins/withLlamaFromSource.js` sets `rnllamaBuildFromSource=true` so the patched source is compiled; the source build needs Python 3 on the build machine.
+  1. `cpp/rn-completion.cpp:402` (INFO) logged every prompt's token IDs.
+  2. `cpp/rn-completion.cpp:1011` (ERROR) logged token text when an eval failed.
+  3. `cpp/common/chat.cpp:3566` (WARN, found 2026-10-10) logged the model's whole reply whenever llama.rn's chat parser couldn't parse it. With Qwen3 that is **every** call, because of the empty `<think></think>` prefix, so explanations, amounts and names reached logcat. The DEBUG lines next to it (full output, parsed message) are removed too.
+
+  Verified on the emulator: across 16 extraction calls, logcat shows only `prompt tokenized, num_prompt_tokens: N` and `unparsed peg-native output (N of M chars)`. When upgrading llama.rn, run a review and grep logcat for `RNLlama|RNLLAMA` before shipping, then regenerate the patch with `npx patch-package llama.rn --include "(rn-completion|common[\\/]chat)\.cpp$"`.
+- **Speed (emulator, 2 x86_64 threads):**
+  - llama.rn reuses the KV cache for the shared system prompt, so only the first call evaluates the whole prompt (≈690 tokens, 30 s). Later blocks evaluate ≈60–70 new tokens (≈4 s).
+  - Generating ≈110 output tokens at ≈8 tok/s (≈15 s) is the main cost: ≈20 s per block, ≈5 min for a 2-page contract (16 calls including the quiz).
+  - Measure on the phone. Shorter outputs (e.g. dropping `questions` from extraction) would be the next lever.
 - **Context size:** `n_ctx` 4096 is plenty. Since `extract-v2`, each call holds one block plus the previous block as context (typically under 600 prompt tokens) and ≤384 output tokens; quiz calls ≤256.
 
 ## Measuring extraction quality (PC, no phone needed)
