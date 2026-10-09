@@ -1,7 +1,7 @@
 // SkimCare landing page.
 // 1. Clauses: as each one scrolls into view, its key sentence is highlighted,
 //    its note slides in, the clause list ticks it off and any stats count up.
-// 2. Exhibit A: a sticky phone replays the app's screens, one per scroll step.
+// 2. Exhibit A: a sticky phone replays 1:1 replicas of the app's screens, one per scroll step.
 // Content is fully readable without this script: every animation starts from
 // a visible resting state, and reduced motion skips the animations entirely.
 (() => {
@@ -95,7 +95,7 @@
   let running = [];
 
   // Split the model's explanation into words once, for the word-by-word reveal.
-  demo.querySelectorAll('.s-ai-text').forEach((p) => {
+  demo.querySelectorAll('.a-ai-text').forEach((p) => {
     const words = p.textContent.trim().split(/\s+/);
     p.textContent = '';
     words.forEach((w, i) => {
@@ -126,104 +126,121 @@
   const $ = (scr, sel) => scr.querySelector(sel);
   const $$ = (scr, sel) => Array.from(scr.querySelectorAll(sel));
 
+  /** Scrolls a replica screen's content like a finger would (translates its body). */
+  function scrollBody(s, steps, start = 0) {
+    const body = $(s, '.a-body');
+    let from = start;
+    steps.forEach(([to, at]) => {
+      anim(body, [{ transform: `translateY(${-from}px)` }, { transform: `translateY(${-to}px)` }], {
+        duration: T.crawl * 0.8, delay: at, fill: 'forwards', easing: 'cubic-bezier(.45,0,.2,1)',
+      });
+      from = to;
+    });
+  }
+  const tap = (el, at) =>
+    anim(el, [{ transform: 'scale(1)' }, { transform: 'scale(.96)' }, { transform: 'scale(1)' }], { duration: T.base * 1.3, delay: at, fill: 'none' });
+  const pop = (el, at) =>
+    anim(el, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: at, easing: EASE_POP, fill: 'backwards' });
+  const top = (el, pad) => Math.max(0, el.offsetTop - pad);
+
   const sequences = [
-    // 0. Home: content settles, then the "Start a review" card is tapped.
-    (s, tk) => {
-      rise($$(s, '.s-small, .s-title, .s-start, .s-pill, .s-label, .s-row'));
-      later(1300, tk, () => {
-        anim($(s, '.s-start'), [{ transform: 'scale(1)' }, { transform: 'scale(.96)' }, { transform: 'scale(1)' }], { duration: T.base * 1.5 });
-        anim($(s, '.s-ripple'), [{ opacity: 0.35, transform: 'scale(0)' }, { opacity: 0, transform: 'scale(5)' }], { duration: T.crawl, fill: 'none' });
-      });
-    },
-    // 1. Capture: a tilted page, edge markers snap on, a scan pass, the page straightens.
+    // 0. Home: content settles, then "Start a review" is tapped.
     (s) => {
-      const tilt = 'rotateX(28deg) rotateZ(-9deg) scale(.86)';
-      anim($(s, '.s-paper'), [{ transform: tilt }, { transform: tilt, offset: 0.62 }, { transform: 'none' }], { duration: 2800 });
-      const out = { tl: [-26, -30], tr: [26, -30], bl: [-26, 30], br: [26, 30] };
-      $$(s, '.s-corner').forEach((c, i) => {
-        const [dx, dy] = out[c.classList[1]];
-        anim(c, [{ opacity: 0, transform: `translate(${dx}px,${dy}px)` }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: 250 + i * 60, easing: EASE_POP });
-      });
-      anim($(s, '.s-scanline'), [
-        { opacity: 0, transform: 'translateY(0)' },
-        { opacity: 1, offset: 0.12 },
-        { opacity: 1, offset: 0.88 },
-        { opacity: 0, transform: 'translateY(226px)' },
-      ], { duration: 1300, delay: 450, fill: 'none' });
-      anim($(s, '.s-shutter-btn'), [{ transform: 'scale(1)' }, { transform: 'scale(.86)' }, { transform: 'scale(1)' }], { duration: T.base, delay: 1650 });
-      anim($(s, '.s-toast'), [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: T.base, delay: 2850 });
-      anim($(s, '.s-thumb'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: 2900, easing: EASE_POP });
+      rise($$(s, '.a-body > *'));
+      tap($(s, '.a-start'), 1400);
     },
-    // 2. Verify: each detail is confirmed against the paper, one after another.
+    // 1. Capture: scanned pages land in the grid one after another.
+    (s, tk) => {
+      const tiles = $$(s, '.a-tile');
+      const count = $(s, '.a-pages');
+      count.textContent = '1';
+      pop(tiles[0], 200);
+      pop(tiles[1], 1300);
+      later(1300, tk, () => { count.textContent = '2'; });
+      tap($(s, '.a-foot .a-primary'), 2400);
+    },
+    // 2. Verify: each detail is confirmed against the paper.
+    (s, tk) => {
+      s.classList.add('pre-verify');
+      const cards = $$(s, '.a-vcard');
+      const left = $(s, '.a-left');
+      left.textContent = String(cards.length);
+      rise($$(s, '.a-body > *'));
+      scrollBody(s, [[top(cards[0], 100), 400], [top(cards[1], 100), 1700], [top(cards[2], 100), 2900]]);
+      cards.forEach((c, i) => {
+        const at = 1000 + i * 1250;
+        tap($(c, '.a-match'), at);
+        later(at + 380, tk, () => {
+          c.classList.add('is-ok');
+          pop($(c, '.a-flag'), 0);
+          left.textContent = String(cards.length - i - 1);
+          if (i === cards.length - 1) s.classList.add('is-solved');
+        });
+      });
+    },
+    // 3. Processing: the five real pipeline steps run in order.
+    (s, tk) => {
+      const rows = $$(s, '.a-step');
+      const sec = $(s, '.a-sec');
+      const fill = $(s, '.a-fill');
+      rows.forEach((r) => { r.className = 'a-step is-wait'; });
+      const plan = [0, 700, 2600, 3300, 3900, 4400];
+      rows.forEach((r, i) => {
+        later(plan[i], tk, () => {
+          if (i > 0) rows[i - 1].className = 'a-step is-done';
+          r.className = 'a-step is-active';
+        });
+      });
+      later(plan[5], tk, () => { rows[rows.length - 1].className = 'a-step is-done'; });
+      sec.textContent = '1';
+      [1, 2, 3, 4].forEach((n, k) => later(plan[1] + k * 450, tk, () => { sec.textContent = String(n); }));
+      anim(fill, [{ width: '0%' }, { width: '25%', offset: 0.1 }, { width: '100%' }], { duration: plan[2] - plan[1], delay: plan[1] });
+    },
+    // 4. Overview: totals count up, the list scrolls to the findings, the first one is tapped.
+    (s, tk) => {
+      rise($$(s, '.a-body > *'), 0, 50);
+      $$(s, '.a-stat b').forEach((b) => countUp(b, Number(b.dataset.count), T.crawl, () => tk === token));
+      const first = $(s, '.a-tapme');
+      scrollBody(s, [[top(first, 150), 1700]]);
+      tap(first, 3000);
+    },
+    // 5. Finding: source quote first, then the model's explanation writes in.
     (s) => {
-      rise($$(s, '.s-title, .s-sub, .s-field'));
-      $$(s, '.s-field').forEach((f, i) => {
-        const d = 1000 + i * 750;
-        anim($(f, '.s-btn'), [
-          { opacity: 1, transform: 'scale(1)' },
-          { opacity: 1, transform: 'scale(.92)', offset: 0.45 },
-          { opacity: 0, transform: 'scale(.92)' },
-        ], { duration: T.slow, delay: d });
-        anim($(f, '.s-ok'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: d + 260, easing: EASE_POP });
-        anim($(f, '.s-ok path'), [{ strokeDashoffset: 24 }, { strokeDashoffset: 0 }], { duration: T.slow, delay: d + 380 });
+      rise($$(s, '.a-body > *'));
+      $$(s, '.a-ai-text .wd').forEach((w, i) => {
+        anim(w, [{ opacity: 0, transform: 'translateY(6px)', filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'none' }], { duration: T.base, delay: 1100 + i * 45 });
       });
     },
-    // 3. Processing: the ring fills, pipeline steps tick, one unmatched output is discarded.
+    // 6. What-if: confirm both values against the page, then the exact result appears.
     (s, tk) => {
-      const total = 3200;
-      anim($(s, '.s-ring-fg'), [{ strokeDashoffset: 289.03 }, { strokeDashoffset: 0 }], { duration: total, easing: 'cubic-bezier(.45,0,.2,1)' });
-      countUp($(s, '.s-pct b'), 100, total, () => tk === token);
-      $$(s, '.s-steps li').forEach((li, i) => {
-        anim(li, [{ opacity: 0.35 }, { opacity: 1 }], { duration: T.base, delay: 300 + i * 750 });
-        anim($(li, '.tick'), [{ transform: 'scale(0)' }, { transform: 'none' }], { duration: T.slow, delay: 500 + i * 750, easing: EASE_POP });
+      s.classList.add('pre-whatif');
+      const vals = $$(s, '.a-valcard');
+      const p0 = top(vals[0], 120);
+      const p1 = top(vals[1], 120);
+      rise($$(s, '.a-body > *'));
+      scrollBody(s, [[p0, 300], [p1, 1500]]);
+      vals.forEach((v, i) => {
+        const at = 1000 + i * 1300;
+        tap($(v, '.a-confirm'), at);
+        later(at + 380, tk, () => { v.classList.add('is-ok'); pop($(v, '.a-flag'), 0); });
       });
-      anim($(s, '.s-discard'), [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: 2100 });
-      rise([$(s, '.s-pill-dark')], 200);
-    },
-    // 4. Overview: totals count up, findings stack in, the first one is tapped.
-    (s, tk) => {
-      rise($$(s, '.s-small, .s-title, .s-stats, .s-label'));
-      $$(s, '.s-stats b').forEach((b) => countUp(b, Number(b.dataset.count), T.crawl, () => tk === token));
-      rise($$(s, '.s-card'), 450, 110);
-      anim($(s, '.s-card.is-tapped'), [
-        { boxShadow: '0 0 0 0 rgba(18,160,158,0)', transform: 'scale(1)' },
-        { boxShadow: '0 0 0 2px #12A09E', transform: 'scale(.98)', offset: 0.5 },
-        { boxShadow: '0 0 0 2px #12A09E', transform: 'scale(1)' },
-      ], { duration: T.slow, delay: 1600 });
-    },
-    // 5. Finding: the source sentence is highlighted, then the explanation writes in.
-    (s) => {
-      rise($$(s, '.s-back, .s-title, .s-label, .s-quote, .s-ai'));
-      anim($(s, '.s-hl'), [{ backgroundSize: '0% 100%' }, { backgroundSize: '100% 100%' }], { duration: T.crawl, delay: 550 });
-      $$(s, '.s-ai-text .wd').forEach((w, i) => {
-        anim(w, [{ opacity: 0, transform: 'translateY(6px)', filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'none' }], { duration: T.base, delay: 1500 + i * 45 });
-      });
-      anim($(s, '.s-ai-label'), [{ opacity: 0 }, { opacity: 1 }], { duration: T.slow, delay: 2400 });
-      rise([$(s, '.s-link')], 2600);
-    },
-    // 6. What-if: days late slide to 10; the fee jumps to ₱225 on day one (any part of a month counts).
-    (s, tk) => {
-      rise($$(s, '.s-title, .s-label, .s-in'));
-      const slide = 1600;
-      const startAt = 700;
-      anim($(s, '.s-thumbdot'), [{ left: '0%' }, { left: '33%' }], { duration: slide, delay: startAt, easing: 'cubic-bezier(.45,0,.2,1)' });
-      anim($(s, '.s-fill'), [{ width: '0%' }, { width: '33%' }], { duration: slide, delay: startAt, easing: 'cubic-bezier(.45,0,.2,1)' });
-      const days = $(s, '.s-days');
-      const money = $(s, '.s-money');
-      days.textContent = '0';
-      money.textContent = '₱0';
-      later(startAt, tk, () => countUp(days, 10, slide, () => tk === token));
-      later(startAt + slide / 10, tk, () => {
-        money.textContent = '₱225';
-        anim(money, [{ transform: 'scale(1.3)', color: '#F2D27A' }, { transform: 'none', color: '#FFFBF2' }], { duration: T.slow * 1.4, easing: EASE_POP });
+      later(3000, tk, () => {
+        s.classList.add('is-solved');
+        const res = $(s, '.a-result');
+        scrollBody(s, [[top(res, 300), 0]], p1);
+        anim(res, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: T.slow, delay: 250 });
       });
     },
   ];
 
-  /** Puts every counter back to its final value (the resting state). */
-  function settleCounters() {
+  /** Returns every replica screen to its resting (final) state. */
+  function settle() {
     demo.querySelectorAll('[data-count]').forEach((el) => { el.textContent = el.dataset.count; });
-    demo.querySelectorAll('.s-money').forEach((el) => { el.textContent = '₱225'; });
+    demo.querySelectorAll('.a-left').forEach((el) => { el.textContent = '0'; });
+    demo.querySelectorAll('.a-sec').forEach((el) => { el.textContent = '4'; });
+    demo.querySelectorAll('.a-step').forEach((el) => { el.className = 'a-step is-done'; });
+    demo.querySelectorAll('.is-ok').forEach((el) => el.classList.remove('is-ok'));
+    screens.forEach((s) => s.classList.remove('pre-verify', 'pre-whatif', 'is-solved'));
   }
 
   function show(i) {
@@ -232,7 +249,7 @@
     token += 1;
     running.forEach((a) => a.cancel());
     running = [];
-    settleCounters();
+    settle();
     screens.forEach((s, k) => s.classList.toggle('is-on', k === i));
     steps.forEach((s, k) => s.classList.toggle('is-active', k === i));
     dots.forEach((d, k) => d.setAttribute('aria-current', k === i ? 'step' : 'false'));

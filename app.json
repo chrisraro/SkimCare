@@ -30,7 +30,13 @@
       "expo-font",
       "expo-image",
       "llama.rn",
-      "./plugins/withLlamaFromSource"
+      "./plugins/withLlamaFromSource",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
