@@ -27,8 +27,8 @@ Review (S11–S17)  Overview · Terms · Finding (SourceQuote + AiNote) · Sourc
 | Capture | `src/features/capture/scanner.ts` | expo-document-scanner (ML Kit Document Scanner), camera fallback | same — device-verify; Play services downloads module once |
 | Digital PDF text | `src/ai/sources/pdfTextLayer.ts` via `src/ai/recognize.ts` | expo-pdf-text-extract (PDFBox) | same; add scanned-PDF render → OCR |
 | OCR | `OcrEngine` in `src/ai/engines.ts` | Demo fixture text | `modules/local-ocr` — bundled ML Kit Text Recognition v2, block text + bounds |
-| LLM | `LlmEngine` | Demo fixture candidates | llama.rn + GGUF (Qwen3 0.6B/1.7B), per-clause prompts, schema-constrained JSON |
-| Readiness | `InferenceEngine.checkReadiness` | Honest "not ready" | Model file present, checksum, warm load, tiny inference test |
+| LLM | `LlmEngine` | Demo fixture candidates; real engine in `src/ai/llm/` (`createLocalLlmEngine(runner)`: chunking, prompt, JSON schema, parser) awaiting a runner | llama.rn + GGUF (Qwen3 0.6B/1.7B) implementing `CompletionRunner`, schema-constrained JSON |
+| Readiness | `InferenceEngine.checkReadiness` | Honest "not ready"; real logic in `src/ai/llm/readiness.ts` (`checkLocalReadiness(spec, probe)`) awaiting a device `ReadinessProbe` | Model file present, checksum, warm load, tiny inference test |
 | Storage | `DocumentRepository` in `src/db/repository.ts` | In-memory Zustand | expo-sqlite + SQLCipher, key in expo-secure-store, encrypted page files |
 
 Switch engines in one place: `getEngine()` in `src/ai/demoEngine.ts`.
@@ -37,6 +37,7 @@ Switch engines in one place: `getEngine()` in `src/ai/demoEngine.ts`.
 
 - A finding with a source pointer is shown only if the page + block exist and the current (possibly corrected) block text contains the quote.
 - A claimed PHP amount must appear in the cited source text.
+- Model-written text (finding fields, quiz prompts/choices) that calls a clause legal/illegal, fair/unfair or safe, or advises on signing, is rejected (`containsVerdict`, reason `verdict_language`).
 - Critical blocks with OCR confidence < 0.7 that the user has not verified → finding downgraded to "Cannot verify".
 - Scenario math uses only facts the user confirmed; missing terms → `insufficient_information`.
 - OCR corrections bump `ocrRevision`, change the provenance hash and mark the analysis stale.

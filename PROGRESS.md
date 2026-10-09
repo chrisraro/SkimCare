@@ -50,9 +50,9 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 | # | Milestone | Status | Notes |
 |---|-----------|--------|-------|
 | 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine; Liquid Glass UI (floating tab bar, glass header, real Android blur); landing page in `site/` |
-| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | ⬜ Not started | Needs dev build; pick Qwen3 0.6B vs 1.7B after device test |
+| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | 🟨 Partial | Runtime-independent engine done (`src/ai/llm/`: extraction + quiz prompts, JSON schemas, parsers, retry, readiness, pinned GGUF candidates); 30-contract eval set + scorer; llama.rn adapter + first dev build pending; pick Qwen3 0.6B vs 1.7B after device test (`docs/LOCAL_LLM.md`) |
 | 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; document scanner + digital-PDF text layer wired (untested on device); ML Kit text recognition bridge pending (`modules/local-ocr`) |
-| 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; needs real model output |
+| 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; local Understand-It-Back generation done (`src/ai/llm/comprehension.ts`); needs real model output |
 | 4 | Prove reliability — SQLCipher, encrypted files, airplane-mode rehearsal | ⬜ Not started | Store is in-memory today (`src/db/repository.ts` contract) |
 
 ## Screen tracker (PRD §07)
@@ -61,7 +61,7 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 |----|--------|-------|--------|
 | S01 | Launch | `src/app/index.tsx` | ✅ UI |
 | S02 | Welcome & privacy | `src/app/welcome.tsx` | ✅ UI |
-| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design) |
+| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design); real checks in `src/ai/llm/readiness.ts`, not wired yet |
 | S04 | Home | `src/app/(tabs)/index.tsx` | ✅ UI |
 | S05 | Add document | `src/app/review/new.tsx` | ✅ UI (scan / gallery / PDF wired) |
 | S06 | Capture | `src/app/review/capture.tsx` | ✅ ML Kit document scanner, camera fallback (device test pending) |
@@ -83,6 +83,25 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 ---
 
 ## Log
+
+### 2026-10-09 — Claude (with Glenn) — Local LLM engine (pre-llama.rn), verdict guardrail, readiness, eval set, first dev build
+- New `src/ai/llm/` — the real `LlmEngine`, independent of the model runtime:
+  - `chunking.ts`: per-page chunks (≤3000 chars, blocks never split, pages never mixed).
+  - `prompt.ts`: `PROMPT_VERSION = 'extract-v1'`; system prompt (source text is untrusted data, cite one block + exact quote, no legal/fair/safe verdicts, no sign advice, abstain via `uncertainty`); `<source>`-delimited `[block_id] text` lines; `EXTRACTION_JSON_SCHEMA` (snake_case, PRD §12) for llama.rn grammar-constrained output.
+  - `parse.ts`: strips Qwen3 `<think>` and Markdown fences, maps snake_case → domain candidates, page derived from `block_id`. Shape mapping only — the evidence gate still decides.
+  - `localLlmEngine.ts`: `createLocalLlmEngine(runner)`; one completion per chunk, retry once on unusable JSON, dedupe same type+block, abort between chunks, `onChunk` progress (counts only, no text logged). The llama.rn adapter only needs to implement `CompletionRunner`.
+- `RawExtraction.incompletePages` (`src/ai/engines.ts`) → `runAnalysis` now reports pages whose output failed after retry as not read (`coverage.incomplete`).
+- `package.json`: `expo prebuild` switched `android`/`ios` scripts to `expo run:android|ios` (dev build). `android/` generated, gitignored.
+- Understand-It-Back (`src/ai/llm/comprehension.ts`, `quiz-v1`): one item per verified finding (max 3, most important first, one per block). Evidence is taken from the finding (not the model), the answer position is shuffled deterministically, and "I'm not sure" / "Hindi ako sigurado" is added by code. Items are dropped when the correct answer has numbers not written in the source (no LLM arithmetic). New optional `LlmEngine.comprehend()`; `runAnalysis` calls it after the gate, else uses `RawExtraction.comprehension` (Demo engine unchanged).
+- Readiness (`src/ai/llm/readiness.ts`): `checkLocalReadiness(spec, probe)` is offline-ready only when the model is present, size + SHA-256 match, bundled OCR is linked and a smoke inference answered. Never loads an unverified file; low storage only warns. Device access via injected `ReadinessProbe` (adapter TODO). The smoke prompt is fixed and has no user data.
+- Models (`src/ai/llm/models.ts`): Qwen3 0.6B Q4_K_M (default), 0.6B Q4_0, 1.7B Q4_K_M with pinned size/SHA-256/revision (Apache-2.0).
+- llama.rn research → `docs/LOCAL_LLM.md`: pin **0.12.9** (npm `latest` tag is 0.13.0-rc.7, so `npx expo install llama.rn` alone would pull an RC); New Arch required (we have it); arm64-v8a + x86_64; Expo config plugin; prebuilt JNI libs fetched at install time; API mapping for the adapter; open questions (model location, native SHA-256).
+- Eval set (`tests/fixtures/contracts.ts`): 30 fictional contracts — 10 service, 10 installment, 5 mixed EN/FIL, 5 prompt-injection — each block labelled with its accepted finding types. `src/ai/eval/score.ts` scores precision/recall, type mismatches, abstentions and injection citations. Image categories (photos/PDFs, blurry pages) still need real files.
+- Dev build: Gradle's NDK 27.1 auto-download stalled at 417 MB; Glenn installed it with `sdkmanager`. Gradle then installed Build-Tools 35/36 and Platform 36 itself. First full build **failed at link time** for nitro-modules, worklets and screens (`undefined symbol: std::__ndk1::…`, `__cxa_throw`). Cause: the SDK path contains spaces (`C:\Users\ACER NITRO V15\…`), so CMake's Ninja generator invokes `clang++.exe` by its 8.3 short name `CLANG_~1.EXE`; clang picks C vs C++ mode from its file name, so it linked as C and dropped libc++. **Windows workaround:** junction without spaces, `mklink /J C:\Android\Sdk "%LOCALAPPDATA%\Android\Sdk"`, then build with `ANDROID_HOME=C:\Android\Sdk`. Next failure: `ninja: error: Stat(…RNGestureHandlerDetectorShadowNode.cpp.o): Filename longer than 260 characters` (gesture-handler codegen object path ≈377 chars; still ≈295 even at a drive root). Fix: Windows `LongPathsEnabled=1` (admin) + CMake 3.31.6 from the SDK (ships Ninja 1.12.1; default 3.22.1 has Ninja 1.10.2). The app's CMake version is not set by RN (`CMAKE_VERSION` env only affects building RN from source), so it is pinned in machine-local `android/local.properties`: `sdk.dir=C\:\\Android\\Sdk` and `cmake.dir=C\:\\Android\\Sdk\\cmake\\3.31.6`. Re-add after `expo prebuild --clean`.
+- **Dev build ✅ on emulator** (`test_device`, x86_64): `npx expo run:android --no-bundler --device test_device`, then `npx expo start --dev-client` + `adb reverse tcp:8081 tcp:8081`. Welcome → readiness → Home render; custom fonts and glass tab bar work. Readiness: Demo engine, not offline-ready (correct); **document scanner ✅ and PDF text reader ✅ load** (Nitro `ExpoDocumentScanner` registered, PDFBox initialized). First launch after install showed a blank screen until a force-stop + relaunch (likely the deep-link intent arrived during a reload). Dev warning: require cycle `FloatingTabBar → ReviewAccessory → ui/index → Screen → FloatingTabBar`. Scanner capture, PDF import and blur performance not exercised yet. Emulator `test_device` (API 34, x86_64, 2 GB) boots; `ambagan_playstore` is missing its system image. No physical phone connected yet (Windows does not see it — cable/driver).
+- Not done: llama.rn adapter (`CompletionRunner` + `ReadinessProbe`); `getEngine()` still returns the Demo engine; on-device eval runner.
+- Guardrail: `containsVerdict()` in `src/ai/evidenceGate.ts` — new rejection reason `verdict_language`. Rejects findings whose title/explanation/uncertainty/questions call the agreement or a clause legal/illegal, (un)fair, (un)safe, (un)enforceable, a scam, or advise whether to sign, in English and Filipino. Runs before the evidence check, so it also covers findings without evidence. Understand-It-Back items (prompt + choices) are filtered the same way in `pipeline.ts`. Closes the gap where a correctly-quoted finding on injection text (fixture `p2_b4`) could say "safe to sign". Patterns are deliberately narrow (factual paraphrase like "the Client should sign the acceptance form" or "not legally yours until paid" passes) — extend `VERDICT_PATTERNS` when real model output shows new phrasings.
+- Verified: typecheck ✅, tests ✅ 132/132 (new: `localLlm` 11, verdict 22, `readiness` 9, `comprehension` 10, `evalSet` 35), lint ✅. Device: emulator dev build launches (see above); no physical phone yet.
 
 ### 2026-10-09 — Claude (with Chris) — Landing page deploy workflow (GitHub Pages)
 - `.github/workflows/pages.yml` publishes `site/` to GitHub Pages on pushes to `main` that touch `site/**`; `site/.nojekyll` serves files as-is.
