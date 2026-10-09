@@ -26,7 +26,7 @@ Android phone, often mid-transaction (at a lender's counter, in a chat with a cl
 - What-if scenarios use deterministic money/date math, never the model. Missing terms → "insufficient information".
 - Never calls a clause legal/illegal, fair/unfair, or tells the user whether to sign. Not legal advice.
 - Today the app runs on a clearly labeled Demo engine with fictional sample findings; real on-device inference is in progress. Marketing must not claim the real engine is shipping.
-- Identifiers (Expo slug, scheme, Android package `ph.appbuilders.pirmabago`) stay unchanged for now; only the display name changed.
+- Identifiers: Expo project `@chrisraro/skimcare`, Android package `ph.skimcare.app` (set before the first APK). The deep-link scheme stays `pirmabago`.
 
 ## Brand Commitments
 - Name: SkimCare. Filipino promise line: "Unawain bago pirmahan." English: "Understand what you are signing."

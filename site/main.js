@@ -61,7 +61,10 @@
           observer.unobserve(entry.target);
         });
       },
-      { rootMargin: '0px 0px -30% 0px', threshold: 0.15 }
+      // Caught once a clause's top edge enters the upper 70% of the viewport.
+      // threshold 0, not a ratio: Exhibit A is several screens tall and never
+      // shows more than ~13% of itself at once.
+      { rootMargin: '0px 0px -30% 0px', threshold: 0 }
     );
     clauses.forEach((el) => {
       el.classList.add('is-pending');

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SkimCare",
-    "slug": "pirmabago",
+    "slug": "skimcare",
     "version": "0.1.0",
     "scheme": "pirmabago",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
       "supportsTablet": false
     },
     "android": {
-      "package": "ph.appbuilders.pirmabago",
+      "package": "ph.skimcare.app",
       "adaptiveIcon": {
         "backgroundColor": "#14273E",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -34,6 +34,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d6996f92-328f-4417-af3f-ef6bd6691ccf"
+      }
+    },
+    "owner": "chrisraro"
   }
 }

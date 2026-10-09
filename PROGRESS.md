@@ -131,6 +131,14 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — EAS (Expo) setup for the first Android APK
+- **Account:** the PC was signed into Expo as `teamocsph` through a user-level `EXPO_TOKEN` env var, which overrides `eas login`. Removed it (regenerate at expo.dev if teamocsph is needed again); EAS now uses the saved `chrisraro` login.
+- **Project:** created and linked **`@chrisraro/skimcare`** (https://expo.dev/accounts/chrisraro/projects/skimcare, ID `d6996f92-328f-4417-af3f-ef6bd6691ccf`); `app.json` gained `owner` + `extra.eas.projectId`.
+- **Identifiers (before the first APK, so nothing installed breaks):** slug `pirmabago` → `skimcare`; Android package `ph.appbuilders.pirmabago` → **`ph.skimcare.app`**. Deep-link scheme stays `pirmabago` (dev bench link). `docs/LOCAL_LLM.md` adb `run-as` commands and `PRODUCT.md` updated. **Glenn:** an app already installed as `ph.appbuilders.pirmabago` is a different app now — reinstall and re-push the model to `ph.skimcare.app`.
+- **`eas.json`:** `preview` = internal APK, real engine (`EXPO_PUBLIC_ENGINE=local`), arm64-v8a only (llama.cpp compiles from source; one ABI keeps cloud build time down); `preview-demo` = same with the Demo engine; `production` = app bundle, auto-incremented version.
+- The model GGUF is **not** in the APK: after installing, push it per `docs/LOCAL_LLM.md` or readiness reports not ready (by design).
+- Verified: `eas config` resolves owner/slug/package/env; expo-doctor 21/21; typecheck ✅, tests ✅ 195/195, lint ✅. First cloud build: see the next entry.
+
 ### 2026-10-10 — Claude (with Chris) — Project-wide QA (Jev + ECC workflow) and bug fixes
 - **QA run:** workflow `skimcare-qa` (44 agents): 6 read-only reviewers (AI pipeline, guardrails/privacy, state/navigation, UI/a11y, tests, native/build), then one adversarial verifier per finding plus a Jev `jev_check` probability. 38 findings → **33 confirmed** (≈27 distinct; 4 found twice), 3 disputed (verifier yes, Jev < 0.5: a test that can't fail, `P,` parsing variant, iOS prebuilt llama.rn not patched — not fixed, iOS is phase 2), 2 refuted.
 - **AI logic & guardrails** (`tests/qaAi.test.ts`, 26 cases):

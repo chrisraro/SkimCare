@@ -47,9 +47,9 @@ The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngi
    ```bash
    export MSYS_NO_PATHCONV=1   # Git Bash on Windows, so /data paths are not rewritten
    adb push Qwen3-0.6B-Q4_K_M.gguf /data/local/tmp/
-   adb shell run-as ph.appbuilders.pirmabago mkdir -p files/models
-   adb shell run-as ph.appbuilders.pirmabago cp /data/local/tmp/Qwen3-0.6B-Q4_K_M.gguf files/models/
-   adb shell run-as ph.appbuilders.pirmabago chmod 600 files/models/Qwen3-0.6B-Q4_K_M.gguf
+   adb shell run-as ph.skimcare.app mkdir -p files/models
+   adb shell run-as ph.skimcare.app cp /data/local/tmp/Qwen3-0.6B-Q4_K_M.gguf files/models/
+   adb shell run-as ph.skimcare.app chmod 600 files/models/Qwen3-0.6B-Q4_K_M.gguf
    adb shell rm /data/local/tmp/Qwen3-0.6B-Q4_K_M.gguf
    ```
    Reinstalling the debug APK keeps this file; uninstalling removes it.
@@ -75,7 +75,7 @@ The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngi
   | TECNO Spark 50 5G (MT6835, 2×A76 + 6×A55, 3.7 GB), 4 threads, **thermal status 3 and swapping** | 6–27 tok/s | 2–3 tok/s | 40–80 s |
 
   The phone numbers were taken while it was hot (CPU 61–64 °C, all cores capped at 1.4 GHz) and out of memory (74 MB free, 1.7 GB swap), while charging over USB. Re-measure cool, with background apps closed.
-- **Device benchmark (dev builds):** open `pirmabago://diagnostics?bench=1` (e.g. `adb shell am start -d "pirmabago://diagnostics?bench=1" ph.appbuilders.pirmabago`). It runs llama.cpp's synthetic bench (no document text) for every installed 0.6B model × CPU setting (default, 2 threads, 2 threads pinned to cores 6–7, 6 and 8 threads) and prints `[bench]` lines to the Metro log. Use the result to set `CPU_SETTINGS` in `src/ai/llm/llamaRuntime.ts` and `DEFAULT_MODEL_ID` in `models.ts`. The Q4_0 file is pinned (SHA-256 verified, MD5 recorded) and was copied to the test phone, but the bench hasn't been run yet.
+- **Device benchmark (dev builds):** open `pirmabago://diagnostics?bench=1` (e.g. `adb shell am start -d "pirmabago://diagnostics?bench=1" ph.skimcare.app`). It runs llama.cpp's synthetic bench (no document text) for every installed 0.6B model × CPU setting (default, 2 threads, 2 threads pinned to cores 6–7, 6 and 8 threads) and prints `[bench]` lines to the Metro log. Use the result to set `CPU_SETTINGS` in `src/ai/llm/llamaRuntime.ts` and `DEFAULT_MODEL_ID` in `models.ts`. The Q4_0 file is pinned (SHA-256 verified, MD5 recorded) and was copied to the test phone, but the bench hasn't been run yet.
 - **Context size:** `n_ctx` 2048 (was 4096; the KV cache costs ≈112 KB per token, so this frees ≈235 MB). One call holds the system prompt (≈690 tokens), at most 300 characters of earlier text, one block and ≤200 output tokens; quiz calls ≤256.
 
 ## Measuring extraction quality (PC, no phone needed)
