@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — README rewritten for judges (submission blocker B4)
+- `README.md`: Try it (APK placeholder until the EAS build finishes, web app, landing page), model import steps (pinned Hugging Face link, 396.7 MB, verified it resolves), how it works, what runs locally vs. needs internet, honest status (phone offline inference ✅; speed, real-world OCR, airplane-mode rehearsal in progress; eval numbers with context), build steps (EAS `preview` profile, dev build, web export with COOP/COEP), project layout, disclosures pointer to `docs/SUBMISSION.md`. Removed the outdated "runs on a Demo engine / planned native" text and the old "slug still pirmabago" note.
+- UI labels in the instructions checked against `src/i18n/strings.ts` and `ModelImportCard.tsx`.
+- Next: put the APK link in README "Try it" + `docs/SUBMISSION.md` when the build is live. Docs only; checks not run.
+
 ### 2026-10-10 — Claude (with Chris) — Hackathon submission pack (`docs/SUBMISSION.md`)
 - From the Participant Briefing (slide 16 + FAQ): copy-ready answers for project name, short description, repo, what runs locally / what needs internet, models, technologies, APIs and cloud services, existing code and assets, AI dev tools, and "Why does this product benefit from running AI locally?". Demo video and X/LinkedIn post deferred (per Chris).
 - Blockers listed: B1 repo must be **public by 10:00 AM** (secret scan of tracked files + history: clean); B2 `docs/local-ai-pipeline-blueprint.pdf` provenance; B3 official team/member names; B4 README out of date for judges (still says Demo engine, no APK/model steps); B5 confirm AI tools (Devin?).
