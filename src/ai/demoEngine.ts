@@ -82,6 +82,8 @@ export const demoEngine: InferenceEngine = {
       await wait(1400, signal);
       throwIfAborted(signal);
       const fixture = fixtureFor(req.pages);
+      // One batch: the Demo engine has no per-block reading. Still gated by the pipeline.
+      req.onCandidates?.(structuredClone(fixture.rawCandidates));
       return {
         findings: structuredClone(fixture.rawCandidates),
         comprehension: structuredClone(fixture.rawComprehension),

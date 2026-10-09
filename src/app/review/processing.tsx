@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { STAGES } from '@/ai/pipeline';
 import { DemoBanner } from '@/components/DemoBanner';
-import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
+import { FindingCard } from '@/components/FindingCard';
+import { AppText, Banner, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { useDraft } from '@/features/review/draftStore';
 import { useReviewJob } from '@/features/review/jobStore';
 import { useT } from '@/i18n/useT';
@@ -19,6 +20,7 @@ export default function Processing() {
   const t = useT();
   const stage = useReviewJob((s) => s.stage);
   const progress = useReviewJob((s) => s.progress);
+  const partialFindings = useReviewJob((s) => s.partialFindings);
   const status = useReviewJob((s) => s.status);
   const error = useReviewJob((s) => s.error ?? null);
   const docId = useReviewJob((s) => s.docId);
@@ -131,6 +133,20 @@ export default function Processing() {
           );
         })}
       </Card>
+
+      {/* Progressive results: already checked against the source; opening them waits for the finished review. */}
+      {status === 'running' && partialFindings.length > 0 ? (
+        <View style={styles.found}>
+          <SectionLabel>{`Found so far (${partialFindings.length})`}</SectionLabel>
+          <AppText variant="small" tone="muted">
+            Checked against the document text. You can open each one when the review is finished.
+          </AppText>
+          {partialFindings.map((f) => (
+            <FindingCard key={f.id} finding={f} />
+          ))}
+        </View>
+      ) : null}
+
       <AppText variant="small" tone="muted" center>
         Findings are checked against the document text. Anything that cannot be traced to a source is marked, not hidden.
       </AppText>
@@ -139,6 +155,7 @@ export default function Processing() {
 }
 
 const styles = StyleSheet.create({
+  found: { gap: space.sm },
   stage: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
   stageIcon: { width: 24, alignItems: 'center' },
   stageText: { flex: 1, gap: 4 },

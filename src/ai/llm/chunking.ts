@@ -92,3 +92,25 @@ export function extractionUnits(pages: DocumentPage[]): ExtractionUnit[] {
   }
   return units;
 }
+
+/** Terms people need early even when the sentence has no amount or date. */
+const KEY_TERM =
+  /\b(?:late|penalt(?:y|ies)|surcharge|multa|terminat\w*|cancel\w*|repossess\w*|notice|due|deadline|refund\w*|non-refundable|forfeit\w*|ownership|property of|abiso|kanselahin|itigil)\b/i;
+
+function priority(unit: ExtractionUnit): number {
+  if (isCriticalText(unit.block.text)) return 0; // money, dates, parties
+  return KEY_TERM.test(unit.block.text) ? 1 : 2;
+}
+
+/**
+ * Order in which to ask the model: amounts, dates and parties first, then other key
+ * terms, then the rest; document order within each group. A long contract takes many
+ * minutes on a phone, so what matters most is found first. Units keep their `index`
+ * (document order) and block ids; only the asking order changes.
+ */
+export function prioritizeUnits(units: ExtractionUnit[]): ExtractionUnit[] {
+  return units
+    .map((unit) => ({ unit, rank: priority(unit) }))
+    .sort((a, b) => a.rank - b.rank || a.unit.index - b.unit.index)
+    .map(({ unit }) => unit);
+}

@@ -1,10 +1,12 @@
 /**
  * Turns raw model text into a finding candidate. This is only a shape mapping
- * (snake_case → domain fields, citation from the unit's own block); it does NOT
+ * (snake_case → domain fields, citation from the unit's own block, a type the block
+ * contradicts relabelled by typeCheck.ts); it does NOT
  * decide what is true. Every candidate still goes through `validateCandidates`.
  */
-import type { FindingType } from '@/domain/schema';
+import { FindingType } from '@/domain/schema';
 import type { ExtractionUnit } from './chunking';
+import { checkFindingType } from './typeCheck';
 
 export type ParseResult = { ok: true; candidates: unknown[] } | { ok: false; error: 'no_json' | 'invalid_json' | 'wrong_shape' };
 
@@ -73,13 +75,18 @@ export function parseModelOutput(output: string, unit: ExtractionUnit, language:
 
   const r = d.finding as Record<string, unknown>;
   const { block } = unit;
+  // A known type the block contradicts is relabelled in code (typeCheck.ts); an unknown
+  // type is left as is for the gate to reject. A relabelled finding gets the new type's title.
+  const known = FindingType.safeParse(r.type);
+  const type = known.success ? checkFindingType(known.data, block.text) : r.type;
+  const title = known.success && type !== known.data ? TYPE_TITLES[language][type as FindingType] : readableTitle(r.title, type, language);
   return {
     ok: true,
     candidates: [
       {
         id: `${block.id}_f`,
-        type: r.type,
-        title: readableTitle(r.title, r.type, language),
+        type,
+        title,
         // The citation is the block the model was asked about — never model-written.
         // Fields outside the extract-v4 schema (e.g. a model-written amount) are ignored.
         evidence: { page: block.page, blockId: block.id, quote: block.text },

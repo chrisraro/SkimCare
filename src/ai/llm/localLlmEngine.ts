@@ -8,7 +8,7 @@
  */
 import { throwIfAborted, type ComprehensionRequest, type ExtractionRequest, type LlmEngine, type RawExtraction } from '../engines';
 import { findBlock } from '../evidenceGate';
-import { extractionUnits } from './chunking';
+import { extractionUnits, prioritizeUnits } from './chunking';
 import { buildComprehensionMessages, COMPREHENSION_JSON_SCHEMA, parseComprehensionOutput, selectQuizFindings } from './comprehension';
 import { parseModelOutput } from './parse';
 import { buildExtractionMessages, EXTRACTION_JSON_SCHEMA, type ChatMessage } from './prompt';
@@ -37,10 +37,13 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
   return {
     async extract(req: ExtractionRequest, signal?: AbortSignal): Promise<RawExtraction> {
       const units = extractionUnits(req.pages);
-      const findings: unknown[] = [];
+      // Asked critical-first (prioritizeUnits), but returned in document order, so the
+      // final result does not depend on the asking order.
+      const byUnit: unknown[][] = units.map(() => []);
       const incompletePages = new Set<number>();
+      let done = 0;
 
-      for (const unit of units) {
+      for (const unit of prioritizeUnits(units)) {
         throwIfAborted(signal);
         const messages = buildExtractionMessages(unit, req.documentType, req.language);
         const ask = async (budget: number) =>
@@ -54,13 +57,15 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
           throwIfAborted(signal);
           result = await ask(maxTokens * 2);
         }
-        if (result.ok) findings.push(...result.candidates);
+        if (result.ok) byUnit[unit.index] = result.candidates;
         else incompletePages.add(unit.page);
-        req.onProgress?.(unit.index + 1, units.length);
-        opts.onProgress?.(unit.index + 1, units.length);
+        done++;
+        if (result.ok) req.onCandidates?.(result.candidates);
+        req.onProgress?.(done, units.length);
+        opts.onProgress?.(done, units.length);
       }
 
-      return { findings, comprehension: [], incompletePages: [...incompletePages] };
+      return { findings: byUnit.flat(), comprehension: [], incompletePages: [...incompletePages].sort((a, b) => a - b) };
     },
 
     async comprehend(req: ComprehensionRequest, signal?: AbortSignal): Promise<unknown[]> {
