@@ -7,8 +7,8 @@
  * without it they are refused with a clear message, never given sample text.
  * Digital PDFs use their text layer (src/ai/recognize.ts).
  */
-import type { DocumentPage, DocumentType } from '@/domain/schema';
 import { getLocalOcr, type LocalOcrModule } from '../../modules/local-ocr';
+import { guessDocumentType } from './documentType';
 import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLlamaProbe, createLlamaRunner } from './llm/llamaRuntime';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
@@ -19,19 +19,7 @@ import type { InferenceEngine, OcrEngine } from './engines';
 import { createMlKitOcr } from './ocr/mlKitOcr';
 import { RecognizeError } from './recognize';
 
-/** Keyword guess only; the user confirms or changes the type on S09. */
-const TYPE_HINTS: [DocumentType, RegExp][] = [
-  ['installment_agreement', /\b(installment|instal(l)?ments?|hulugan|hulog|amorti[sz]ation|down ?payment)\b/i],
-  ['lease', /\b(lease|lessor|lessee|rent|upa|paupahan|umuupa)\b/i],
-  ['employment', /\b(employ(er|ee|ment)|salary|sahod|probation(ary)?)\b/i],
-  ['service_agreement', /\b(services?|deliverables?|provider|consultant|designer|developer|serbisyo)\b/i],
-];
-
-export function guessDocumentType(pages: DocumentPage[]): { type: DocumentType; confidence: number } {
-  const text = pages.flatMap((p) => p.blocks.map((b) => b.text)).join(' ');
-  const hit = TYPE_HINTS.find(([, re]) => re.test(text));
-  return hit ? { type: hit[0], confidence: 0.6 } : { type: 'other', confidence: 0.3 };
-}
+export { guessDocumentType };
 
 const NO_OCR: OcrEngine = {
   async recognize() {
