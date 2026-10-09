@@ -20,11 +20,36 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 
 ---
 
+## Handover — backend (2026-10-09)
+
+Frontend work is **paused** here; the backend/on-device AI moves to the co-developer. Everything below is on `main` (latest: glass navigation, `0d16347`).
+
+**State of the app**
+- All 19 H1 screens + diagnostics are built and run on the **Demo engine** (fictional sample contracts, always labelled "Demo engine"). No real OCR, LLM or encrypted storage yet.
+- Display name is **SkimCare** (formerly PirmaBago); slug, scheme and Android package still `pirmabago`.
+- Checks: `npm run typecheck`, `npm test` (45 tests), `npm run lint` — all green at handover. Web preview: `npm run web`. Native modules need a dev build: `npx expo run:android`.
+
+**Where the backend plugs in (no screen changes needed)** — see `docs/ARCHITECTURE.md` › "Swap points"
+1. **LLM** — implement `LlmEngine` (`src/ai/engines.ts`) with llama.rn + GGUF (Qwen3 0.6B/1.7B candidate). Return raw candidates; never bypass `src/ai/evidenceGate.ts`.
+2. **OCR** — implement `OcrEngine` via `modules/local-ocr` (bundled ML Kit Text Recognition v2; contract in its README). Digital PDFs already use the text layer (`src/ai/recognize.ts`).
+3. **Readiness** — `InferenceEngine.checkReadiness`: model present, checksum, warm load, tiny inference. Only report `offlineReady: true` when real checks pass.
+4. **Switch engines** in one place: `getEngine()` in `src/ai/demoEngine.ts`.
+5. **Storage** — implement `DocumentRepository` (`src/db/repository.ts`) with expo-sqlite + SQLCipher, key in expo-secure-store, encrypted page files; back `src/features/documents/store.ts` (and settings, so onboarding persists).
+6. **Reviews** run through `src/features/review/jobStore.ts` (one at a time, minimizable); `runAnalysis` in `src/ai/pipeline.ts` is the entry point.
+
+**Priority order (PRD §18):** Milestone 1 (real llama.rn extraction offline on the demo phone) is the top risk — prove it before more UI. Then OCR bridge, then SQLCipher, then airplane-mode rehearsal.
+
+**Untested on device (first dev build checklist):** expo-document-scanner (needs one online launch for Google Play services), expo-pdf-text-extract (New Architecture support undocumented), Android Dimezis glass blur performance, headless glass tab bar.
+
+**Rules to keep** (also in `CLAUDE.md`): no network calls with document content; all model output through the evidence gate; money/date math only in `scenarioRules.ts`; never present demo output as real; never call a clause legal/illegal or say whether to sign; **log every change in this file**.
+
+---
+
 ## Milestone tracker (PRD §18)
 
 | # | Milestone | Status | Notes |
 |---|-----------|--------|-------|
-| 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine |
+| 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine; Liquid Glass UI (floating tab bar, glass header, real Android blur); landing page in `site/` |
 | 1 | Prove local AI — llama.rn + GGUF extraction offline on device | ⬜ Not started | Needs dev build; pick Qwen3 0.6B vs 1.7B after device test |
 | 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; document scanner + digital-PDF text layer wired (untested on device); ML Kit text recognition bridge pending (`modules/local-ocr`) |
 | 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; needs real model output |
@@ -58,6 +83,11 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 ---
 
 ## Log
+
+### 2026-10-09 — Claude (with Chris) — Pause frontend; backend handover
+- Added the "Handover — backend" section at the top of this file (state, swap points, priorities, device checklist, rules) and updated the milestone tracker.
+- No code changes. Working tree clean; all commits pushed to `origin/main`.
+- Verified: typecheck ✅, tests ✅ 45/45, lint ✅ (at `0d16347`).
 
 ### 2026-10-09 — Claude (with Chris) — Glass navigation from the design canvas (floating tab bar, glass header)
 - Source: "PirmaBago Screens" design canvas, rows "iOS 26 · Liquid Glass direction" and "Glass · …" (GlassHome, GlassOverview, GlassDocuments, GlassSpec).
