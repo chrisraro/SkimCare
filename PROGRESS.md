@@ -59,6 +59,14 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 
 ## Log
 
+### 2026-10-09 — Claude (with Chris) — SkimCare landing page (`site/`)
+- New static marketing site in `site/` (`index.html`, `styles.css`, `main.js`, `assets/icon.png` + `favicon.png`, `README.md`). No build step, no new dependencies, separate from the Expo app.
+- Direction "the page is the fine print": the page is a plain-language SkimCare agreement on paper; the owl icon peeks over the sheet; 7 clauses. As each scrolls in, its key sentence gets highlighted, a SkimCare note slides in, and a sticky clause list ticks it off. Clause 2 shows sample findings, all labelled "Sample agreement, fictional", plus a deterministic what-if (5% × ₱4,500 = ₱225). Clause 6 states the Demo engine status honestly.
+- Fully readable without JS; reduced motion shows everything highlighted, with no animation.
+- Placeholders before launch: `[TEAM NAMES]` in the footer; download buttons point to the GitHub Releases page until there is an APK.
+- `.claude/launch.json`: added `site` preview config (`python -m http.server 8130 --directory site`).
+- Verified: typecheck ✅, tests ✅ 45/45, `npm run lint` ✅, `npx eslint site/main.js` ✅. Browser: desktop 1440 + phone 390 screenshots; scroll reveal checked in a headless browser (7 of 7 clauses caught, sticky list works, no horizontal overflow). Fixed: `overflow-x: hidden` broke the sticky list → `clip`; phone header wrapped → short "Get the app" label.
+
 ### 2026-10-09 — Claude (with Chris) — Review fixes for the Liquid Glass frontend
 - **Bug fix — second review while one runs minimized:** finishing review A used to wipe review B's in-progress draft, and B's Processing screen showed/opened A instead of running B. Now: drafts carry a `sessionId`; a job only clears the draft it started from (`src/features/review/jobStore.ts`). Add document (S05) is blocked while a review is running or failed, with a "See the review in progress" button; a finished job's notice is cleared when a new review starts.
 - Failed reviews can be discarded (`discard()` + "Discard this review" on Processing); "Try again" only shows when there are pages to retry.

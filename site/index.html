@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkimCare: you skim, we read every line</title>
+<meta name="description" content="SkimCare reads the agreement you are about to sign on your phone, explains each term in plain English or Filipino, and shows the sentence every explanation came from. Nothing is uploaded.">
+<meta name="theme-color" content="#14273E">
+<meta property="og:title" content="SkimCare: you skim, we read every line">
+<meta property="og:description" content="An on-device agreement reader for Filipinos. Unawain bago pirmahan.">
+<meta property="og:image" content="assets/icon.png">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="main.js" defer></script>
+</head>
+<body>
+<div style="background: #14273E; font-family: 'Instrument Sans', system-ui, sans-serif; color: #14273E; min-height: 100vh; overflow-x: clip">
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+<defs>
+<symbol id="lp-icon" viewBox="0 0 1024 1024">
+<rect width="1024" height="1024" fill="#14273E"></rect>
+<g transform="translate(0 -48)">
+<path d="M310 470 L286 268 L454 366 Z" fill="#12A09E"></path>
+<path d="M714 470 L738 268 L570 366 Z" fill="#12A09E"></path>
+<ellipse cx="512" cy="540" rx="236" ry="200" fill="#12A09E"></ellipse>
+<circle cx="430" cy="500" r="66" fill="#FFFBF2"></circle>
+<circle cx="436" cy="530" r="30" fill="#0F1E31"></circle>
+<circle cx="594" cy="500" r="66" fill="#FFFBF2"></circle>
+<circle cx="600" cy="530" r="32" fill="#0F1E31"></circle>
+<circle cx="594" cy="500" r="92" fill="none" stroke="#D9B45C" stroke-width="26"></circle>
+<rect x="196" y="640" width="632" height="520" rx="32" fill="#FFFBF2"></rect>
+<rect x="240" y="772" width="528" height="64" rx="16" fill="#F2D27A"></rect>
+<rect x="260" y="790" width="360" height="28" rx="14" fill="#14273E"></rect>
+</g>
+</symbol>
+<clipPath id="lp-above"><rect x="0" y="0" width="1024" height="640"></rect></clipPath>
+</defs>
+</svg>
+
+<header class="site-head" style="max-width: 1240px; margin: 0 auto; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+<a href="#top" style="display: flex; align-items: center; gap: 12px; text-decoration: none" aria-label="SkimCare home">
+<svg width="40" height="40" style="border-radius: 10px" aria-hidden="true"><use href="#lp-icon"></use></svg>
+<span style="font-family: 'Newsreader', Georgia, serif; font-weight: 500; font-size: 28px; letter-spacing: -0.02em; color: #FFFBF2">Skim<em style="color: #5FD0C9">Care</em></span>
+</a>
+<nav class="navlinks" style="display: flex; align-items: center; gap: 28px" aria-label="Clauses">
+<a class="navlink" href="#c2">How it reads</a>
+<a class="navlink" href="#c3">Privacy</a>
+<a class="navlink" href="#c4">Limits</a>
+<a class="navlink" href="#c6">Status</a>
+</nav>
+<a class="btn btn-nav" href="#get"><span class="lbl-long">Get the Android build</span><span class="lbl-short">Get the app</span></a>
+</header>
+
+<main id="top" class="lp-main" style="max-width: 1240px; margin: 0 auto; padding: 150px 24px 0; box-sizing: border-box">
+<div style="position: relative">
+
+<svg class="owl" viewBox="260 220 504 452" style="position: absolute; right: 9%; top: -183px; width: 220px; height: 197px; z-index: 2; overflow: visible" role="img" aria-label="The SkimCare owl, wearing a monocle, peeking over the top of the page">
+<g clip-path="url(#lp-above)">
+<path d="M310 470 L286 268 L454 366 Z" fill="#12A09E"></path>
+<path d="M714 470 L738 268 L570 366 Z" fill="#12A09E"></path>
+<ellipse cx="512" cy="540" rx="236" ry="200" fill="#12A09E"></ellipse>
+<ellipse cx="430" cy="500" rx="96" ry="92" fill="#0E8584"></ellipse>
+<ellipse cx="594" cy="500" rx="96" ry="92" fill="#0E8584"></ellipse>
+<circle cx="430" cy="500" r="66" fill="#FFFBF2"></circle>
+<circle cx="594" cy="500" r="66" fill="#FFFBF2"></circle>
+<g class="eyes">
+<circle cx="436" cy="530" r="30" fill="#0F1E31"></circle>
+<circle cx="600" cy="530" r="32" fill="#0F1E31"></circle>
+<circle cx="611" cy="517" r="9" fill="#FFFBF2"></circle>
+</g>
+<path class="lid" d="M365 488 A66 66 0 0 1 495 488 Q430 454 365 488 Z" fill="#0E8584"></path>
+<circle cx="594" cy="500" r="92" fill="none" stroke="#D9B45C" stroke-width="26"></circle>
+<path d="M512 556 L494 584 L512 614 L530 584 Z" fill="#E0A63A"></path>
+</g>
+<rect x="300" y="614" width="42" height="56" rx="21" fill="#12A09E"></rect>
+<rect x="352" y="614" width="42" height="56" rx="21" fill="#12A09E"></rect>
+<rect x="630" y="614" width="42" height="56" rx="21" fill="#12A09E"></rect>
+<rect x="682" y="614" width="42" height="56" rx="21" fill="#12A09E"></rect>
+</svg>
+
+<article style="position: relative; background: #FFFBF2; border-radius: 22px 22px 0 0; padding: clamp(28px, 5vw, 64px) clamp(20px, 5vw, 72px) 96px; box-shadow: 0 40px 80px -40px rgba(0,0,0,.6)">
+
+<div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 18px; border-bottom: 1px solid #DEE4EB; font-size: 14px; color: #4A6380">
+<span>SkimCare Agreement, plain-language edition</span>
+<span class="pg" style="font-variant-numeric: tabular-nums">Page 1 of 1</span>
+</div>
+
+<section data-clause="c0" style="padding: clamp(40px, 6vw, 72px) 0 clamp(56px, 7vw, 96px); display: flex; flex-direction: column; gap: 32px">
+<h1 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-weight: 500; font-size: clamp(46px, 7.4vw, 104px); line-height: .98; letter-spacing: -0.035em; color: #14273E; max-width: 13ch">
+<span class="w" style="--i: 0">You</span> <span class="w" style="--i: 1">skim.</span> <span class="w" style="--i: 2">We</span> <span class="w" style="--i: 3">read</span> <span class="w" style="--i: 4">every</span> <span class="w" style="--i: 5"><em style="color: #0A6E6C">line.</em></span>
+</h1>
+<div class="row">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<p class="body" style="font-size: clamp(19px, 1.6vw, 22px)">SkimCare reads the agreement you are about to sign, explains each term in plain English or Filipino, and shows the exact sentence every explanation came from. It all happens on your phone. <span class="hl" style="font-weight: 600; color: #14273E">Nothing is uploaded.</span></p>
+<p style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-style: italic; font-size: 24px; color: #4A6380">Unawain bago pirmahan.</p>
+<div style="display: flex; gap: 14px; flex-wrap: wrap">
+<a class="btn btn-primary" href="#get">Get the Android build
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"></path></svg></a>
+<a class="btn btn-ghost" href="#c2">See it read a sample</a>
+</div>
+</div>
+<aside class="note" aria-label="SkimCare note">
+<div class="notecard">
+<div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>SkimCare note</div>
+<span class="chip ch-exp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"></path></svg>Explained from source</span>
+<span>Your document stays on the device. Clause 3 covers what that means.</span>
+</div>
+</aside>
+</div>
+</section>
+
+<div class="layout">
+<nav class="rail" aria-label="Clauses read">
+<p style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #14273E">Clauses</p>
+<p style="margin: 0 0 14px; font-size: 13px; color: #4A6380; font-variant-numeric: tabular-nums"><span id="read-count">0</span> of 7 read</p>
+<a class="rail-item" href="#c1"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>Definitions</a>
+<a class="rail-item" href="#c2"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>How it reads</a>
+<a class="rail-item" href="#c3"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>Where it goes</a>
+<a class="rail-item" href="#c4"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>What it won’t do</a>
+<a class="rail-item" href="#c5"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>Languages</a>
+<a class="rail-item" href="#c6"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>Current status</a>
+<a class="rail-item" href="#c7"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"></path></svg></span>Signing</a>
+</nav>
+
+<div style="display: flex; flex-direction: column; gap: clamp(72px, 9vw, 128px); min-width: 0">
+
+<section id="c1" data-clause="c1" style="display: flex; flex-direction: column; gap: 24px">
+<h2 class="clause-h"><span class="clause-n">1</span>Definitions</h2>
+<div class="row">
+<p class="body">“You” means the person about to sign. “The document” means the agreement in your hand: a freelance contract, a service agreement, an installment or loan agreement. <span class="hl">“SkimCare” means an app that reads the document with you, on your phone,</span> and points to its source every time it says something.</p>
+<aside class="note"><div class="notecard"><div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>SkimCare note</div><span class="chip ch-exp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"></path></svg>Explained from source</span><span>Plain version: a reading companion, not a lawyer.</span></div></aside>
+</div>
+</section>
+
+<section id="c2" data-clause="c2" style="display: flex; flex-direction: column; gap: 28px">
+<h2 class="clause-h"><span class="clause-n">2</span>How SkimCare reads</h2>
+<div class="row">
+<p class="body">You scan the pages or import a PDF. SkimCare turns them into text, asks you to confirm anything it could not read cleanly, then finds the terms that matter: amounts, due dates, fees, renewals, penalties. <span class="hl">Each finding is shown beside the sentence it came from,</span> so you can check it yourself.</p>
+<div></div>
+</div>
+
+<div style="background: #FFFFFF; border-radius: 20px; padding: clamp(20px, 3vw, 36px); display: flex; flex-direction: column; gap: 28px; box-shadow: inset 0 0 0 1px #DEE4EB">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Newsreader', Georgia, serif; font-size: 24px; font-weight: 500">Installment agreement, page 2</span>
+<span class="chip ch-cnv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16.5h.01"></path></svg>Sample agreement, fictional</span>
+</div>
+
+<div class="row" style="gap: 28px">
+<blockquote class="quote">A late payment fee of five percent (5%) of the unpaid installment shall be charged for every month or fraction thereof that the installment remains unpaid.</blockquote>
+<div class="notecard" style="box-shadow: inset 0 0 0 1px #DEE4EB"><span class="chip ch-att"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z"></path><path d="M12 10v4M12 16.8h.01"></path></svg>Needs attention</span><span>Paying even one day late adds 5% of that installment, and the fee repeats every month it stays unpaid.</span></div>
+</div>
+
+<div class="row" style="gap: 28px">
+<blockquote class="quote">The Seller may adjust the monthly rate upon notice to the Buyer.</blockquote>
+<div class="notecard" style="box-shadow: inset 0 0 0 1px #DEE4EB"><span class="chip ch-cla"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.4v.3M12 16.8h.01"></path></svg>Needs clarification</span><span>The document does not say how much notice, or how far the rate can change. Ask before signing.</span></div>
+</div>
+
+<div class="row" style="gap: 28px">
+<blockquote class="quote">Each installment is due on the fifth (5th) day of every month.</blockquote>
+<div class="notecard" style="box-shadow: inset 0 0 0 1px #DEE4EB"><span class="chip ch-exp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"></path></svg>Explained from source</span><span>Pay by the 5th of each month.</span></div>
+</div>
+
+<div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 20px 22px; border-radius: 14px; background: #EFF8F6">
+<span style="font-weight: 700; font-size: 15px">What if I pay 10 days late on a ₱4,500 installment?</span>
+<span style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-variant-numeric: tabular-nums; color: #0A6E6C">₱225 fee</span>
+<span style="font-size: 14px; color: #3D4A5A">5% × ₱4,500, for one month or part of a month. Worked out by fixed rules, not by the AI.</span>
+</div>
+</div>
+</section>
+
+<section id="c3" data-clause="c3" style="display: flex; flex-direction: column; gap: 24px">
+<h2 class="clause-h"><span class="clause-n">3</span>Where your document goes</h2>
+<div class="row">
+<p class="body">Nowhere. <span class="hl">Text recognition, reading and explanations run on the phone.</span> There is no account to create, no cloud copy, and no upload. Once the reading model is installed, SkimCare works in airplane mode. Your reviews are saved privately on the device.</p>
+<aside class="note"><div class="notecard"><div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>SkimCare note</div><span class="chip ch-exp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"></path></svg>Explained from source</span><span>No internet needed to read a document. Setup downloads the model once.</span></div></aside>
+</div>
+</section>
+
+<section id="c4" data-clause="c4" style="display: flex; flex-direction: column; gap: 24px">
+<h2 class="clause-h"><span class="clause-n">4</span>What SkimCare will not do</h2>
+<div class="row">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<p class="body"><span class="hl">SkimCare will not tell you whether to sign.</span> It will not call a clause legal or illegal, fair or unfair.</p>
+<p class="body">It will not guess a number the document does not state. When a term is missing, it says so: “insufficient information.”</p>
+<p class="body">It is a document comprehension and legal-information aid, not legal advice. For advice, talk to a lawyer.</p>
+</div>
+<aside class="note"><div class="notecard"><div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>SkimCare note</div><span class="chip ch-att"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z"></path><path d="M12 10v4M12 16.8h.01"></path></svg>Needs attention</span><span>The decision stays with you. SkimCare explains, you decide.</span></div></aside>
+</div>
+</section>
+
+<section id="c5" data-clause="c5" style="display: flex; flex-direction: column; gap: 24px">
+<h2 class="clause-h"><span class="clause-n">5</span>Languages</h2>
+<div class="row">
+<p class="body">Explanations come in plain English or Filipino. <span class="hl">Status is always shown with an icon and words,</span> never color alone, and every label avoids legal jargon.</p>
+<aside class="note"><div class="notecard"><div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>Paalala ng SkimCare</div><span class="chip ch-exp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"></path></svg>Ipinaliwanag mula sa source</span><span>Puwede mong basahin ang paliwanag sa Filipino.</span></div></aside>
+</div>
+</section>
+
+<section id="c6" data-clause="c6" style="display: flex; flex-direction: column; gap: 24px">
+<h2 class="clause-h"><span class="clause-n">6</span>Current status</h2>
+<div class="row">
+<p class="body">SkimCare is being built for the AppBuilders PH Local AI Hackathon. All 19 screens are in place. <span class="hl">Today’s build runs a clearly labeled Demo engine that shows sample findings;</span> on-device text recognition and the local reading model are being integrated now. The app will not claim it is ready for offline use until every readiness check passes.</p>
+<aside class="note"><div class="notecard"><div class="notehead"><svg width="18" height="18" style="border-radius: 5px" aria-hidden="true"><use href="#lp-icon"></use></svg>SkimCare note</div><span class="chip ch-cnv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg>Cannot verify yet</span><span>Real on-device reading is in progress. Every screen that shows sample output says so.</span></div></aside>
+</div>
+</section>
+
+<section id="c7" data-clause="c7" style="display: flex; flex-direction: column; gap: 32px">
+<h2 class="clause-h"><span class="clause-n">7</span>Signing</h2>
+<p class="body">By signing below you get the Android build. <span class="hl">You agree to nothing else.</span></p>
+<div id="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 40px 56px; align-items: end; padding-top: 12px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<a class="btn btn-primary" href="https://github.com/chrisraro/PirmaBago/releases" style="align-self: flex-start; min-height: 60px; font-size: 18px; padding: 0 30px">Get the Android build
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"></path></svg></a>
+<div style="height: 1.5px; background: #14273E"></div>
+<span style="font-size: 14px; color: #4A6380">Signature of user</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<a href="https://github.com/chrisraro/PirmaBago" style="font-family: 'Newsreader', Georgia, serif; font-size: 26px; min-height: 44px; display: flex; align-items: flex-end; color: #14273E">Read the source on GitHub</a>
+<div style="height: 1.5px; background: #14273E"></div>
+<span style="font-size: 14px; color: #4A6380">Witness</span>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</article>
+</div>
+</main>
+
+<footer style="max-width: 1240px; margin: 0 auto; padding: 56px 24px 64px; box-sizing: border-box; display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; color: #C9D4E0; font-size: 14px; line-height: 1.6">
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 520px">
+<span style="font-family: 'Newsreader', Georgia, serif; font-weight: 500; font-size: 26px; color: #FFFBF2">Skim<em style="color: #5FD0C9">Care</em></span>
+<span>SkimCare is a document comprehension and legal-information aid. It is not legal advice, a licensed attorney, or an instruction to sign or refuse any document.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span>Built for the AppBuilders PH Local AI Hackathon</span>
+<span>[TEAM NAMES]</span>
+<a href="https://github.com/chrisraro/PirmaBago" style="color: #5FD0C9">github.com/chrisraro/PirmaBago</a>
+</div>
+</footer>
+</div>
+</body>
+</html>
