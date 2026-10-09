@@ -131,6 +131,14 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — In-app model import (Glenn #5); web app project; deps baseline
+- Glenn is out today; Chris asked to finish his backlog. Work runs as parallel agent branches merged here (worktrees in `.claude/worktrees/`, now gitignored).
+- **In-app model import** (`src/features/model/importModel.ts`, `src/components/ModelImportCard.tsx`): pick the GGUF with the system picker (`content://`, copied once — no cache duplicate), match name + size against `models.ts`, free-space check, copy to `<documents>/models/<file>.part`, **native MD5** check, release the model, move into place; mismatch deletes the copy and keeps an existing good model. Shown in Settings › On-device AI and on Readiness when the model check fails (Android + local engine only). `docs/LOCAL_LLM.md`: "Install the model in the app (no adb)". 13 tests (mocked native modules). **Not tried on a phone.** Limits: MD5 is synchronous (screen pauses a few seconds); readiness still checks `DEFAULT_MODEL_ID` only, so importing Q4_0 needs that changed.
+- **Web app:** new Vercel project from the repo root (`vercel.json`: `npx expo export -p web` → `dist`, SPA rewrite, COOP/COEP for multi-threaded WebAssembly). Until the browser engine lands it serves the full app on the labelled Demo engine. Local `expo export -p web` ✅ (2 MB bundle).
+- Dependencies added for today's streams: `@wllama/wllama`, `tesseract.js`, `pdfjs-dist`, `expo-sqlite` (plugin `useSQLCipher: true`), `expo-secure-store`. These add native code → the in-progress EAS build (started before them) does not include them; rebuild after merging.
+- ⚠️ Commit `1562f8b` accidentally also included the landing-page session's in-progress `site/*` edits (left in place, not reverted).
+- Verified: typecheck ✅, tests ✅ 208/208, lint ✅.
+
 ### 2026-10-10 — Claude (with Chris) — Landing page: Exhibit A screens rebuilt 1:1 with the app
 - Chris flagged that the phone mockups (esp. header and bottom nav) didn't match the app. The app's web build can't run right now (`llama.rn` is native-only and is imported via the tab bar → jobStore → engines), so the spec came from the source: `src/theme/tokens.ts`, `GlassSurface`, `FloatingTabBar`, `GlassHeader`, `Screen`, the screen routes, and `src/ai/demo/fixtures.ts`.
 - `site/`: each of the 7 screens is now built at the app's real size (390×844) with its tokens and scaled into the frame: floating glass tab bar (Home/Documents/Settings pill + separate search circle), glass back circle + title capsule header with frosted veil, footers, DemoBanner on review screens, StatusBadge/FindingCard/SourceQuote/AiNote as in the app. Icons are the app's own Ionicons, subset to 35 glyphs (`site/assets/ionicons-subset.woff2`, 5.5 KB, MIT).
