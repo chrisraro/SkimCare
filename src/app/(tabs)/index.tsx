@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { EmptyState } from '@/components/EmptyState';
-import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
+import { AppText, Banner, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
+import { dismissInstallHint, shouldShowInstallHint } from '@/features/pwa/pwa';
 import { useSettings } from '@/features/settings/store';
 import { useT } from '@/i18n/useT';
 import { colors, palette, radius, space } from '@/theme/tokens';
@@ -22,6 +24,8 @@ export default function Home() {
   const recent = order.slice(0, 3).map((id) => byId[id]!).filter(Boolean);
   const isDemo = getEngine().info.kind === 'demo';
   const offlineReady = useSettings((s) => s.offlineReady);
+  // Web on iOS Safari only: installing is what makes the browser app open offline from the home screen.
+  const [installHint, setInstallHint] = useState(shouldShowInstallHint);
 
   return (
     <Screen edges={['top']} tab>
@@ -64,6 +68,23 @@ export default function Home() {
       <AppText variant="display" accessibilityRole="header">
         {t('home_title')}
       </AppText>
+
+      {installHint ? (
+        <Banner
+          action={
+            <Button
+              variant="ghost"
+              label={t('home_install_dismiss')}
+              onPress={() => {
+                dismissInstallHint();
+                setInstallHint(false);
+              }}
+            />
+          }
+        >
+          {t('home_install_ios')}
+        </Banner>
+      ) : null}
 
       <Card tone="brand" onPress={() => router.push('/review/new')} accessibilityLabel={t('home_start')}>
         <View style={styles.startRow}>

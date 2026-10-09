@@ -53,6 +53,8 @@ const en = {
   home_empty: 'No reviews yet. Your reviews are saved privately on this phone.',
   home_offline: 'Offline · on-device',
   home_not_ready: 'Offline check needed',
+  home_install_ios: 'Install SkimCare: tap Share, then Add to Home Screen. It then opens offline.',
+  home_install_dismiss: 'Got it',
   home_supported: 'Best for: freelance/service agreements and simple installment agreements.',
 
   // Capture flow
@@ -201,6 +203,8 @@ const fil: Partial<Record<StringKey, string>> = {
   home_recent: 'Mga huling review',
   home_offline: 'Offline · nasa phone',
   home_not_ready: 'Kailangang i-check offline',
+  home_install_ios: 'I-install ang SkimCare: i-tap ang Share, tapos Add to Home Screen. Bubukas na ito kahit offline.',
+  home_install_dismiss: 'Sige',
   add_title: 'Idagdag ang dokumento',
   add_camera: 'I-scan ang mga pahina',
   add_gallery: 'Pumili ng larawan',

@@ -6,12 +6,13 @@ import {
 } from '@expo-google-fonts/instrument-sans';
 import { Newsreader_400Regular, Newsreader_500Medium, Newsreader_600SemiBold, useFonts } from '@expo-google-fonts/newsreader';
 import { Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { openStorage } from '@/db/openStorage';
 import { initPersistence } from '@/features/storage/persistence';
+import { registerServiceWorker } from '@/features/pwa/pwa';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
@@ -40,6 +41,8 @@ export default function RootLayout() {
   useEffect(() => {
     void initPersistence(openStorage).then(() => setHydrated(true));
   }, []);
+  // Web only, production only: lets the app shell open offline after one visit.
+  useEffect(registerServiceWorker, []);
   // A failed font load falls back to system fonts rather than blocking the app.
   if ((!loaded && !error) || !hydrated) return null;
 
