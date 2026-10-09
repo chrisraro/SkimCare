@@ -1,4 +1,3 @@
-import { Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
@@ -29,8 +28,7 @@ export default function Diagnostics() {
   });
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: t('settings_diagnostics') }} />
+    <Screen title={t('settings_diagnostics')}>
       <SectionLabel>Engine</SectionLabel>
       <Card>
         <Row k="Engine" v={info.name} />

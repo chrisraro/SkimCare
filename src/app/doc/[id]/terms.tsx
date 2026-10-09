@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { DemoBanner } from '@/components/DemoBanner';
@@ -26,8 +26,7 @@ export default function Terms() {
   const findings = (doc?.analysis?.findings ?? []).filter((f) => !filter || f.reviewStatus === filter);
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: t('terms_title') }} />
+    <Screen title={t('terms_title')}>
       <DemoBanner />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
         <Chip label={t('terms_all')} selected={!filter} onPress={() => setFilter(null)} />

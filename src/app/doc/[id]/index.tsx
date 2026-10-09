@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { runAnalysis } from '@/ai/pipeline';
 import { DemoBanner } from '@/components/DemoBanner';
+import { GlassActionGroup, GlassGroupAction } from '@/components/glass/GlassHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { FindingCard } from '@/components/FindingCard';
 import { AppText, Banner, Button, Card, ListRow, Screen, SectionLabel } from '@/components/ui';
@@ -56,8 +57,16 @@ export default function Overview() {
   const count = (s: ReviewStatus[]) => findings.filter((f) => s.includes(f.reviewStatus)).length;
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: 'Overview' }} />
+    <Screen
+      title="Overview"
+      headerRight={
+        <GlassActionGroup>
+          <GlassGroupAction icon="document-text-outline" label={t('terms_title')} onPress={() => router.push({ pathname: '/doc/[id]/terms', params: { id: doc.id } })} />
+          <GlassGroupAction icon="chatbubble-outline" label={t('questionsToAsk')} onPress={() => router.push({ pathname: '/doc/[id]/questions', params: { id: doc.id } })} />
+          <GlassGroupAction icon="calculator-outline" label={t('whatIf')} onPress={() => router.push({ pathname: '/doc/[id]/what-if', params: { id: doc.id } })} />
+        </GlassActionGroup>
+      }
+    >
       <DemoBanner />
 
       <View style={{ gap: space.xs }}>

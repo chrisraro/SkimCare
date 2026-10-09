@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { AppText, Banner, Button, Card, Chip, Screen, SectionLabel } from '@/components/ui';
 import { FULLY_SUPPORTED_TYPES, TYPE_LABELS, type DocumentType } from '@/domain/schema';
@@ -17,8 +17,7 @@ export default function Preferences() {
   const limited = type !== null && !FULLY_SUPPORTED_TYPES.includes(type);
 
   return (
-    <Screen footer={<Button label={t('prefs_start')} icon="sparkles-outline" disabled={!type} onPress={() => router.push('/review/processing')} />}>
-      <Stack.Screen options={{ title: t('prefs_title') }} />
+    <Screen title={t('prefs_title')} footer={<Button label={t('prefs_start')} icon="sparkles-outline" disabled={!type} onPress={() => router.push('/review/processing')} />}>
       {detected ? (
         <Card tone="muted">
           <AppText variant="label" tone="muted">

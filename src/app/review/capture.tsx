@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Banner, Button, Screen } from '@/components/ui';
@@ -55,7 +55,7 @@ export default function Capture() {
   }, []);
 
   return (
-    <Screen
+    <Screen title={t('capture_title')}
       footer={
         <>
           <Button label={hasScanner ? 'Scan more pages' : 'Add another page'} variant="secondary" icon="add" onPress={addMore} />
@@ -67,7 +67,6 @@ export default function Capture() {
         </>
       }
     >
-      <Stack.Screen options={{ title: t('capture_title') }} />
       {hasScanner ? (
         <Banner tone="info">
           The scanner finds page edges and straightens each page automatically. It runs on this phone; the first use may

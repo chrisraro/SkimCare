@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { DemoBanner } from '@/components/DemoBanner';
 import { EmptyState } from '@/components/EmptyState';
@@ -20,7 +20,7 @@ export default function FindingDetail() {
   const saved = new Set(doc.analysis?.questions.map((q) => q.text));
 
   return (
-    <Screen
+    <Screen title={'Finding'}
       footer={
         finding.evidence ? (
           <Button
@@ -36,7 +36,6 @@ export default function FindingDetail() {
         ) : undefined
       }
     >
-      <Stack.Screen options={{ title: 'Finding' }} />
       <DemoBanner />
       {doc.analysisStale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
 

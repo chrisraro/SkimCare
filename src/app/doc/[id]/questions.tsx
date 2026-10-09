@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Clipboard from 'expo-clipboard';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
@@ -29,7 +29,7 @@ export default function Questions() {
   };
 
   return (
-    <Screen
+    <Screen title={t('questions_title')}
       footer={
         <Button
           label={copied ? t('questions_copied') : t('questions_copy')}
@@ -39,7 +39,6 @@ export default function Questions() {
         />
       }
     >
-      <Stack.Screen options={{ title: t('questions_title') }} />
       <AppText tone="subtle">{t('questions_body')}</AppText>
 
       {questions.length === 0 ? <EmptyState icon="chatbubbles-outline" message="No questions yet." /> : null}

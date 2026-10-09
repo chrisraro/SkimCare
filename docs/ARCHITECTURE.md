@@ -43,6 +43,8 @@ Switch engines in one place: `getEngine()` in `src/ai/demoEngine.ts`.
 
 ## Design system
 
+- Glass chrome: `GlassScene` (content = BlurTargetView, chrome = overlays) → `GlassSurface` / `GlassHeader` / `FloatingTabBar`. Android blur only works for glass rendered as a scene's chrome; glass is for controls, never contract text.
+
 - Tokens: `src/theme/tokens.ts` — navy (`#14273E`) structure, teal (`#0E8584`) primary/"explained", amber attention, coral "needs attention", slate "cannot verify".
 - Source text: serif on warm paper with gold rule (`SourceQuote`). AI text: labeled "Explanation by the on-device model — not contract text" (`AiNote`).
 - Status badges always pair icon + words. Touch targets ≥ 48dp. Text scales up to 2× (`maxFontSizeMultiplier`).

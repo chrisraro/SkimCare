@@ -59,6 +59,16 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 
 ## Log
 
+### 2026-10-09 — Claude (with Chris) — Glass navigation from the design canvas (floating tab bar, glass header)
+- Source: "PirmaBago Screens" design canvas, rows "iOS 26 · Liquid Glass direction" and "Glass · …" (GlassHome, GlassOverview, GlassDocuments, GlassSpec).
+- **Real blur on Android:** `expo-blur` BlurView with `blurMethod="dimezisBlurViewSdk31Plus"` + `BlurTargetView`. New `GlassScene` (`src/components/ui/GlassScene.tsx`) splits each screen into content (the blur target) and chrome (glass that blurs it). `GlassSurface` tiers: Reduce Transparency → solid; iOS 26 → native Liquid Glass; else expo-blur (iOS material, web backdrop-filter, Android Dimezis; Android 11 and below get a tint). Glass inside content never blurs its own target — it uses a fill.
+- **Floating tab bar** (`src/components/glass/FloatingTabBar.tsx`): glass capsule (Home / Documents / Settings) + glass search circle, on all platforms via headless tabs (`expo-router/ui`), replacing NativeTabs. Scrolling a tab screen past 40px collapses it to the current tab (`src/features/chrome/store.ts`); the review-progress capsule sits above the bar, or beside it when collapsed. Search circle opens Documents with the search field focused.
+- **Glass nav header** (`src/components/glass/GlassHeader.tsx`): glass back circle + title capsule + optional grouped actions over a frosted scroll edge. All stack screens use it via `<Screen title=…>` (native headers off). Overview has the design's action group (Terms / Questions / What if). Processing has no back button.
+- Fix found while building: headless TabSlot sizes screens to content (`flexShrink: 0`), so tab ScrollViews never scrolled; tab screen roots are now pinned to the slot.
+- Removed `AccessorySpacer` (tab screens reserve bar + capsule space via `tabBarSpace()`).
+- Verified: typecheck ✅, tests ✅ 45/45, lint ✅; web at 390×844: header on Add document / Verify / Overview, tab switching, collapse on scroll (DOM: only the current tab remains), search circle focuses Documents search. **Not yet run on Android** — Dimezis blur needs a dev build (`npx expo run:android`); check blur performance on the demo phone.
+- Next: finding as a detented sheet (GlassFinding), glass camera controls (GlassCapture), Overview filter segmented control.
+
 ### 2026-10-09 — Claude (with Chris) — SkimCare landing page (`site/`)
 - New static marketing site in `site/` (`index.html`, `styles.css`, `main.js`, `assets/icon.png` + `favicon.png`, `README.md`). No build step, no new dependencies, separate from the Expo app.
 - Direction "the page is the fine print": the page is a plain-language SkimCare agreement on paper; the owl icon peeks over the sheet; 7 clauses. As each scrolls in, its key sentence gets highlighted, a SkimCare note slides in, and a sticky clause list ticks it off. Clause 2 shows sample findings, all labelled "Sample agreement, fictional", plus a deterministic what-if (5% × ₱4,500 = ₱225). Clause 6 states the Demo engine status honestly.

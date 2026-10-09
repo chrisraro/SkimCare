@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { EmptyState } from '@/components/EmptyState';
-import { AccessorySpacer } from '@/components/ReviewAccessory';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
@@ -23,7 +22,7 @@ export default function Home() {
   const isDemo = getEngine().info.kind === 'demo';
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} tab>
       <View style={styles.topRow}>
         <AppText tone="muted">{t('home_greeting')}</AppText>
         <View style={styles.pills}>
@@ -78,7 +77,6 @@ export default function Home() {
           ))}
         </View>
       )}
-      <AccessorySpacer />
     </Screen>
   );
 }

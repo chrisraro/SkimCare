@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
@@ -43,7 +43,7 @@ export default function Readiness() {
   };
 
   return (
-    <Screen
+    <Screen title={t('readiness_title')}
       footer={
         <>
           <Button label={t('readiness_continue')} onPress={proceed} disabled={!report} />
@@ -51,7 +51,6 @@ export default function Readiness() {
         </>
       }
     >
-      <Stack.Screen options={{ title: t('readiness_title') }} />
       <AppText tone="subtle">{t('readiness_body')}</AppText>
 
       {report ? (

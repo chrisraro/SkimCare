@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { STAGES } from '@/ai/pipeline';
@@ -46,7 +46,7 @@ export default function Processing() {
   const currentIndex = STAGES.findIndex((s) => s.id === stage);
 
   return (
-    <Screen
+    <Screen title={t('processing_title')} back={false}
       footer={
         error ? (
           <>
@@ -75,7 +75,6 @@ export default function Processing() {
         )
       }
     >
-      <Stack.Screen options={{ title: t('processing_title') }} />
       <DemoBanner />
       <AppText tone="subtle">{t('processing_body')}</AppText>
       {error ? <Banner tone="danger">{error}</Banner> : null}

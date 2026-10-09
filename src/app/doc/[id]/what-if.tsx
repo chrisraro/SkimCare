@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { lateInstallmentScenario } from '@/ai/scenarioRules';
@@ -30,8 +30,7 @@ export default function WhatIf() {
     router.push({ pathname: '/doc/[id]/source', params: { id: doc.id, page: String(page), block } });
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: t('whatif_title') }} />
+    <Screen title={t('whatif_title')}>
       <DemoBanner />
       <AppText tone="subtle">{t('whatif_body')}</AppText>
 

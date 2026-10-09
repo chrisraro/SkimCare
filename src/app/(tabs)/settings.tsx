@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
-import { AccessorySpacer } from '@/components/ReviewAccessory';
 import { AppText, Button, Card, Chip, ListRow, Screen, SectionLabel } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
 import { useSettings } from '@/features/settings/store';
@@ -24,7 +23,7 @@ export default function Settings() {
     ]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} tab>
       <AppText variant="display" accessibilityRole="header">
         {t('settings_title')}
       </AppText>
@@ -60,7 +59,6 @@ export default function Settings() {
           {t('settings_disclaimer')}
         </AppText>
       </Card>
-      <AccessorySpacer />
     </Screen>
   );
 }

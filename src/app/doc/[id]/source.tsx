@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { GlassHeader, HEADER_GAP, HEADER_HEIGHT } from '@/components/glass/GlassHeader';
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText, Banner, Button, Chip } from '@/components/ui';
 import { useDocument, useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
@@ -23,13 +24,14 @@ export default function SourceViewer() {
   const [text, setText] = useState('');
   const [fontScale, setFontScale] = useState(1);
   const scroller = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   if (!doc) return null;
   const page = doc.pages.find((p) => p.number === pageNo) ?? doc.pages[0];
   if (!page) return null;
 
   return (
-    <SafeAreaView style={styles.root} edges={['bottom']}>
+    <SafeAreaView style={[styles.root, { paddingTop: insets.top + HEADER_GAP + HEADER_HEIGHT + space.sm }]} edges={['bottom']}>
       <Stack.Screen options={{ title: `${t('source_title')} · ${t('page')} ${page.number}` }} />
       <View style={styles.toolbar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
@@ -102,6 +104,7 @@ export default function SourceViewer() {
           {`Long-press any passage to ${t('source_correct').toLowerCase()}. Edits mark this review as out of date.`}
         </AppText>
       </ScrollView>
+      <GlassHeader title={`${t('source_title')} · ${t('page')} ${page.number}`} />
     </SafeAreaView>
   );
 }

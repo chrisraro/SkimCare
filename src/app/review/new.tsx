@@ -1,6 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { setDemoFixture } from '@/ai/demoEngine';
@@ -59,8 +59,7 @@ export default function AddDocument() {
   // One review at a time: a new capture would otherwise replace the pages the running review depends on.
   if (jobStatus === 'running' || jobStatus === 'error') {
     return (
-      <Screen footer={<Button label="See the review in progress" icon="arrow-forward" onPress={() => router.replace('/review/processing')} />}>
-        <Stack.Screen options={{ title: t('add_title') }} />
+      <Screen title={t('add_title')} footer={<Button label="See the review in progress" icon="arrow-forward" onPress={() => router.replace('/review/processing')} />}>
         <Banner tone="info">
           {jobStatus === 'running'
             ? `“${jobTitle}” is still being reviewed. You can start the next one when it finishes.`
@@ -71,8 +70,7 @@ export default function AddDocument() {
   }
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: t('add_title') }} />
+    <Screen title={t('add_title')}>
       <View style={styles.list}>
         <ListRow
           icon="camera-outline"

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
@@ -45,8 +45,7 @@ export default function Preview() {
   };
 
   return (
-    <Screen footer={<Button label={busy ? t('preview_reading') : t('preview_confirm')} loading={busy} onPress={recognize} disabled={pages.length === 0} icon="scan-outline" />}>
-      <Stack.Screen options={{ title: t('preview_title') }} />
+    <Screen title={t('preview_title')} footer={<Button label={busy ? t('preview_reading') : t('preview_confirm')} loading={busy} onPress={recognize} disabled={pages.length === 0} icon="scan-outline" />}>
       <DemoBanner />
       <AppText tone="subtle">{t('preview_body')}</AppText>
       {source === 'pdf' ? (

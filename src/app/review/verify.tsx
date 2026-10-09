@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { LOW_CONFIDENCE } from '@/ai/evidenceGate';
@@ -22,7 +22,7 @@ export default function Verify() {
   const pending = critical.filter((b) => !b.verifiedAt && !b.correctedAt).length;
 
   return (
-    <Screen
+    <Screen title={t('verify_title')}
       footer={
         <>
           {pending > 0 ? (
@@ -34,7 +34,6 @@ export default function Verify() {
         </>
       }
     >
-      <Stack.Screen options={{ title: t('verify_title') }} />
       <DemoBanner />
       <AppText tone="subtle">{t('verify_body')}</AppText>
       {textNote ? <Banner tone="success">{textNote}</Banner> : null}

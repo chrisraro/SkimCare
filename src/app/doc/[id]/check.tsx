@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { DemoBanner } from '@/components/DemoBanner';
@@ -39,8 +39,7 @@ export default function Check() {
   if (done) {
     const matched = items.filter((i) => feedbackFor(i) === 'supported').length;
     return (
-      <Screen footer={<Button label={t('done')} onPress={() => router.back()} />}>
-        <Stack.Screen options={{ title: t('check_title') }} />
+      <Screen title={t('check_title')} footer={<Button label={t('done')} onPress={() => router.back()} />}>
         <Card>
           <AppText variant="title">{`${t('check_summary')} ${matched} of ${items.length}.`}</AppText>
           <AppText tone="subtle">
@@ -57,7 +56,7 @@ export default function Check() {
   const f = fb ? FEEDBACK[fb] : null;
 
   return (
-    <Screen
+    <Screen title={t('check_title')}
       footer={
         <Button
           label={index === items.length - 1 ? t('done') : t('check_next')}
@@ -66,7 +65,6 @@ export default function Check() {
         />
       }
     >
-      <Stack.Screen options={{ title: t('check_title') }} />
       <DemoBanner />
       <AppText variant="small" tone="muted">{`${index + 1} / ${items.length} · ${t('check_body')}`}</AppText>
       <AppText variant="title" accessibilityRole="header">

@@ -38,6 +38,8 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
+          // Screens draw the floating glass header themselves (components/glass/GlassHeader).
+          headerShown: false,
           ...headerChrome,
           headerTintColor: colors.text,
           headerTitleStyle: { fontFamily: fonts.sans[600] },
@@ -49,7 +51,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
-        <Stack.Screen name="review/processing" options={{ gestureEnabled: false, headerBackVisible: false }} />
+        <Stack.Screen name="review/processing" options={{ gestureEnabled: false }} />
       </Stack>
     </SafeAreaProvider>
   );

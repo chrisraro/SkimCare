@@ -77,6 +77,12 @@ export const glass = {
   fill: 'rgba(250,251,253,0.72)',
   fillAndroid: 'rgba(250,251,253,0.94)',
   rim: 'rgba(255,255,255,0.7)',
+  /** Selected tab / search circle: soft teal glass. */
+  tealFill: 'rgba(221,242,239,0.78)',
+  /** Selected tab inside a glass bar. */
+  selected: 'rgba(10,110,108,0.12)',
+  /** Scroll-edge veil behind floating headers. */
+  edge: 'rgba(242,244,247,0.72)',
   solid: palette.white,
 } as const;
 
