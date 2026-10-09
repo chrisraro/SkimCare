@@ -49,8 +49,9 @@ export default function Processing() {
           analysisStale: false,
         });
         draft.reset();
-        router.dismissAll();
-        router.replace({ pathname: '/doc/[id]', params: { id } });
+        // Pop the capture flow back to Home, then open the review on top so Back returns Home.
+        router.dismissTo('/(tabs)');
+        router.push({ pathname: '/doc/[id]', params: { id } });
       })
       .catch((e: Error) => {
         if (ac.signal.aborted) return;

@@ -5,21 +5,32 @@ import { router, Stack } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Banner, Button, Screen } from '@/components/ui';
+import { scanPages, scannerAvailable } from '@/features/capture/scanner';
 import { useDraft } from '@/features/review/draftStore';
 import { useT } from '@/i18n/useT';
 import { colors, radius, space, touch } from '@/theme/tokens';
 
 const pageId = () => `pg_${Math.random().toString(36).slice(2, 9)}`;
 
-async function shoot(): Promise<string | null> {
+/** Fallback when the document scanner is not in this build (Expo Go / web). */
+async function shootWithCamera(): Promise<string | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return null;
-  // System camera with crop step (F03: shoot, crop). Rotate/reorder happen in-app.
   const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.85 });
   return res.canceled ? null : (res.assets[0]?.uri ?? null);
 }
 
-/** S06 Capture — shoot, rotate, retake, add page. Camera permission requested only here. */
+/** Capture one or more pages: document scanner first, system camera as fallback. */
+async function capture(maxPages: number): Promise<string[]> {
+  if (scannerAvailable()) {
+    const out = await scanPages(maxPages);
+    return out.status === 'ok' ? out.uris : [];
+  }
+  const uri = await shootWithCamera();
+  return uri ? [uri] : [];
+}
+
+/** S06 Capture — scan (edge detection, perspective fix, cleanup), rotate, retake, add pages. */
 export default function Capture() {
   const t = useT();
   const pages = useDraft((s) => s.captured);
@@ -28,16 +39,17 @@ export default function Capture() {
   const removePage = useDraft((s) => s.removePage);
   const rotatePage = useDraft((s) => s.rotatePage);
   const opened = useRef(false);
+  const hasScanner = scannerAvailable();
 
-  const addPage = async () => {
-    const uri = await shoot();
-    if (uri) addPages([{ id: pageId(), uri, rotation: 0 }]);
+  const addMore = async () => {
+    const uris = await capture(20);
+    if (uris.length) addPages(uris.map((uri) => ({ id: pageId(), uri, rotation: 0 as const })));
   };
 
   useEffect(() => {
     if (!opened.current && pages.length === 0) {
       opened.current = true;
-      addPage();
+      addMore();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -46,7 +58,7 @@ export default function Capture() {
     <Screen
       footer={
         <>
-          <Button label="Add another page" variant="secondary" icon="add" onPress={addPage} />
+          <Button label={hasScanner ? 'Scan more pages' : 'Add another page'} variant="secondary" icon="add" onPress={addMore} />
           <Button
             label={`Continue with ${pages.length} page${pages.length === 1 ? '' : 's'}`}
             disabled={pages.length === 0}
@@ -56,11 +68,20 @@ export default function Capture() {
       }
     >
       <Stack.Screen options={{ title: t('capture_title') }} />
-      <Banner tone="info">Lay the page flat in good light. Fill the frame with the page edges visible.</Banner>
+      {hasScanner ? (
+        <Banner tone="info">
+          The scanner finds page edges and straightens each page automatically. It runs on this phone; the first use may
+          need internet once to finish setting up.
+        </Banner>
+      ) : (
+        <Banner tone="warning">
+          Using the basic camera — the document scanner needs a development build. Lay the page flat in good light.
+        </Banner>
+      )}
 
       {pages.length === 0 ? (
         <AppText tone="muted" center>
-          No pages yet. Camera permission is only used while you capture.
+          No pages yet. Camera access is only used while you capture.
         </AppText>
       ) : null}
 
@@ -84,7 +105,7 @@ export default function Capture() {
                 icon="camera-reverse-outline"
                 label={`Retake page ${i + 1}`}
                 onPress={async () => {
-                  const uri = await shoot();
+                  const [uri] = await capture(1);
                   if (uri) replacePage(p.id, uri);
                 }}
               />

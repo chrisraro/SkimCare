@@ -24,6 +24,8 @@ Review (S11–S17)  Overview · Terms · Finding (SourceQuote + AiNote) · Sourc
 
 | Concern | Interface | Today | Target (H1) |
 |---|---|---|---|
+| Capture | `src/features/capture/scanner.ts` | expo-document-scanner (ML Kit Document Scanner), camera fallback | same — device-verify; Play services downloads module once |
+| Digital PDF text | `src/ai/sources/pdfTextLayer.ts` via `src/ai/recognize.ts` | expo-pdf-text-extract (PDFBox) | same; add scanned-PDF render → OCR |
 | OCR | `OcrEngine` in `src/ai/engines.ts` | Demo fixture text | `modules/local-ocr` — bundled ML Kit Text Recognition v2, block text + bounds |
 | LLM | `LlmEngine` | Demo fixture candidates | llama.rn + GGUF (Qwen3 0.6B/1.7B), per-clause prompts, schema-constrained JSON |
 | Readiness | `InferenceEngine.checkReadiness` | Honest "not ready" | Model file present, checksum, warm load, tiny inference test |

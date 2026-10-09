@@ -38,6 +38,8 @@ export const OcrBlock = z.object({
   correctedAt: z.string().optional(),
   /** Set when the user confirmed this block reads correctly (S08). */
   verifiedAt: z.string().optional(),
+  /** Where the text came from. Absent means on-device OCR. */
+  origin: z.enum(['ocr', 'pdf_text']).optional(),
 });
 
 export const DocumentPage = z.object({

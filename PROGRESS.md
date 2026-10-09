@@ -26,7 +26,7 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 |---|-----------|--------|-------|
 | 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine |
 | 1 | Prove local AI — llama.rn + GGUF extraction offline on device | ⬜ Not started | Needs dev build; pick Qwen3 0.6B vs 1.7B after device test |
-| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; native OCR bridge pending (`modules/local-ocr`) |
+| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; document scanner + digital-PDF text layer wired (untested on device); ML Kit text recognition bridge pending (`modules/local-ocr`) |
 | 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; needs real model output |
 | 4 | Prove reliability — SQLCipher, encrypted files, airplane-mode rehearsal | ⬜ Not started | Store is in-memory today (`src/db/repository.ts` contract) |
 
@@ -38,9 +38,9 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 | S02 | Welcome & privacy | `src/app/welcome.tsx` | ✅ UI |
 | S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design) |
 | S04 | Home | `src/app/(tabs)/index.tsx` | ✅ UI |
-| S05 | Add document | `src/app/review/new.tsx` | ✅ UI (gallery + PDF picker wired) |
-| S06 | Capture | `src/app/review/capture.tsx` | ✅ UI (system camera + crop) |
-| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI (PDF page render pending) |
+| S05 | Add document | `src/app/review/new.tsx` | ✅ UI (scan / gallery / PDF wired) |
+| S06 | Capture | `src/app/review/capture.tsx` | ✅ ML Kit document scanner, camera fallback (device test pending) |
+| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI; digital PDFs read via text layer (scanned-PDF render + OCR pending) |
 | S08 | OCR verification | `src/app/review/verify.tsx` | ✅ UI |
 | S09 | Analysis preferences | `src/app/review/preferences.tsx` | ✅ UI |
 | S10 | Processing | `src/app/review/processing.tsx` | ✅ UI |
@@ -58,6 +58,21 @@ Rules: don't log secrets or real contract text; note anything deferred honestly.
 ---
 
 ## Log
+
+### 2026-10-09 — Claude (with Chris) — Document scanner + PDF text extraction
+- Added `expo-document-scanner@0.2.8` (+ `react-native-nitro-modules`) and `expo-pdf-text-extract@1.1.0`.
+- `src/features/capture/scanner.ts` — lazy-loaded scanner (ML Kit Document Scanner on Android: edge detection, perspective fix, cleanup, multi-page). Falls back to system camera when not in the build (Expo Go / web).
+- `src/ai/sources/pdfTextLayer.ts` — reads digital-PDF text page by page (PDFBox). Handles: no text layer (scanned PDF → clear message), password-protected, module unavailable (→ OCR fallback).
+- `src/ai/textBlocks.ts` — page text → evidence blocks with stable ids (`p{page}_b{n}`), rejoins wrapped lines into sentences, flags amounts/dates/parties as critical. New optional `OcrBlock.origin` ('ocr' | 'pdf_text').
+- `src/ai/recognize.ts` — Recognize stage router: PDF text layer first, OCR engine otherwise. Wired into Preview (S07); Verify (S08) shows "read directly from the PDF" when applicable.
+- Capture (S06) now scans first; Readiness (S03) gained a "Capture tools" section that reports honestly whether scanner/PDF reader are in this build.
+- Fixed navigation found while testing: finishing onboarding now makes Home the stack root, and finishing a review returns to Home underneath the Overview (Back used to land on Welcome / nowhere). Back label now reads "Home".
+- Verified: typecheck ✅, tests ✅ 40/40 (new: textBlocks 13, recognize 5), lint ✅, web walk-through (onboarding → sample review → Back → Documents; no nested buttons in DOM). **Not yet tested on an Android dev build** — both libraries are native-only.
+- Caveats / next:
+  1. Scanner on Android is downloaded once by Google Play services → open it once while online during setup before going to airplane mode.
+  2. Confirm both libs build with RN 0.86 New Architecture in the first `npx expo run:android`; the PDF lib's docs don't state New Arch support.
+  3. Scanned PDFs still unsupported — needs PDF page → image rendering, then OCR.
+  4. With the Demo engine, a real PDF's text yields no findings (the sample candidates don't match it and the evidence gate rejects them). That is expected until llama.rn is wired.
 
 ### 2026-10-09 — Claude (with Chris) — Project foundation, design system, frontend structure
 - Scaffolded Expo SDK 57 + React Native 0.86 + TypeScript (strict) with Expo Router (`src/app`), Zustand, Zod.

@@ -4,24 +4,29 @@
  */
 import { create } from 'zustand';
 import type { CapturedPage } from '@/ai/engines';
+import type { TextSource } from '@/ai/recognize';
 import type { DocumentPage, DocumentType } from '@/domain/schema';
 
 interface DraftState {
   source: 'camera' | 'gallery' | 'pdf' | 'sample' | null;
   captured: CapturedPage[];
+  /** Set for PDF imports — the text layer is read from this file. */
+  pdfUri?: string;
+  textSource: TextSource | null;
+  textNote?: string;
   recognized: DocumentPage[];
   documentType: DocumentType | null;
   detectedType: DocumentType | null;
   language: 'en' | 'fil';
   title: string;
 
-  start: (source: NonNullable<DraftState['source']>, title?: string) => void;
+  start: (source: NonNullable<DraftState['source']>, title?: string, pdfUri?: string) => void;
   addPages: (pages: CapturedPage[]) => void;
   replacePage: (id: string, uri: string) => void;
   removePage: (id: string) => void;
   rotatePage: (id: string) => void;
   movePage: (id: string, dir: -1 | 1) => void;
-  setRecognized: (pages: DocumentPage[]) => void;
+  setRecognized: (pages: DocumentPage[], textSource: TextSource, textNote?: string) => void;
   updateBlock: (blockId: string, page: number, patch: { text?: string; verified?: boolean }) => void;
   setType: (t: DocumentType, detected?: boolean) => void;
   setLanguage: (l: 'en' | 'fil') => void;
@@ -31,6 +36,9 @@ interface DraftState {
 const initial = {
   source: null,
   captured: [],
+  pdfUri: undefined,
+  textSource: null,
+  textNote: undefined,
   recognized: [],
   documentType: null,
   detectedType: null,
@@ -40,7 +48,7 @@ const initial = {
 
 export const useDraft = create<DraftState>((set) => ({
   ...initial,
-  start: (source, title = '') => set({ ...initial, source, title }),
+  start: (source, title = '', pdfUri) => set({ ...initial, source, title, pdfUri }),
   addPages: (pages) => set((s) => ({ captured: [...s.captured, ...pages] })),
   replacePage: (id, uri) => set((s) => ({ captured: s.captured.map((p) => (p.id === id ? { ...p, uri } : p)) })),
   removePage: (id) => set((s) => ({ captured: s.captured.filter((p) => p.id !== id) })),
@@ -59,7 +67,7 @@ export const useDraft = create<DraftState>((set) => ({
       [next[i], next[j]] = [next[j]!, next[i]!];
       return { captured: next };
     }),
-  setRecognized: (recognized) => set({ recognized }),
+  setRecognized: (recognized, textSource, textNote) => set({ recognized, textSource, textNote }),
   updateBlock: (blockId, page, patch) =>
     set((s) => ({
       recognized: s.recognized.map((p) =>

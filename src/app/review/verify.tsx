@@ -14,6 +14,7 @@ export default function Verify() {
   const t = useT();
   const recognized = useDraft((s) => s.recognized);
   const updateBlock = useDraft((s) => s.updateBlock);
+  const textNote = useDraft((s) => s.textNote);
   const [editing, setEditing] = useState<string | null>(null);
   const [text, setText] = useState('');
 
@@ -36,6 +37,7 @@ export default function Verify() {
       <Stack.Screen options={{ title: t('verify_title') }} />
       <DemoBanner />
       <AppText tone="subtle">{t('verify_body')}</AppText>
+      {textNote ? <Banner tone="success">{textNote}</Banner> : null}
 
       {critical.length === 0 ? <Banner tone="info">No amounts, dates or names were detected.</Banner> : null}
 

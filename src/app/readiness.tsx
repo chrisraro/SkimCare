@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import type { CheckStatus, ReadinessReport } from '@/ai/engines';
+import { pdfTextAvailable } from '@/ai/sources/pdfTextLayer';
+import { scannerAvailable } from '@/features/capture/scanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
 import { useSettings } from '@/features/settings/store';
 import { useT } from '@/i18n/useT';
@@ -35,6 +37,8 @@ export default function Readiness() {
   const proceed = () => {
     if (onboarded) return router.back();
     completeOnboarding();
+    // Make Home the stack root so Back never returns to onboarding.
+    if (router.canDismiss()) router.dismissAll();
     router.replace('/(tabs)');
   };
 
@@ -96,6 +100,41 @@ export default function Readiness() {
           })}
         </Card>
       )}
+
+      <Card>
+        <AppText variant="label" tone="muted">
+          CAPTURE TOOLS
+        </AppText>
+        {[
+          {
+            id: 'scanner',
+            label: 'Document scanner',
+            status: scannerAvailable() ? ('pass' as const) : ('warn' as const),
+            detail: scannerAvailable()
+              ? 'Available. On Android, open it once while online so Google Play services can finish setup.'
+              : 'Not in this build — using the basic camera instead.',
+          },
+          {
+            id: 'pdf',
+            label: 'PDF text reader',
+            status: pdfTextAvailable() ? ('pass' as const) : ('warn' as const),
+            detail: pdfTextAvailable()
+              ? 'Digital PDFs are read exactly from their built-in text.'
+              : 'Not in this build — PDFs need a development build.',
+          },
+        ].map((c) => {
+          const s = statusIcon[c.status];
+          return (
+            <View key={c.id} style={styles.check} accessible accessibilityLabel={`${c.label}: ${s.word}. ${c.detail}`}>
+              <Ionicons name={s.name} size={22} color={s.color} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="bodyStrong">{c.label}</AppText>
+                <AppText variant="small" tone="muted">{`${s.word} · ${c.detail}`}</AppText>
+              </View>
+            </View>
+          );
+        })}
+      </Card>
 
       {engine.info.kind === 'demo' ? <Banner tone="info">{t('readiness_demo_note')}</Banner> : null}
     </Screen>

@@ -4,6 +4,7 @@ import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
+import { recognizeDocument, RecognizeError } from '@/ai/recognize';
 import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
 import { useDraft } from '@/features/review/draftStore';
@@ -15,6 +16,7 @@ export default function Preview() {
   const t = useT();
   const pages = useDraft((s) => s.captured);
   const source = useDraft((s) => s.source);
+  const pdfUri = useDraft((s) => s.pdfUri);
   const movePage = useDraft((s) => s.movePage);
   const setRecognized = useDraft((s) => s.setRecognized);
   const setType = useDraft((s) => s.setType);
@@ -26,13 +28,17 @@ export default function Preview() {
     setError(null);
     try {
       const engine = getEngine();
-      const recognized = await engine.ocr.recognize(pages);
-      setRecognized(recognized);
-      const { type } = await engine.classify(recognized);
+      const result = await recognizeDocument({ engine, captured: pages, pdfUri });
+      setRecognized(result.pages, result.source, result.note);
+      const { type } = await engine.classify(result.pages);
       setType(type, true);
       router.push('/review/verify');
-    } catch {
-      setError('Could not read the text. Your pages are kept — try again or retake blurry pages.');
+    } catch (e) {
+      setError(
+        e instanceof RecognizeError
+          ? e.message
+          : 'Could not read the text. Your pages are kept — try again or retake blurry pages.',
+      );
     } finally {
       setBusy(false);
     }
@@ -44,7 +50,7 @@ export default function Preview() {
       <DemoBanner />
       <AppText tone="subtle">{t('preview_body')}</AppText>
       {source === 'pdf' ? (
-        <Banner tone="info">PDF page previews appear once the native PDF renderer is linked.</Banner>
+        <Banner tone="info">Digital PDFs are read from their built-in text. Page previews for PDFs are coming.</Banner>
       ) : null}
       {error ? <Banner tone="danger">{error}</Banner> : null}
 

@@ -32,8 +32,9 @@ export default function AddDocument() {
   const pickPdf = async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
     if (res.canceled || !res.assets[0]) return;
-    start('pdf', res.assets[0].name.replace(/\.pdf$/i, ''));
-    // TODO(native): render each PDF page to an image via the tested native PDF renderer.
+    const asset = res.assets[0];
+    start('pdf', asset.name.replace(/\.pdf$/i, ''), asset.uri);
+    // Digital PDFs are read from their text layer; page images are not needed for that path.
     addPages([{ id: pageId(), uri: undefined, rotation: 0 }]);
     router.push('/review/preview');
   };
