@@ -1,38 +1,40 @@
 /**
- * Splits a document into small extraction chunks (PRD §10: "avoid prompting over
- * an entire long contract at once — extract by page or clause"). A chunk never
- * crosses a page and never cuts a block, so every quote the model returns can be
- * matched against one whole recorded block.
+ * Splits a document into extraction units: one source block each, with the
+ * previous block on the same page as read-only context. A 0.6B model reliably
+ * handles "does this one sentence state a term?" but misses most terms when asked
+ * to list everything on a page (eval: extract-v1 recall 12%), so extraction runs
+ * per block (PRD §10: "perform extraction by page or clause").
  */
 import type { DocumentPage, OcrBlock } from '@/domain/schema';
+import { looksLikeInstruction } from '../injection';
 
-export interface Chunk {
+export interface ExtractionUnit {
   index: number;
   page: number;
-  blocks: OcrBlock[];
+  block: OcrBlock;
+  /** Previous block on the same page, for context only — never cited. */
+  context?: string;
 }
 
-/** Source characters per chunk. ~4 chars/token keeps one chunk near 750 tokens, leaving room in a 2–4k context. */
-export const DEFAULT_CHUNK_CHARS = 3000;
+/** Headings and fragments that cannot state a term on their own. */
+export function isTrivialBlock(text: string): boolean {
+  const t = text.trim();
+  if (t.length < 12) return true;
+  const isHeading = t.length <= 80 && /[A-Z]/.test(t) && t === t.toUpperCase() && !/\d/.test(t);
+  return isHeading;
+}
 
-export function chunkPages(pages: DocumentPage[], maxChars = DEFAULT_CHUNK_CHARS): Chunk[] {
-  const chunks: Chunk[] = [];
+export function extractionUnits(pages: DocumentPage[]): ExtractionUnit[] {
+  const units: ExtractionUnit[] = [];
   for (const page of pages) {
-    let current: OcrBlock[] = [];
-    let size = 0;
-    const flush = () => {
-      if (current.length) chunks.push({ index: chunks.length, page: page.number, blocks: current });
-      current = [];
-      size = 0;
-    };
+    let previous: string | undefined;
     for (const block of page.blocks) {
-      if (!block.text.trim()) continue;
-      // An oversized block still goes alone: trimming it would make exact quotes impossible.
-      if (size > 0 && size + block.text.length > maxChars) flush();
-      current.push(block);
-      size += block.text.length;
+      // Text addressed to AI tools is never a term: skip it rather than ask the model about it.
+      if (!isTrivialBlock(block.text) && !looksLikeInstruction(block.text)) {
+        units.push({ index: units.length, page: page.number, block, context: previous });
+      }
+      previous = block.text;
     }
-    flush();
   }
-  return chunks;
+  return units;
 }

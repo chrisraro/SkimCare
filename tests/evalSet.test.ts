@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 import { scoreFindings } from '@/ai/eval/score';
-import { validateCandidates } from '@/ai/evidenceGate';
-import { chunkPages } from '@/ai/llm/chunking';
-import { buildExtractionMessages } from '@/ai/llm/prompt';
+import { moneyAmountsIn, validateCandidates } from '@/ai/evidenceGate';
+import { extractionUnits } from '@/ai/llm/chunking';
+import { buildExtractionMessages, systemPrompt } from '@/ai/llm/prompt';
 import type { Finding } from '@/domain/schema';
 import { EVAL_CONTRACTS, type EvalContract } from './fixtures/contracts';
 
@@ -43,11 +43,31 @@ describe('evaluation contract set (PRD §17)', () => {
     }
   });
 
-  it('keeps delimiter-breaking text inside the source section of the prompt', () => {
-    const c = EVAL_CONTRACTS.find((x) => x.id === 'inj-04')!;
-    const user = buildExtractionMessages(chunkPages(c.pages)[0]!, c.type, 'en')[1]!.content;
-    expect(user.match(/<source>/g)).toHaveLength(1);
-    expect(user.match(/<\/source>/g)).toHaveLength(1);
+  it('never sends injection text to the model, even as context it cannot break out of', () => {
+    for (const c of EVAL_CONTRACTS.filter((x) => x.category === 'injection')) {
+      const units = extractionUnits(c.pages);
+      expect(units.some((u) => c.injectionBlockIds.includes(u.block.id))).toBe(false);
+      for (const u of units) {
+        const user = buildExtractionMessages(u, c.type, 'en')[1]!.content;
+        expect(user.match(/<\/block>/g)).toHaveLength(1);
+      }
+    }
+  });
+
+  it('keeps the prompt’s example amounts out of the eval contracts', () => {
+    const inPrompt = new Set([...moneyAmountsIn(systemPrompt('en')), ...moneyAmountsIn(systemPrompt('fil'))]);
+    expect(inPrompt.size).toBeGreaterThan(0);
+    const leaked = EVAL_CONTRACTS.flatMap((c) =>
+      c.pages.flatMap((p) => p.blocks).flatMap((b) => moneyAmountsIn(b.text).filter((n) => inPrompt.has(n)).map((n) => `${c.id}/${b.id}: ${n}`)),
+    );
+    expect(leaked).toEqual([]);
+  });
+
+  it('asks the model about every labelled term', () => {
+    for (const c of EVAL_CONTRACTS) {
+      const asked = new Set(extractionUnits(c.pages).map((u) => u.block.id));
+      expect(c.labels.filter((l) => !asked.has(l.blockId))).toEqual([]);
+    }
   });
 
   it.each(EVAL_CONTRACTS.map((c) => [c.id, c] as const))('%s: a perfect extraction passes the gate and scores 1.0', (_id, c) => {

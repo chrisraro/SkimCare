@@ -84,24 +84,23 @@ describe('quiz prompt and parsing', () => {
 describe('quiz through the pipeline', () => {
   const quote = "The final payment shall be released upon the Client's acceptance of all deliverables.";
   const extraction = JSON.stringify({
-    findings: [
-      {
-        type: 'payment_condition',
-        title: 'Final payment depends on acceptance',
-        block_id: 'p3_b12',
-        quote,
-        explanation: 'You are paid the rest only after the Client accepts everything.',
-        review_status: 'needs_clarification',
-        questions: [],
-      },
-    ],
+    relevant: true,
+    finding: {
+      type: 'payment_condition',
+      title: 'Final payment depends on acceptance',
+      explanation: 'You are paid the rest only after the Client accepts everything.',
+      review_status: 'needs_clarification',
+      questions: [],
+    },
   });
   const engineAnswering = (quiz: string): InferenceEngine => ({
     ...demoEngine,
     info: { ...demoEngine.info, kind: 'local' },
-    llm: createLocalLlmEngine(async (req: CompletionRequest) =>
-      req.messages[1]!.content.includes('Page 3.') ? extraction : req.messages[1]!.content.includes('Page') ? '{"findings": []}' : quiz,
-    ),
+    llm: createLocalLlmEngine(async (req: CompletionRequest) => {
+      const user = req.messages[1]!.content;
+      if (!user.includes('<block>')) return quiz;
+      return user.includes(quote) && !user.includes('Earlier text, for context only: The final') ? extraction : '{"relevant": false}';
+    }),
   });
   const analyze = (quiz: string) =>
     runAnalysis({ engine: engineAnswering(quiz), pages, ocrRevision: 0, documentType: 'service_agreement', language: 'en' });

@@ -112,12 +112,20 @@ export function validateCandidates(candidates: unknown[], pages: DocumentPage[])
     }
 
     // Monetary values must agree with readable source characters.
+    const sourceAmounts = moneyAmountsIn(source.text);
     if (finding.normalizedValue) {
       const claimed = parsePhpAmount(finding.normalizedValue);
-      if (claimed !== null && !amountsIn(source.text).includes(claimed)) {
+      if (claimed !== null && !sourceAmounts.includes(claimed)) {
         rejected.push({ id: finding.id, reason: 'value_not_in_source' });
         return;
       }
+    }
+    // Amounts written in the model's own words must be in the cited text too:
+    // no arithmetic in the model and no numbers borrowed from other clauses.
+    const written = [finding.title, finding.explanation, finding.uncertainty ?? ''].flatMap(moneyAmountsIn);
+    if (written.some((n) => !sourceAmounts.includes(n))) {
+      rejected.push({ id: finding.id, reason: 'value_not_in_source' });
+      return;
     }
 
     if (source.critical && source.confidence < LOW_CONFIDENCE && !source.correctedAt) {
@@ -135,7 +143,8 @@ export function validateCandidates(candidates: unknown[], pages: DocumentPage[])
   return { accepted, rejected };
 }
 
-function amountsIn(text: string): number[] {
+/** PHP amounts written in a text (PHP / ₱ / P prefix). */
+export function moneyAmountsIn(text: string): number[] {
   const out: number[] = [];
   const re = /(?:PHP|₱|\bP)\s?[\d,]+(?:\.\d+)?/gi;
   for (const m of text.matchAll(re)) {

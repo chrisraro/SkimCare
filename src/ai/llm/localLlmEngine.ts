@@ -1,6 +1,6 @@
 /**
- * Real LlmEngine, independent of the runtime. It chunks the document, prompts
- * the model once per chunk, parses the JSON and aggregates raw candidates;
+ * Real LlmEngine, independent of the runtime. It prompts the model once per
+ * source block (see chunking.ts), parses the JSON and aggregates raw candidates;
  * then writes Understand-It-Back items from the findings that passed the gate.
  * The llama.rn adapter only has to implement `CompletionRunner`.
  *
@@ -8,7 +8,7 @@
  */
 import { throwIfAborted, type ComprehensionRequest, type ExtractionRequest, type LlmEngine, type RawExtraction } from '../engines';
 import { findBlock } from '../evidenceGate';
-import { chunkPages, DEFAULT_CHUNK_CHARS } from './chunking';
+import { extractionUnits } from './chunking';
 import { buildComprehensionMessages, COMPREHENSION_JSON_SCHEMA, parseComprehensionOutput, selectQuizFindings } from './comprehension';
 import { parseModelOutput } from './parse';
 import { buildExtractionMessages, EXTRACTION_JSON_SCHEMA, type ChatMessage } from './prompt';
@@ -25,51 +25,36 @@ export interface CompletionRequest {
 export type CompletionRunner = (req: CompletionRequest) => Promise<string>;
 
 export interface LocalLlmOptions {
-  maxChunkChars?: number;
+  /** Output budget per block; one finding fits well within this. */
   maxTokens?: number;
-  /** Called after each chunk, for progress UI. Counts only — never text. */
-  onChunk?: (done: number, total: number) => void;
-}
-
-/** Same block cited for the same kind of term twice → keep the first. */
-function dedupeKey(c: unknown): string | null {
-  if (!c || typeof c !== 'object') return null;
-  const r = c as { type?: unknown; evidence?: { blockId?: unknown } };
-  return typeof r.type === 'string' && typeof r.evidence?.blockId === 'string' ? `${r.type}:${r.evidence.blockId}` : null;
+  /** Called after each block, for progress UI. Counts only — never text. */
+  onProgress?: (done: number, total: number) => void;
 }
 
 export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOptions = {}): LlmEngine {
-  const maxTokens = opts.maxTokens ?? 1024;
+  const maxTokens = opts.maxTokens ?? 384;
 
   return {
     async extract(req: ExtractionRequest, signal?: AbortSignal): Promise<RawExtraction> {
-      const chunks = chunkPages(req.pages, opts.maxChunkChars ?? DEFAULT_CHUNK_CHARS);
+      const units = extractionUnits(req.pages);
       const findings: unknown[] = [];
       const incompletePages = new Set<number>();
-      const seen = new Set<string>();
 
-      for (const chunk of chunks) {
+      for (const unit of units) {
         throwIfAborted(signal);
-        const messages = buildExtractionMessages(chunk, req.documentType, req.language);
+        const messages = buildExtractionMessages(unit, req.documentType, req.language);
+        const ask = async () =>
+          parseModelOutput(await run({ messages, jsonSchema: EXTRACTION_JSON_SCHEMA, maxTokens, signal }), unit, req.language);
 
         // PRD §12: invalid output → retry once, then fall back to explicit uncertainty.
-        let result = parseModelOutput(await run({ messages, jsonSchema: EXTRACTION_JSON_SCHEMA, maxTokens, signal }), chunk);
+        let result = await ask();
         if (!result.ok) {
           throwIfAborted(signal);
-          result = parseModelOutput(await run({ messages, jsonSchema: EXTRACTION_JSON_SCHEMA, maxTokens, signal }), chunk);
+          result = await ask();
         }
-
-        if (result.ok) {
-          for (const c of result.candidates) {
-            const key = dedupeKey(c);
-            if (key && seen.has(key)) continue;
-            if (key) seen.add(key);
-            findings.push(c);
-          }
-        } else {
-          incompletePages.add(chunk.page);
-        }
-        opts.onChunk?.(chunk.index + 1, chunks.length);
+        if (result.ok) findings.push(...result.candidates);
+        else incompletePages.add(unit.page);
+        opts.onProgress?.(unit.index + 1, units.length);
       }
 
       return { findings, comprehension: [], incompletePages: [...incompletePages] };
