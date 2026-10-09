@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Hackathon submission pack (`docs/SUBMISSION.md`)
+- From the Participant Briefing (slide 16 + FAQ): copy-ready answers for project name, short description, repo, what runs locally / what needs internet, models, technologies, APIs and cloud services, existing code and assets, AI dev tools, and "Why does this product benefit from running AI locally?". Demo video and X/LinkedIn post deferred (per Chris).
+- Blockers listed: B1 repo must be **public by 10:00 AM** (secret scan of tracked files + history: clean); B2 `docs/local-ai-pipeline-blueprint.pdf` provenance; B3 official team/member names; B4 README out of date for judges (still says Demo engine, no APK/model steps); B5 confirm AI tools (Devin?).
+- No code changed. Checks not run (docs only).
+
 ### 2026-10-10 — Claude (with Chris) — Web app: real in-browser engine (wllama + Tesseract + pdf.js)
 - **Why:** iPhone users can't install the APK; the web app at https://skimcare-app.vercel.app should run the actual offline core, not only the Demo engine.
 - **Engine (web only, `*.web.ts`; the phone build is unchanged):** `src/ai/localEngine.web.ts` — Qwen3 0.6B GGUF through `@wllama/wllama` (llama.cpp WebAssembly; `-compat` build for Safari/iOS) in `src/ai/web/wllamaRuntime.ts`; OCR with tesseract.js eng+fil (`src/ai/web/tesseractOcr.ts`, layout → stable `p{page}_b{n}` blocks in `src/ai/ocr/tesseractLayout.ts`); PDF text layer with pdf.js (`src/ai/sources/pdfTextLayer.web.ts`, `pdfTextMapping.ts`); model checksum with WebCrypto (`src/ai/web/sha256.ts`); browser readiness checks (`src/ai/web/readiness.ts`) shown on Readiness; `devBench.web.ts` stub. Same evidence gate, scenario rules and prompts as the phone.
