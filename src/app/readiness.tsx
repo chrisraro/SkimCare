@@ -7,6 +7,7 @@ import type { CheckStatus, ReadinessReport } from '@/ai/engines';
 import { pdfTextAvailable } from '@/ai/sources/pdfTextLayer';
 import { scannerAvailable } from '@/features/capture/scanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
+import { ModelImportCard } from '@/components/ModelImportCard';
 import { useSettings } from '@/features/settings/store';
 import { useT } from '@/i18n/useT';
 import { colors, palette, space } from '@/theme/tokens';
@@ -104,6 +105,10 @@ export default function Readiness() {
           })}
         </Card>
       )}
+
+      {report?.checks.some((c) => (c.id === 'model_present' || c.id === 'checksum') && c.status === 'fail') ? (
+        <ModelImportCard onImported={recheck} />
+      ) : null}
 
       <Card>
         <AppText variant="label" tone="muted">
