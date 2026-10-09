@@ -47,3 +47,6 @@ yarn-error.*
 modules/*/android/build/
 modules/*/android/.cxx/
 modules/*/ios/build/
+
+# parallel agent worktrees
+.claude/worktrees/
