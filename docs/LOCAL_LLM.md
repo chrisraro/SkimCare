@@ -11,7 +11,7 @@ Checked 2026-10-09, before installing anything. Re-check versions before upgradi
 | **Architecture** | v0.10+ requires the New Architecture. This project has `newArchEnabled=true` |
 | **ABIs** | arm64-v8a and x86_64, so the `test_device` emulator works |
 | **Expo** | Config plugin: add `"llama.rn"` to `plugins` in `app.json`, then rebuild |
-| **Native libs** | `postinstall` downloads prebuilt Android JNI libraries from the GitHub release and checks their SHA-256 (`install/native-artifacts.json`). llama.cpp is not compiled with our NDK. That network access happens only at install time; the app makes no network calls |
+| **Native libs** | Android builds llama.cpp **from the patched source** in `node_modules/llama.rn` (`rnllamaBuildFromSource=true`, set by `plugins/withLlamaFromSource.js`), so the first `expo run:android` needs the NDK and Python 3 and takes a while (≈27 min for arm64 on the dev PC). `postinstall` still downloads prebuilt libs (SHA-256 checked, install time only), but Android does not use them. **Do not remove the plugin:** the prebuilt libs are unpatched and log document text (see the privacy patches in this doc). On Windows, `npm install` needs `C:\Windows\System32` first on PATH so Windows `tar` unpacks those downloads. The app itself makes no network calls |
 | **RN 0.86** | Neither confirmed nor ruled out in the docs or release notes; verify on the first build. 0.13.0-rc.2 lists an iOS fix for RN 0.87 |
 
 ## API mapping (0.12.9 typings)

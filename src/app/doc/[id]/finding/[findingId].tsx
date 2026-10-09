@@ -16,7 +16,13 @@ export default function FindingDetail() {
   const upsertQuestion = useDocuments((s) => s.upsertQuestion);
   const finding = doc?.analysis?.findings.find((f) => f.id === findingId);
 
-  if (!doc || !finding) return <EmptyState icon="alert-circle-outline" message="Finding not found." />;
+  if (!doc || !finding) {
+    return (
+      <Screen title="Finding">
+        <EmptyState icon="alert-circle-outline" message="Finding not found." />
+      </Screen>
+    );
+  }
   const saved = new Set(doc.analysis?.questions.map((q) => q.text));
 
   return (

@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { confirmDestructive } from '@/components/confirm';
 import { getEngine } from '@/ai/demoEngine';
 import { AppText, Button, Card, Chip, ListRow, Screen, SectionLabel } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
@@ -17,10 +18,13 @@ export default function Settings() {
   const info = getEngine().info;
 
   const confirmErase = () =>
-    Alert.alert(t('settings_erase'), t('settings_erase_confirm'), [
-      { text: t('cancel'), style: 'cancel' },
-      { text: t('delete'), style: 'destructive', onPress: eraseAll },
-    ]);
+    confirmDestructive({
+      title: t('settings_erase'),
+      message: t('settings_erase_confirm'),
+      confirmLabel: t('delete'),
+      cancelLabel: t('cancel'),
+      onConfirm: eraseAll,
+    });
 
   return (
     <Screen edges={['top']} tab>

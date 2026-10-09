@@ -19,10 +19,13 @@ export default function WhatIf() {
   const [open, setOpen] = useState(false);
 
   const facts = useMemo(() => doc?.analysis?.facts ?? [], [doc]);
-  const result = useMemo(() => lateInstallmentScenario(facts), [facts]);
+  const stale = Boolean(doc?.analysisStale);
+  // After a text correction the figures may come from the old text: no math until the review is re-run.
+  const result = useMemo(() => lateInstallmentScenario(stale ? [] : facts), [facts, stale]);
   const relevant = facts.filter((f) => f.key === 'installment_amount' || f.key === 'late_fee_fixed');
   const unconfirmed = relevant.filter((f) => !f.confirmedByUser);
   const applicable = relevant.length > 0;
+  const savedNone = Boolean(doc?.analysis?.questions.some((q) => q.id === 'whatif_none_q'));
 
   if (!doc) return null;
 
@@ -32,15 +35,17 @@ export default function WhatIf() {
   return (
     <Screen title={t('whatif_title')}>
       <DemoBanner />
+      {stale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
       <AppText tone="subtle">{t('whatif_body')}</AppText>
 
       {!applicable ? (
         <>
           <Banner tone="info">{t('whatif_none')}</Banner>
           <Button
-            label="Save a question about payment rules"
-            variant="secondary"
-            icon="bookmark-outline"
+            label={savedNone ? 'Saved to your questions' : 'Save a question about payment rules'}
+            variant={savedNone ? 'ghost' : 'secondary'}
+            icon={savedNone ? 'checkmark' : 'bookmark-outline'}
+            disabled={savedNone}
             onPress={() =>
               upsertQuestion(doc.id, {
                 id: 'whatif_none_q',

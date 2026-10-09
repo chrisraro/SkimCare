@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { confirmDestructive } from '@/components/confirm';
 import { EmptyState } from '@/components/EmptyState';
 import { AppText, ListRow, Screen } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
@@ -31,10 +32,13 @@ export default function Documents() {
   }, [order, byId, query]);
 
   const confirmDelete = (id: string) =>
-    Alert.alert(t('docs_delete'), t('docs_delete_confirm'), [
-      { text: t('cancel'), style: 'cancel' },
-      { text: t('delete'), style: 'destructive', onPress: () => remove(id) },
-    ]);
+    confirmDestructive({
+      title: t('docs_delete'),
+      message: t('docs_delete_confirm'),
+      confirmLabel: t('delete'),
+      cancelLabel: t('cancel'),
+      onConfirm: () => remove(id),
+    });
 
   return (
     <Screen edges={['top']} tab>

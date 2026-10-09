@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
+import { useSettings } from '@/features/settings/store';
 import { useT } from '@/i18n/useT';
 import { colors, palette, radius, space } from '@/theme/tokens';
 
@@ -20,6 +21,7 @@ export default function Home() {
   const byId = useDocuments((s) => s.byId);
   const recent = order.slice(0, 3).map((id) => byId[id]!).filter(Boolean);
   const isDemo = getEngine().info.kind === 'demo';
+  const offlineReady = useSettings((s) => s.offlineReady);
 
   return (
     <Screen edges={['top']} tab>
@@ -34,12 +36,28 @@ export default function Home() {
               </AppText>
             </View>
           ) : null}
-          <View style={styles.pill} accessible accessibilityLabel={t('home_offline')}>
-            <Ionicons name="lock-closed" size={12} color={palette.teal700} />
-            <AppText variant="label" style={{ color: palette.teal700, letterSpacing: 0 }}>
-              {t('home_offline')}
-            </AppText>
-          </View>
+          {/* Claim offline only when the last readiness check passed; otherwise link to the check. */}
+          {offlineReady ? (
+            <View style={styles.pill} accessible accessibilityLabel={t('home_offline')}>
+              <Ionicons name="lock-closed" size={12} color={palette.teal700} />
+              <AppText variant="label" style={{ color: palette.teal700, letterSpacing: 0 }}>
+                {t('home_offline')}
+              </AppText>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('home_not_ready')}
+              onPress={() => router.push('/readiness')}
+              hitSlop={8}
+              style={[styles.pill, { backgroundColor: palette.slate100 }]}
+            >
+              <Ionicons name="alert-circle-outline" size={13} color={palette.slate700} />
+              <AppText variant="label" style={{ color: palette.slate700, letterSpacing: 0 }}>
+                {t('home_not_ready')}
+              </AppText>
+            </Pressable>
+          )}
         </View>
       </View>
 

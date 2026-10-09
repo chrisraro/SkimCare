@@ -52,6 +52,7 @@ const en = {
   home_recent: 'Recent reviews',
   home_empty: 'No reviews yet. Your reviews are saved privately on this phone.',
   home_offline: 'Offline · on-device',
+  home_not_ready: 'Offline check needed',
   home_supported: 'Best for: freelance/service agreements and simple installment agreements.',
 
   // Capture flow
@@ -196,6 +197,7 @@ const fil: Partial<Record<StringKey, string>> = {
   home_start_body: 'Kunan ng litrato o mag-import ng PDF',
   home_recent: 'Mga huling review',
   home_offline: 'Offline · nasa phone',
+  home_not_ready: 'Kailangang i-check offline',
   add_title: 'Idagdag ang dokumento',
   add_camera: 'I-scan ang mga pahina',
   add_gallery: 'Pumili ng larawan',

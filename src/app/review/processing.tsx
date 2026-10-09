@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { STAGES } from '@/ai/pipeline';
 import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
@@ -43,6 +43,18 @@ export default function Processing() {
     setMinimized(true);
     router.dismissTo('/(tabs)');
   };
+
+  // Android back must not pop this screen mid-run: the finished review would open
+  // nowhere and reset the draft under the capture screens. Treat it as "keep using the app".
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (useReviewJob.getState().status !== 'running') return false;
+      useReviewJob.getState().setMinimized(true);
+      router.dismissTo('/(tabs)');
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   const currentIndex = STAGES.findIndex((s) => s.id === stage);
 

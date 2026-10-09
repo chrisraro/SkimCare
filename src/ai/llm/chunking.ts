@@ -7,6 +7,7 @@
  */
 import type { DocumentPage, OcrBlock } from '@/domain/schema';
 import { looksLikeInstruction } from '../injection';
+import { isCriticalText } from '../textBlocks';
 
 export interface ExtractionUnit {
   index: number;
@@ -61,8 +62,16 @@ function repeatedAcrossPages(pages: DocumentPage[]): Set<string> {
       pagesByKey.set(key, seen);
     }
   }
-  return new Set([...pagesByKey].filter(([, seen]) => seen.size >= 2).map(([key]) => key));
+  // Letterheads and footers repeat on many pages (or on every page of a short document);
+  // a term restated once in a summary is still a term. Money/date lines are never
+  // treated as page furniture (see extractionUnits).
+  const everyPage = pages.length >= 2 ? pages.length : Infinity;
+  return new Set(
+    [...pagesByKey].filter(([, seen]) => seen.size >= Math.min(REPEATED_MIN_PAGES, everyPage)).map(([key]) => key),
+  );
 }
+
+const REPEATED_MIN_PAGES = 3;
 
 export function extractionUnits(pages: DocumentPage[]): ExtractionUnit[] {
   const repeated = repeatedAcrossPages(pages);
@@ -75,9 +84,10 @@ export function extractionUnits(pages: DocumentPage[]): ExtractionUnit[] {
         // Text addressed to AI tools is never a term: skip it rather than ask the model about it.
         looksLikeInstruction(block.text) ||
         isBoilerplate(block.text) ||
-        (block.text.length <= REPEATED_MAX_CHARS && repeated.has(repeatKey(block.text)));
+        (block.text.length <= REPEATED_MAX_CHARS && !isCriticalText(block.text) && repeated.has(repeatKey(block.text)));
       if (!skip) units.push({ index: units.length, page: page.number, block, context: previous });
-      previous = block.text;
+      // Text kept away from the model must not reach it as the next block's context either.
+      previous = looksLikeInstruction(block.text) || isBoilerplate(block.text) ? undefined : block.text;
     }
   }
   return units;

@@ -28,26 +28,38 @@ export default function Overview() {
   const doc = useDocument(id);
   const setAnalysis = useDocuments((s) => s.setAnalysis);
   const [rerunning, setRerunning] = useState(false);
+  const [rerunError, setRerunError] = useState<string | null>(null);
 
   const openFinding = useCallback(
     (findingId: string) => router.push({ pathname: '/doc/[id]/finding/[findingId]', params: { id: id!, findingId } }),
     [id],
   );
 
-  if (!doc) return <EmptyState icon="alert-circle-outline" message="This review no longer exists." />;
+  if (!doc) {
+    return (
+      <Screen title="Overview">
+        <EmptyState icon="alert-circle-outline" message="This review no longer exists." />
+      </Screen>
+    );
+  }
   const run = doc.analysis;
 
   const rerun = async () => {
     setRerunning(true);
+    setRerunError(null);
+    // Read the latest text: corrections may have landed since this screen rendered.
+    const latest = useDocuments.getState().byId[doc.id] ?? doc;
     try {
       const next = await runAnalysis({
         engine: getEngine(),
-        pages: doc.pages,
-        ocrRevision: doc.ocrRevision,
+        pages: latest.pages,
+        ocrRevision: latest.ocrRevision,
         documentType: doc.type,
         language: doc.language === 'fil' ? 'fil' : 'en',
       });
       setAnalysis(doc.id, next);
+    } catch (e) {
+      setRerunError(`${e instanceof Error ? e.message : 'The review could not be run'}. Your document and corrections are kept — try again.`);
     } finally {
       setRerunning(false);
     }
@@ -86,6 +98,7 @@ export default function Overview() {
           {t('overview_stale')}
         </Banner>
       ) : null}
+      {rerunError ? <Banner tone="danger">{rerunError}</Banner> : null}
       {run?.coverage.incomplete ? <Banner tone="warning">{t('overview_incomplete')}</Banner> : null}
 
       <View style={styles.stats}>

@@ -131,6 +131,29 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Project-wide QA (Jev + ECC workflow) and bug fixes
+- **QA run:** workflow `skimcare-qa` (44 agents): 6 read-only reviewers (AI pipeline, guardrails/privacy, state/navigation, UI/a11y, tests, native/build), then one adversarial verifier per finding plus a Jev `jev_check` probability. 38 findings → **33 confirmed** (≈27 distinct; 4 found twice), 3 disputed (verifier yes, Jev < 0.5: a test that can't fail, `P,` parsing variant, iOS prebuilt llama.rn not patched — not fixed, iOS is phase 2), 2 refuted.
+- **AI logic & guardrails** (`tests/qaAi.test.ts`, 26 cases):
+  - `deriveFacts` picks the amount the finding is about: gate-checked `normalizedValue` → the only amount → first amount after the term's keyword ("late fee/charge/penalty/multa", "monthly/installment"); ambiguous → no fact. Was: first peso amount in the block ("installment P2,000 … late fee P500" gave late fee 2,000).
+  - Scenario: any confirmed copy of a fact counts; copies that disagree → insufficient information with a clear reason (was: first copy only).
+  - `parsePhpAmount` needs a digit ("Ana P, Reyes" was ₱0).
+  - Evidence gate: verdict filter catches pronoun subjects ("This is illegal…"), reasonable/excessive/standard, "nothing to worry about", "you can sign", "signing this … is fine", Filipino "labis/sobra/makatwiran". Money check now covers **questions** and "N pesos/piso".
+  - Chunking: injection/boilerplate text is no longer passed as the next block's context; the repeated-line filter needs 3+ pages (or every page) and never skips money/date lines.
+  - Retry on unusable output doubles the token budget (greedy decoding made an identical retry pointless).
+  - Quiz numbers compare by value ("6,400" = "6,400.00").
+  - Local engine + unreadable PDF says "could not be opened" (was "import a digital PDF instead").
+- **State** (`tests/qaState.test.ts`, 4 cases):
+  - `correctBlock` un-confirms facts read from that block; What-if shows the stale banner and does no math until re-run. Stale banner also on Check and Questions.
+  - `setAnalysis` keeps the review stale when the run was built from older text (`run.ocrRevision !== doc.ocrRevision`); Overview re-run reads the latest pages.
+  - Re-run keeps the user's own/edited questions, confirmed figures (same value) and quiz answers (`carryOverUserState`).
+  - Re-run failure shows a danger banner (was silent + unhandled rejection).
+  - Deleting/erasing a finished review clears the "Review ready" capsule.
+  - Preview applies OCR results only to the same draft session and only navigates while focused.
+  - Android hardware back on Processing minimizes the review instead of abandoning it.
+- **UI / a11y:** Home shows "Offline · on-device" only after a passing readiness check (else "Offline check needed" → readiness); DemoBanner on Questions and Source; finding cards announce their status; Source has a visible "Correct this text" button (long-press + selectable text didn't work on Android or with screen readers); empty/not-found screens keep the glass header and Back; delete/erase confirmations work on web (`src/components/confirm.ts`); iOS keyboard insets on all screens; What-if "Saved to your questions" feedback; a failed document scanner (e.g. offline first use) falls back to the camera instead of silently capturing nothing.
+- **Native / docs:** `LocalOcrModule.kt` handles mirrored EXIF orientations (2/4/5/7: flip + rotate); `docs/LOCAL_LLM.md` "Native libs" row corrected (llama.cpp builds from patched source; don't remove the plugin; Windows tar note).
+- Verified: typecheck ✅, tests ✅ 195/195 (+30), lint ✅. **Not verified:** the Kotlin change (no Android build run here) and all UI changes on a device; the web preview was shared with another session, so no browser pass this time.
+
 ### 2026-10-10 — Claude (with Chris) — Landing page ready for Vercel
 - Repo is private (now `chrisraro/SkimCare`), so the page no longer links to it: removed "Read the source on GitHub", the footer repo link and the GitHub Releases download link (all would 404 for visitors). Removed the `[TEAM NAMES]` placeholder.
 - Signing clause: download button is now a non-clickable "Android build coming soon" (`.btn-soon`) with "The download goes live with the first public release." Witness line reads "AppBuilders PH Local AI Hackathon". Swap in a real `<a class="btn btn-primary">` when a public APK exists.

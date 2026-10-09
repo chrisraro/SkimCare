@@ -132,14 +132,15 @@ class LocalOcrModule : Module() {
     val decoded = openImage(uri).use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
       ?: throw imageUnreadable(null)
 
-    val exifRotation = try {
-      resolver.openInputStream(uri)?.use { exifDegrees(ExifInterface(it)) } ?: 0
+    val matrix = try {
+      resolver.openInputStream(uri)?.use { exifMatrix(ExifInterface(it)) } ?: Matrix()
     } catch (e: IOException) {
-      0
+      Matrix()
     }
-    val degrees = (exifRotation + userRotation) % 360
-    if (degrees == 0) return decoded
-    val rotated = Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, Matrix().apply { postRotate(degrees.toFloat()) }, true)
+    // The user's extra rotation applies to the already-upright image.
+    if (userRotation != 0) matrix.postRotate(userRotation.toFloat())
+    if (matrix.isIdentity) return decoded
+    val rotated = Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
     if (rotated !== decoded) decoded.recycle()
     return rotated
   }
@@ -155,13 +156,23 @@ class LocalOcrModule : Module() {
 
   private fun imageUnreadable(cause: Throwable?) = CodedException("ERR_IMAGE_UNREADABLE", "The image could not be opened", cause)
 
-  private fun exifDegrees(exif: ExifInterface): Int =
+  /**
+   * EXIF orientation as a matrix. The mirrored orientations (2, 4, 5, 7 — front cameras,
+   * some Samsung/Xiaomi apps) need a horizontal flip as well as a rotation; without it
+   * ML Kit gets mirror-image text and reads nothing.
+   */
+  private fun exifMatrix(exif: ExifInterface): Matrix = Matrix().apply {
     when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-      ExifInterface.ORIENTATION_ROTATE_90, ExifInterface.ORIENTATION_TRANSPOSE -> 90
-      ExifInterface.ORIENTATION_ROTATE_180, ExifInterface.ORIENTATION_FLIP_VERTICAL -> 180
-      ExifInterface.ORIENTATION_ROTATE_270, ExifInterface.ORIENTATION_TRANSVERSE -> 270
-      else -> 0
+      ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> setScale(-1f, 1f)
+      ExifInterface.ORIENTATION_ROTATE_180 -> setRotate(180f)
+      ExifInterface.ORIENTATION_FLIP_VERTICAL -> { setRotate(180f); postScale(-1f, 1f) }
+      ExifInterface.ORIENTATION_TRANSPOSE -> { setRotate(90f); postScale(-1f, 1f) }
+      ExifInterface.ORIENTATION_ROTATE_90 -> setRotate(90f)
+      ExifInterface.ORIENTATION_TRANSVERSE -> { setRotate(-90f); postScale(-1f, 1f) }
+      ExifInterface.ORIENTATION_ROTATE_270 -> setRotate(-90f)
+      else -> Unit
     }
+  }
 
   private fun <T> withPdf(uri: String, use: (PdfRenderer) -> T): T {
     val fd: ParcelFileDescriptor = try {

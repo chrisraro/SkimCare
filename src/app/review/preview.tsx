@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { ocrStats } from '@/ai/ocr/devStats';
@@ -23,22 +23,37 @@ export default function Preview() {
   const setType = useDraft((s) => s.setType);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const focused = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => {
+        focused.current = false;
+      };
+    }, []),
+  );
 
   const recognize = async () => {
     setBusy(true);
     setError(null);
+    // Reading can take seconds; the person may leave and start another document meanwhile.
+    const session = useDraft.getState().sessionId;
+    const stillHere = () => useDraft.getState().sessionId === session;
     try {
       const engine = getEngine();
       const started = Date.now();
       const result = await recognizeDocument({ engine, captured: pages, pdfUri });
+      if (!stillHere()) return;
       const ms = Date.now() - started;
       setRecognized(result.pages, result.source, result.note);
       const { type } = await engine.classify(result.pages);
+      if (!stillHere()) return;
       setType(type, true);
       // Counts only, never text (src/ai/ocr/devStats.ts).
       if (__DEV__) console.log(`[ocr-stats] ${JSON.stringify({ source: result.source, ms, type, ...ocrStats(result.pages) })}`);
-      router.push('/review/verify');
+      if (focused.current) router.push('/review/verify');
     } catch (e) {
+      if (!stillHere()) return;
       setError(
         e instanceof RecognizeError
           ? e.message

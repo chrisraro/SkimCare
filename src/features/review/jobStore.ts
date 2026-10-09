@@ -132,3 +132,9 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
     return status === 'running' || status === 'error';
   },
 }));
+
+// A finished review's "Review ready" notice must not outlive the document it opens.
+useDocuments.subscribe((docs) => {
+  const job = useReviewJob.getState();
+  if (job.status === 'done' && job.docId && !docs.byId[job.docId]) job.clear();
+});

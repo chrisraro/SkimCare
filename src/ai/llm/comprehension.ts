@@ -70,7 +70,8 @@ export function buildComprehensionMessages(sourceText: string, language: 'en' | 
   ];
 }
 
-const numbersIn = (s: string) => (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, ''));
+// Compared by value, so "6,400" in an answer matches "6,400.00" in the source.
+const numbersIn = (s: string) => (s.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => String(Number(n.replace(/,/g, ''))));
 
 /** Stable 0..n-1 position for the correct answer, so it is not always first. */
 function slotFor(id: string, n: number): number {

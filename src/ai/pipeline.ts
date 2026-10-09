@@ -12,7 +12,7 @@ import {
   type ExtractedFact,
   type Finding,
 } from '@/domain/schema';
-import { containsVerdict, findBlock, normalizeText, validateCandidates } from './evidenceGate';
+import { containsVerdict, findBlock, moneyMatchesIn, normalizeText, validateCandidates } from './evidenceGate';
 import { throwIfAborted, type InferenceEngine } from './engines';
 import { parsePhpAmount } from './scenarioRules';
 
@@ -55,6 +55,28 @@ function blockConfirmed(pages: DocumentPage[], f: Finding): boolean {
   return Boolean(b && (b.verifiedAt || b.correctedAt || !b.critical));
 }
 
+const LATE_FEE_WORDS = /\b(?:late\s+(?:fee|charge|payment\s+charge)s?|penalt(?:y|ies)|surcharge|multa)\b/gi;
+const INSTALLMENT_WORDS = /\b(?:monthly|installments?|amortizations?|hulog)\b/gi;
+
+/**
+ * The amount a finding is about. A block can state several ("installment of P2,000 …
+ * late fee of P500"), so: the gate-checked normalizedValue if it is in the text; the
+ * only amount if there is one; else the first amount after the term's keyword.
+ * Ambiguous → null, so the scenario reports insufficient information.
+ */
+function amountFor(text: string, f: Finding, keyword: RegExp): number | null {
+  const amounts = moneyMatchesIn(text);
+  if (!amounts.length) return null;
+  const claimed = f.normalizedValue ? parsePhpAmount(f.normalizedValue) : null;
+  if (claimed !== null && amounts.some((a) => a.value === claimed)) return claimed;
+  if (new Set(amounts.map((a) => a.value)).size === 1) return amounts[0]!.value;
+  for (const m of text.matchAll(keyword)) {
+    const after = amounts.find((a) => a.index > (m.index ?? 0));
+    if (after) return after.value;
+  }
+  return null;
+}
+
 /** Deterministically derive numeric facts from accepted, source-linked findings. */
 export function deriveFacts(pages: DocumentPage[], findings: Finding[]): ExtractedFact[] {
   const facts: ExtractedFact[] = [];
@@ -66,12 +88,12 @@ export function deriveFacts(pages: DocumentPage[], findings: Finding[]): Extract
     const text = source.text;
 
     if (f.type === 'late_fee') {
-      const n = parsePhpAmount(text);
+      const n = amountFor(text, f, LATE_FEE_WORDS);
       if (n !== null && /fixed|flat/i.test(text)) {
         facts.push({ id: `fact_${f.id}`, key: 'late_fee_fixed', value: n, evidence: f.evidence, confirmedByUser });
       }
     } else if (f.type === 'payment_amount' && /monthly|installment/i.test(text) && !/total/i.test(text)) {
-      const n = parsePhpAmount(text);
+      const n = amountFor(text, f, INSTALLMENT_WORDS);
       if (n !== null) facts.push({ id: `fact_${f.id}`, key: 'installment_amount', value: n, evidence: f.evidence, confirmedByUser });
     } else if (f.type === 'due_date') {
       const m = /(\d{1,2})(?:st|nd|rd|th)/i.exec(text);

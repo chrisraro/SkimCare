@@ -75,6 +75,8 @@ export function Screen({ children, footer, scroll = true, edges = ['bottom'], ti
           <ScrollView
             contentContainerStyle={[styles.content, pad]}
             keyboardShouldPersistTaps="handled"
+            // iOS: scroll focused inputs above the keyboard (Android resizes the window).
+            automaticallyAdjustKeyboardInsets
             onScroll={onScroll}
             scrollEventThrottle={32}
           >

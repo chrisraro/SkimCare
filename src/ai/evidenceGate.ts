@@ -21,9 +21,10 @@ export type RejectionReason = 'malformed' | 'verdict_language' | 'unknown_source
  */
 const SUBJECT = '(?:clause|contract|agreement|term|provision|condition|deal|document|fee|penalty|charge|interest|rate)s?';
 const VERDICT =
-  '(?:illegal|unlawful|lawful|legal|enforceable|unenforceable|fair|unfair|safe|unsafe|predatory|abusive|exploitative|legit(?:imate)?|a scam|null and void|void|legally (?:valid|invalid|void))';
+  '(?:illegal|unlawful|lawful|legal|enforceable|unenforceable|fair|unfair|safe|unsafe|predatory|abusive|exploitative|legit(?:imate)?|a scam|null and void|void|legally (?:valid|invalid|void)|reasonable|unreasonable|excessive|acceptable|unacceptable)';
 const FIL_SUBJECT = '(?:kontrata|kasunduan|sugnay|probisyon|termino|kondisyon|multa|singil)(?:ng)?';
-const FIL_VERDICT = '(?:ligtas|legal|ilegal|labag sa batas|patas|hindi patas|makatarungan|hindi makatarungan|walang bisa)';
+const FIL_VERDICT =
+  '(?:ligtas|legal|ilegal|labag sa batas|patas|hindi patas|makatarungan|hindi makatarungan|walang bisa|labis|sobra|makatwiran|hindi makatwiran)';
 const SIGN = '(?:pumirma|pirmahan|lumagda|lagdaan)';
 
 const VERDICT_PATTERNS: RegExp[] = [
@@ -32,7 +33,14 @@ const VERDICT_PATTERNS: RegExp[] = [
     `\\b(?:this|the|that|these|those|your)\\s+(?:\\S+\\s+){0,2}${SUBJECT}\\s+(?:is|are|seems?|looks?|appears?|sounds?|may be|might be|could be|is not|isn't|are not|aren't)\\s+(?:to be\\s+)?(?:(?:very|completely|totally|perfectly|clearly|probably|likely|generally|quite|legally|not)\\s+)?${VERDICT}\\b`,
   ),
   /\b(?:against the law|violates? (?:the )?law|breaks? the law|is a scam)\b/,
+  // Pronoun subjects: "this is illegal under Philippine law", "it seems unfair"
+  new RegExp(`\\b(?:this|it|that)\\s+(?:is|seems|looks|appears|sounds)\\s+(?:(?:very|completely|totally|clearly|probably|likely|quite|legally)\\s+)?${VERDICT}\\b`),
+  // Reassurance: "a standard clause", "nothing to worry about"
+  /\b(?:this|it|that)\s+is\s+(?:a\s+|an\s+)?(?:standard|normal|typical|common)\s+(?:clause|term|provision|contract|agreement|fee|penalty|charge)\b/,
+  /\bnothing to worry about\b/,
   // Sign advice
+  /\byou\s+(?:can|may|could)\s+(?:safely\s+|now\s+)?sign\b/,
+  /\bsigning\s+(?:this|the|it)\b(?:\s+\S+){0,3}?\s+(?:is|seems|looks)\s+(?:\w+\s+)?(?:fine|ok|okay|safe|good|wise|risky|a good idea)\b/,
   /\b(?:safe|okay|ok|fine|good|wise|risky|dangerous|unsafe)\s+to\s+sign\b/,
   /\b(?:should(?:n't| not)?|don't|do not|never|can safely)\s+sign\s+(?:this|the|it)\b(?:\s+(?:contract|agreement|document))?(?!\s+(?:\S+\s+)?(?:form|receipt|certificate|report|slip|acknowledg))/,
   /\b(?:recommend|advise|suggest)\w*\s+(?:that\s+)?(?:you\s+)?(?:not\s+)?(?:to\s+)?sign(?:ing)?\b/,
@@ -122,7 +130,8 @@ export function validateCandidates(candidates: unknown[], pages: DocumentPage[])
     }
     // Amounts written in the model's own words must be in the cited text too:
     // no arithmetic in the model and no numbers borrowed from other clauses.
-    const written = [finding.title, finding.explanation, finding.uncertainty ?? ''].flatMap(moneyAmountsIn);
+    // Questions are shown and can be copied to the other party, so they are held to the same rule.
+    const written = [finding.title, finding.explanation, finding.uncertainty ?? '', ...finding.questions].flatMap(moneyAmountsIn);
     if (written.some((n) => !sourceAmounts.includes(n))) {
       rejected.push({ id: finding.id, reason: 'value_not_in_source' });
       return;
@@ -144,13 +153,23 @@ export function validateCandidates(candidates: unknown[], pages: DocumentPage[])
   return { accepted, rejected };
 }
 
-/** PHP amounts written in a text (PHP / ₱ / P prefix). */
-export function moneyAmountsIn(text: string): number[] {
-  const out: number[] = [];
-  const re = /(?:PHP|₱|\bP)\s?[\d,]+(?:\.\d+)?/gi;
-  for (const m of text.matchAll(re)) {
+/** Peso amounts in a text with their position: "PHP 500", "₱500", "P500", and "500 pesos" / "500 piso". */
+export function moneyMatchesIn(text: string): { value: number; index: number }[] {
+  const out: { value: number; index: number }[] = [];
+  const prefixed = /(?:PHP|₱|\bP)\s?\d[\d,]*(?:\.\d+)?/gi;
+  for (const m of text.matchAll(prefixed)) {
     const n = parsePhpAmount(m[0]);
-    if (n !== null) out.push(n);
+    if (n !== null) out.push({ value: n, index: m.index ?? 0 });
   }
-  return out;
+  const suffixed = /\b(\d[\d,]*(?:\.\d+)?)\s*(?:pesos?|piso)\b/gi;
+  for (const m of text.matchAll(suffixed)) {
+    const n = Number(m[1]!.replace(/,/g, ''));
+    if (Number.isFinite(n)) out.push({ value: n, index: m.index ?? 0 });
+  }
+  return out.sort((a, b) => a.index - b.index);
+}
+
+/** Peso amounts written in a text, in reading order. */
+export function moneyAmountsIn(text: string): number[] {
+  return moneyMatchesIn(text).map((m) => m.value);
 }

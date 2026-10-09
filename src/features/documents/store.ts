@@ -39,6 +39,32 @@ function patchRun(doc: DocumentRecord, fn: (r: AnalysisRun) => AnalysisRun): Doc
   return doc.analysis ? { ...doc, analysis: fn(doc.analysis) } : doc;
 }
 
+/**
+ * A re-run replaces the analysis, but what the person did with the last one is theirs:
+ * their own and edited questions, confirmed figures (if the value is unchanged) and
+ * quiz answers (if the item is unchanged) carry over.
+ */
+export function carryOverUserState(prev: AnalysisRun | undefined, next: AnalysisRun): AnalysisRun {
+  if (!prev) return next;
+  const own = prev.questions.filter((q) => q.edited || q.id.startsWith('user_'));
+  const ownById = new Map(own.map((q) => [q.id, q]));
+  const questions = [
+    ...next.questions.map((q) => ownById.get(q.id) ?? q),
+    ...own.filter((q) => !next.questions.some((n) => n.id === q.id)),
+  ];
+  const facts = next.facts.map((f) => {
+    const old = prev.facts.find((p) => p.id === f.id);
+    return old?.confirmedByUser && old.value === f.value ? { ...f, confirmedByUser: true } : f;
+  });
+  const comprehension = next.comprehension.map((c) => {
+    const old = prev.comprehension.find((p) => p.id === c.id);
+    return old?.userChoiceId && old.supportedChoiceId === c.supportedChoiceId && old.prompt === c.prompt
+      ? { ...c, userChoiceId: old.userChoiceId }
+      : c;
+  });
+  return { ...next, questions, facts, comprehension };
+}
+
 export const useDocuments = create<DocumentsState>((set) => ({
   byId: {},
   order: [],
@@ -56,12 +82,26 @@ export const useDocuments = create<DocumentsState>((set) => ({
     }),
   eraseAll: () => set({ byId: {}, order: [] }),
 
-  setAnalysis: (id, run) => set((s) => patchDoc(s, id, (d) => ({ ...d, analysis: run, analysisStale: false }))),
+  setAnalysis: (id, run) =>
+    set((s) =>
+      patchDoc(s, id, (d) => ({
+        ...d,
+        analysis: carryOverUserState(d.analysis, run),
+        // A run built from older text (the user corrected a block while it ran) is still stale.
+        analysisStale: run.ocrRevision !== d.ocrRevision,
+      })),
+    ),
 
   correctBlock: (id, page, blockId, text) =>
     set((s) =>
       patchDoc(s, id, (d) => ({
-        ...d,
+        ...patchRun(d, (r) => ({
+          ...r,
+          // Figures read from the old text must not feed What-if until the review is re-run.
+          facts: r.facts.map((f) =>
+            f.evidence.page === page && f.evidence.blockId === blockId ? { ...f, confirmedByUser: false } : f,
+          ),
+        })),
         ocrRevision: d.ocrRevision + 1,
         analysisStale: Boolean(d.analysis),
         pages: d.pages.map((p) =>

@@ -43,14 +43,16 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
       for (const unit of units) {
         throwIfAborted(signal);
         const messages = buildExtractionMessages(unit, req.documentType, req.language);
-        const ask = async () =>
-          parseModelOutput(await run({ messages, jsonSchema: EXTRACTION_JSON_SCHEMA, maxTokens, signal }), unit, req.language);
+        const ask = async (budget: number) =>
+          parseModelOutput(await run({ messages, jsonSchema: EXTRACTION_JSON_SCHEMA, maxTokens: budget, signal }), unit, req.language);
 
         // PRD §12: invalid output → retry once, then fall back to explicit uncertainty.
-        let result = await ask();
+        // Decoding is greedy, so an identical retry returns identical output; the usual
+        // failure is a reply cut off at the token cap, so the retry gets twice the budget.
+        let result = await ask(maxTokens);
         if (!result.ok) {
           throwIfAborted(signal);
-          result = await ask();
+          result = await ask(maxTokens * 2);
         }
         if (result.ok) findings.push(...result.candidates);
         else incompletePages.add(unit.page);

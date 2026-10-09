@@ -103,3 +103,16 @@ describe('recognizeDocument with on-device OCR', () => {
     expect(r.note).toMatch(/Pages 2 and 3 had no readable text/);
   });
 });
+
+describe('PDF errors on the local engine (QA #7)', () => {
+  it('says the PDF could not be opened instead of "import a digital PDF"', async () => {
+    mockExtract.mockReset();
+    mockExtract.mockResolvedValue({ status: 'error', message: 'CORRUPT_PDF' });
+    const photosOnly = jest.fn(async () => {
+      throw new RecognizeError('On-device text recognition is not in this build. Import a digital PDF instead.');
+    });
+    const engine: InferenceEngine = { ...demoEngine, info: { ...demoEngine.info, kind: 'local' }, ocr: { recognize: photosOnly } };
+    await expect(recognizeDocument({ engine, captured, pdfUri: 'file:///broken.pdf' })).rejects.toThrow(/could not be opened/i);
+    expect(photosOnly).not.toHaveBeenCalled();
+  });
+});

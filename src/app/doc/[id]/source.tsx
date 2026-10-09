@@ -4,6 +4,7 @@ import { GlassHeader, HEADER_GAP, HEADER_HEIGHT } from '@/components/glass/Glass
 import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Chip } from '@/components/ui';
 import { useDocument, useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
@@ -50,6 +51,7 @@ export default function SourceViewer() {
       </View>
 
       <ScrollView ref={scroller} contentContainerStyle={styles.content}>
+        <DemoBanner />
         {doc.analysisStale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
         <View style={styles.paper} accessibilityLabel={`Recognized text of page ${page.number}`}>
           {page.blocks.map((b) => {
@@ -81,27 +83,37 @@ export default function SourceViewer() {
                     </View>
                   </>
                 ) : (
-                  <Pressable
-                    onLongPress={() => {
-                      setText(b.text);
-                      setEditing(b.id);
-                    }}
-                    accessibilityHint="Long press to correct this text"
-                  >
+                  <View style={styles.passage}>
                     <AppText variant="quote" selectable style={{ fontSize: 16 * fontScale, lineHeight: 25 * fontScale }}>
                       {b.text}
                     </AppText>
                     {b.correctedAt ? (
                       <AppText variant="small" tone="muted">{`Corrected by you · was: “${b.originalText}”`}</AppText>
                     ) : null}
-                  </Pressable>
+                    {/* A visible button, not a long press: selectable text eats long presses on Android, and screen readers can't find them. */}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t('source_correct')}: ${b.text.slice(0, 60)}`}
+                      onPress={() => {
+                        setText(b.text);
+                        setEditing(b.id);
+                      }}
+                      hitSlop={6}
+                      style={styles.correct}
+                    >
+                      <Ionicons name="create-outline" size={16} color={colors.primary} />
+                      <AppText variant="small" tone="primary" style={{ fontWeight: '700' }}>
+                        {t('source_correct')}
+                      </AppText>
+                    </Pressable>
+                  </View>
                 )}
               </View>
             );
           })}
         </View>
         <AppText variant="small" tone="muted" center>
-          {`Long-press any passage to ${t('source_correct').toLowerCase()}. Edits mark this review as out of date.`}
+          {`Tap "${t('source_correct')}" under a passage to fix misread text. Edits mark this review as out of date.`}
         </AppText>
       </ScrollView>
       <GlassHeader title={`${t('source_title')} · ${t('page')} ${page.number}`} />
@@ -110,6 +122,8 @@ export default function SourceViewer() {
 }
 
 const styles = StyleSheet.create({
+  passage: { gap: space.xs },
+  correct: { flexDirection: 'row', alignItems: 'center', gap: space.xs, alignSelf: 'flex-start', minHeight: touch.min },
   root: { flex: 1, backgroundColor: colors.bg },
   toolbar: {
     flexDirection: 'row',

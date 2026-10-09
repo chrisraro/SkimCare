@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { DemoBanner } from '@/components/DemoBanner';
 import { EmptyState } from '@/components/EmptyState';
-import { AppText, Button, Card, Screen, SourceQuote } from '@/components/ui';
+import { AppText, Banner, Button, Card, Screen, SourceQuote } from '@/components/ui';
 import type { ComprehensionItem } from '@/domain/schema';
 import { useDocument, useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
@@ -33,7 +33,13 @@ export default function Check() {
   const [index, setIndex] = useState(0);
 
   const items = doc?.analysis?.comprehension ?? [];
-  if (!doc || items.length === 0) return <EmptyState icon="school-outline" message="No questions could be prepared from verified text." />;
+  if (!doc || items.length === 0) {
+    return (
+      <Screen title={t('check_title')}>
+        <EmptyState icon="school-outline" message="No questions could be prepared from verified text." />
+      </Screen>
+    );
+  }
 
   const done = index >= items.length;
   if (done) {
@@ -66,6 +72,7 @@ export default function Check() {
       }
     >
       <DemoBanner />
+      {doc.analysisStale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
       <AppText variant="small" tone="muted">{`${index + 1} / ${items.length} · ${t('check_body')}`}</AppText>
       <AppText variant="title" accessibilityRole="header">
         {item.prompt}

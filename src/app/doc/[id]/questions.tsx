@@ -3,8 +3,9 @@ import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { DemoBanner } from '@/components/DemoBanner';
 import { EmptyState } from '@/components/EmptyState';
-import { AppText, Button, Card, Screen } from '@/components/ui';
+import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
 import { useDocument, useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
 import { colors, radius, space, touch } from '@/theme/tokens';
@@ -39,6 +40,8 @@ export default function Questions() {
         />
       }
     >
+      <DemoBanner />
+      {doc.analysisStale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
       <AppText tone="subtle">{t('questions_body')}</AppText>
 
       {questions.length === 0 ? <EmptyState icon="chatbubbles-outline" message="No questions yet." /> : null}

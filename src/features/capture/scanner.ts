@@ -29,7 +29,12 @@ export function scannerAvailable(): boolean {
   return loadScanner() !== null;
 }
 
-export type ScanOutcome = { status: 'ok'; uris: string[] } | { status: 'cancelled' } | { status: 'unavailable' };
+export type ScanOutcome =
+  | { status: 'ok'; uris: string[] }
+  | { status: 'cancelled' }
+  | { status: 'unavailable' }
+  /** The scanner exists but could not run (e.g. Play services module not downloaded yet, offline). */
+  | { status: 'failed' };
 
 export async function scanPages(maxPages = 20): Promise<ScanOutcome> {
   const scanner = loadScanner();
@@ -37,8 +42,9 @@ export async function scanPages(maxPages = 20): Promise<ScanOutcome> {
   try {
     const result = await scanner.scanDocument({ maxNumDocuments: maxPages, scannerMode: 'full', galleryImportAllowed: false });
     return result.pages.length ? { status: 'ok', uris: result.pages.map((p) => p.uri) } : { status: 'cancelled' };
-  } catch {
-    // Rejects on user cancel, unsupported device, or a scan already in progress.
-    return { status: 'cancelled' };
+  } catch (e) {
+    // The native side rejects with "User cancelled the scan…" on cancel; anything else is a failure.
+    const message = e instanceof Error ? e.message : '';
+    return /cancel/i.test(message) ? { status: 'cancelled' } : { status: 'failed' };
   }
 }

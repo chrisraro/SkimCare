@@ -25,6 +25,11 @@ export default function Readiness() {
   const completeOnboarding = useSettings((s) => s.completeOnboarding);
   const [report, setReport] = useState<ReadinessReport | null>(null);
 
+  const setOfflineReady = useSettings((s) => s.setOfflineReady);
+  useEffect(() => {
+    if (report) setOfflineReady(report.offlineReady);
+  }, [report, setOfflineReady]);
+
   useEffect(() => {
     engine.checkReadiness().then(setReport);
   }, [engine]);

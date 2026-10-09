@@ -24,7 +24,9 @@ async function shootWithCamera(): Promise<string | null> {
 async function capture(maxPages: number): Promise<string[]> {
   if (scannerAvailable()) {
     const out = await scanPages(maxPages);
-    return out.status === 'ok' ? out.uris : [];
+    if (out.status === 'ok') return out.uris;
+    if (out.status === 'cancelled') return [];
+    // The scanner could not start (offline first use, Play services): use the camera instead.
   }
   const uri = await shootWithCamera();
   return uri ? [uri] : [];

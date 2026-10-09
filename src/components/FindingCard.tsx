@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { Finding } from '@/domain/schema';
+import { useT } from '@/i18n/useT';
 import { colors, space } from '@/theme/tokens';
 import { AppText, Card, StatusBadge } from './ui';
 
@@ -11,8 +12,11 @@ interface Props {
 }
 
 export const FindingCard = memo(function FindingCard({ finding, onPress }: Props) {
+  const t = useT();
+  // An explicit label replaces the children's text for screen readers, so it must carry the status too.
+  const label = `${t(`status_${finding.reviewStatus}`)}: ${finding.title}${finding.evidence ? `, page ${finding.evidence.page}` : ''}. Opens evidence and explanation.`;
   return (
-    <Card onPress={() => onPress(finding.id)} accessibilityLabel={`${finding.title}. Opens evidence and explanation.`}>
+    <Card onPress={() => onPress(finding.id)} accessibilityLabel={label}>
       <View style={styles.top}>
         <StatusBadge status={finding.reviewStatus} />
         {finding.evidence ? (
