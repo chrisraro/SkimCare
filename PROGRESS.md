@@ -45,12 +45,66 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 
 ---
 
+## Backend status & next steps (2026-10-10, Glenn)
+
+Branch `feat/local-llm-engine` (pushed; no PR yet). Details are in the log entries below.
+
+**Finished**
+- **Real on-device AI:** llama.rn 0.12.9 + Qwen3 0.6B GGUF, opt-in with `EXPO_PUBLIC_ENGINE=local`; the Demo engine is still the default.
+  - Per-block extraction with the citation filled in by code. Evidence gate, verdict filter and injection skip.
+  - Understand-It-Back quiz.
+  - Readiness checks: model file, MD5, storage, OCR self-test, smoke inference.
+- **Physical phone (TECNO Spark 50 5G, Android 16):** arm64 build installed, model and OCR run offline, **readiness passes ("Ready to work offline")**.
+- **On-device OCR** (`modules/local-ocr`, bundled ML Kit): photos (EXIF + rotation), scanned PDFs, mixed PDFs (only image pages OCR'd). Reading order, sentence blocks, bboxes, digit repair ("6,40o" → "6,400", always flagged). Verified on the emulator, plus a real 10-page signed contract read with counts only.
+- **Privacy:** three llama.rn native log leaks patched (prompt tokens, token text on error, every model reply) and verified in the built libs and logcat. Recognized text is never logged. The dev `[ocr-stats]` line prints counts only.
+- **Stability:** all model calls serialized (concurrent calls crashed natively).
+- **Quality tooling:** 30-contract fictional eval set; `npm run eval:llm` (localhost llama.cpp, fictional fixtures only) reports precision, recall and generated tokens.
+
+**Current numbers** (30-contract eval, Qwen3 0.6B Q4_K_M, PC)
+
+| Prompt | Precision | Recall | Tokens per call |
+|---|---|---|---|
+| `extract-v3` | 79% | 75% | 94.6 |
+| **`extract-v4`** (current) | 74% | 71% | **78.6** (−17%) |
+
+- Injection text cited: 0 in both.
+- The quality drop is mostly wrong type labels: 38 vs 29.
+- On the phone, a review is **too slow**: 2–3 tok/s, 40–80 s per block, because the phone was thermally throttled and swapping. A 10-page contract is ≈138 model calls.
+
+**Next, in order**
+1. **Phone speed:**
+   - Run the device bench cool and unplugged as much as possible: `pirmabago://diagnostics?bench=1`, see `docs/LOCAL_LLM.md`.
+   - Set `CPU_SETTINGS` (try 2 threads on the fast cores) and pick Q4_0 vs Q4_K_M. Also run `npm run eval:llm` with the Q4_0 GGUF to check quality.
+   - Re-run the fictional test review on the phone and record the time.
+2. **Architecture for long contracts:** per-block explanations don't scale to 100+ blocks on a 4 GB phone.
+   - Fast pass first: type/relevance only (a few tokens per block). Then explain important blocks first (amounts, dates, needs_attention).
+   - Show findings progressively. The UI part needs Chris.
+3. **Recover type accuracy** lost in `extract-v4` (wrong types 29 → 38), e.g. one-line type hints back, or a keyword check when the model's type contradicts the block.
+4. **Document-type guess:** count keyword hits instead of first match (a real services contract was guessed as "employment").
+5. **In-app model import** (Android Files picker → app storage → checksum), so the model can be installed without adb. Decide whether to bundle it in the APK (+≈380 MB).
+6. **Privacy copy:** disclose ML Kit usage metrics (no content is sent) in the welcome/privacy text, as the ML Kit terms require (with Chris).
+7. **Milestone 4:** SQLCipher storage and encrypted files, then an airplane-mode rehearsal on the phone.
+8. **iPhone (phase 2, outside PRD H1):** needs EAS Build or a Mac plus an Apple Developer account; Apple Vision OCR; llama.rn built from source (`RNLLAMA_BUILD_FROM_SOURCE=1`, so the log patches apply); in-app model import.
+
+**For Chris (UI):**
+- S05 `pickPdf` has no catch for picker errors.
+- "1 outputs were discarded" (plural).
+- The processing screen has no per-block progress (`onProgress` exists).
+- Disable "Run checks again" while checks run.
+- The "Import PDF" copy could mention scans.
+- The disabled "Matches the paper" button draws a white box.
+- Require cycle `FloatingTabBar → ReviewAccessory → ui/index → Screen`.
+
+**Housekeeping:** fictional test files are on the test phone (`Download/SkimCare-test-scanned.pdf`, `Pictures/SkimCare-test-photo-exif.jpg`). A copy of Glenn's signed contract is in the repo root, untracked; never commit it.
+
+---
+
 ## Milestone tracker (PRD §18)
 
 | # | Milestone | Status | Notes |
 |---|-----------|--------|-------|
 | 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine; Liquid Glass UI (floating tab bar, glass header, real Android blur); landing page in `site/` |
-| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | 🟨 Partial | Runtime-independent engine done (`src/ai/llm/`: extraction + quiz prompts, JSON schemas, parsers, retry, readiness, pinned GGUF candidates); 30-contract eval set + scorer; llama.rn 0.12.9 adapter + local engine (opt-in `EXPO_PUBLIC_ENGINE=local`); **real Qwen3 0.6B inference passes on the emulator, also in airplane mode**; native prompt-token logging removed (patched source build); per-block `extract-v3` scores precision 79% / recall 75% / 0 injection citations on the 30-contract eval (`npm run eval:llm`); next: wrong-type errors, speed on the phone, 0.6B vs 1.7B on the real phone (`docs/LOCAL_LLM.md`) |
+| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | 🟨 Mostly done | Engine, eval set and llama.rn integration done; **real phone (TECNO Spark 50 5G): arm64 build, readiness all pass, offline inference ✅**; native log leaks patched; `extract-v4` precision 74% / recall 71% (v3: 79/75); **open: speed on the phone** (2–3 tok/s while throttled; device bench, CPU settings, Q4_0, fast-pass architecture; see "Backend status & next steps") |
 | 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; digital-PDF text layer ✅ on emulator; **bundled ML Kit OCR (`modules/local-ocr`) ✅ on emulator** for scanned PDFs (stable `p{page}_b{n}` blocks, bboxes, digit repair); still to verify: photos/scanner capture on device, real phone (arm64), real-world scans |
 | 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; local Understand-It-Back generation done (`src/ai/llm/comprehension.ts`); needs real model output |
 | 4 | Prove reliability — SQLCipher, encrypted files, airplane-mode rehearsal | ⬜ Not started | Store is in-memory today (`src/db/repository.ts` contract) |
@@ -83,6 +137,37 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 ---
 
 ## Log
+
+### 2026-10-10 — Claude (with Glenn) — First run on a physical phone; speed work (extract-v4, 2048 context, boilerplate skip, device bench)
+- **Physical phone:** TECNO Spark 50 5G (MediaTek MT6835: 2×A76 2.5 GHz + 6×A55 2.0 GHz, arm64 with dotprod, no i8mm; 3.7 GB RAM; Android 16).
+  - USB debugging first failed: Windows saw no device at all (cable or USB mode); it worked after reconnecting.
+  - arm64 debug build: 27 min (llama.rn source build compiles 7 ARM variants). All carry the log patches (strings checked in the APK).
+  - Installed with `adb install`; model copied via `run-as` (MD5 matches).
+  - **Readiness: all checks pass, "Ready to work offline"**: model, MD5, storage, OCR self-test, inference (load 9.3 s, smoke test 4.9 tok/s).
+- **Review on the phone is too slow:** fictional 2-page scanned contract, cancelled after 11 of ≈16 model calls (≈10 min).
+  - Generation 2–3 tok/s, prompt 6–27 tok/s, 40–80 s per block.
+  - Cause: **thermal status 3 (severe)**; CPU 61–64 °C, skin 53 °C, every core capped at 1.4 GHz. Plus **memory exhaustion**: 74 MB free, 1.7 GB swap; the app held 850 MB. The phone was charging over USB at 370% CPU.
+- **Speed changes** (JS only, no rebuild needed):
+  - `src/ai/llm/llamaRuntime.ts`: `n_ctx` 4096 → **2048** (≈235 MB less KV cache). Added `CPU_SETTINGS` (threads, core mask; empty = llama.rn default until the bench decides). Added `benchmark()`: llama.cpp's synthetic bench through the serial queue, no document text.
+  - `src/ai/llm/devBench.ts` + `src/app/diagnostics.tsx`: dev-only trigger `pirmabago://diagnostics?bench=1` (lazy import, `__DEV__` and local engine only), printing `[bench]` lines to Metro. Not run yet: the phone was still at thermal status 3.
+  - `src/ai/llm/prompt.ts` **`extract-v4`**:
+    - The model no longer writes `uncertainty` or `normalized_value`; at most 1 question; title ≤ 8 words with no amount in the examples; explanation ≤ 25 words.
+    - The "earlier text" context is capped at its last 300 characters (`CONTEXT_CHARS`).
+    - Output cap 384 → 200 tokens (`localLlmEngine.ts`).
+    - The parser ignores fields outside the schema.
+  - `src/ai/llm/chunking.ts`: skips signing/notarial boilerplate (notary public, subscribed and sworn, Doc./Page/Book No., Series of, IN WITNESS WHEREOF, in the presence of, ID-number lines, "Republic of the Philippines") and **short lines repeated on 2+ pages** (letterheads, footers, "Page 3 of 10"). Long repeated sentences are still sent. The eval-set test confirms no labelled term is skipped.
+  - `src/ai/llm/models.ts`: Q4_0 GGUF downloaded from the pinned revision; SHA-256 matches; **MD5 `14d5eac0…` pinned**. Copied to the test phone, not yet the default.
+- **Eval** (`scripts/eval-extraction.ts` now reports generated tokens; v3 re-measured from a temporary worktree):
+  - v3: precision 79%, recall 75%, 94.6 tokens per call.
+  - First v4: 78% / 70% / 82.4. Short "key detail" titles made the model borrow amounts into titles (18 gate rejections; one title copied the prompt example).
+  - **Final v4: 74% / 71% / 78.6 (−17%)**; amount rejections 9, injection cited 0, wrong types 38 (v3: 29).
+  - Kept for speed; recovering type accuracy is on the next-steps list.
+- Docs: `docs/LOCAL_LLM.md` (phone numbers, device bench, context size), `docs/ARCHITECTURE.md` (LLM row). `docs/local-ai-pipeline-blueprint.pdf` (added by Glenn) is committed as a general reference. Where SkimCare differs:
+  - The model is not bundled through Metro (+≈380 MB per APK); it's placed separately and checksummed.
+  - Its scan-quality ratio counts ₱, ñ and curly quotes as garbage, so it would reject Filipino contracts.
+  - OCR is our own bundled ML Kit module.
+  - Prompts already restrict the model to the cited block, with grammar-constrained JSON.
+- Verified: typecheck ✅, tests ✅ 162/162 (new: boilerplate/repeated-line skip, context cap, schema-only fields), lint ✅; phone runs as above.
 
 ### 2026-10-10 — Claude (with Glenn) — Real-contract OCR benchmark, llama.rn concurrent-call crash fixed, dev OCR stats
 - **Crash fixed:** two model calls at once crash llama.rn natively (SIGSEGV, null dereference in `llm_graph_context::build_inp_out_ids`). Seen on the emulator when "Run checks again" was tapped while readiness was still running. The same would happen if readiness ran during a background review. `src/ai/llm/llamaRuntime.ts` now runs every model operation (load, completion, release) through one serial queue.

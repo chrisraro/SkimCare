@@ -12,14 +12,20 @@ import { FindingType, ReviewStatus, TYPE_LABELS, type DocumentType } from '@/dom
 import type { ExtractionUnit } from './chunking';
 
 /** Bump whenever the prompt text or output schema changes; stored on every AnalysisRun. */
-export const PROMPT_VERSION = 'extract-v3';
+export const PROMPT_VERSION = 'extract-v4';
 
 export interface ChatMessage {
   role: 'system' | 'user';
   content: string;
 }
 
-/** Passed to llama.rn as a JSON-schema response format (grammar-constrained decoding). */
+/**
+ * Passed to llama.rn as a JSON-schema response format (grammar-constrained decoding).
+ * Kept small on purpose: every output token costs a full model step, and on a
+ * mid-range phone generation is most of the review time. Amounts are checked by
+ * the evidence gate against the block, so the model no longer copies them into a
+ * separate field; "what is unclear" goes into the one question.
+ */
 export const EXTRACTION_JSON_SCHEMA = {
   type: 'object',
   properties: {
@@ -30,10 +36,8 @@ export const EXTRACTION_JSON_SCHEMA = {
         type: { type: 'string', enum: FindingType.options },
         title: { type: 'string' },
         explanation: { type: 'string' },
-        uncertainty: { type: 'string' },
         review_status: { type: 'string', enum: ReviewStatus.options.filter((s) => s !== 'unable_to_verify') },
-        questions: { type: 'array', maxItems: 2, items: { type: 'string' } },
-        normalized_value: { type: 'string' },
+        questions: { type: 'array', maxItems: 1, items: { type: 'string' } },
       },
       required: ['type', 'title', 'explanation', 'review_status', 'questions'],
     },
@@ -52,12 +56,10 @@ const EXAMPLE_ANSWER = JSON.stringify({
   relevant: true,
   finding: {
     type: 'payment_condition',
-    title: 'PHP 7,750 paid after acceptance',
-    explanation: 'You are paid PHP 7,750 only after the Owner accepts the work, within 7 days of accepting it.',
-    uncertainty: 'It does not say how the Owner decides to accept the work.',
+    title: 'Paid only after the work is accepted',
+    explanation: 'You get PHP 7,750 only after the Owner accepts the work, within 7 days.',
     review_status: 'needs_clarification',
     questions: ['How will the work be accepted?'],
-    normalized_value: 'PHP 7,750',
   },
 });
 
@@ -82,15 +84,13 @@ export function systemPrompt(language: 'en' | 'fil'): string {
     '',
     'If the block is not a term (a title, a signature line, a note to the reader), answer {"relevant": false}.',
     'If it is, answer {"relevant": true, "finding": {...}} with:',
-    '- "title": a short headline with the key detail, like "Deposit is PHP 4,250". Never just the type name.',
-    '- "explanation": one plain sentence on what this means for the reader, with the exact amounts, dates and conditions from the block. Add nothing the block does not say.',
+    '- "title": at most 8 words saying what the term is about, like "Deposit due at signing". Never just the type name.',
+    '- "explanation": one short sentence (at most 25 words) on what this means for the reader, with the exact amounts, dates and conditions from the block. Add nothing the block does not say.',
     'Use only amounts, dates and numbers written inside <block>. The earlier text only helps you understand words like "the fee" or "it"; never copy its amounts.',
-    '- "uncertainty": only if something important is unclear or missing.',
     '- "review_status": "needs_attention" for an important obligation or risk to the reader, "needs_clarification" if something important is vague or missing, otherwise "explained".',
-    '- "questions": up to 2 short questions the reader could ask the other party, or [].',
-    '- "normalized_value": only for money written in the block, copied exactly as written, like "PHP 4,250".',
+    '- "questions": one short question the reader could ask the other party about what is unclear, or [].',
     'Never say a clause is legal, illegal, fair, unfair, safe or unsafe, and never say whether to sign.',
-    `Write "title", "explanation", "uncertainty" and "questions" in plain ${LANGUAGE_NAMES[language]}. Answer with JSON only.`,
+    `Write "title", "explanation" and "questions" in plain ${LANGUAGE_NAMES[language]}. Answer with JSON only.`,
     '',
     'Example:',
     `<block>${EXAMPLE_BLOCK}</block>`,
@@ -103,10 +103,20 @@ function sanitize(text: string): string {
   return text.replace(/<\/?(block|source)>/gi, '').replace(/\s+/g, ' ').trim();
 }
 
+/** Context only resolves words like "the fee"; its end is enough, and long context costs prompt time and memory. */
+export const CONTEXT_CHARS = 300;
+
+function tail(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(-max);
+  const space = cut.indexOf(' ');
+  return `…${space >= 0 ? cut.slice(space + 1) : cut}`;
+}
+
 export function userPrompt(unit: ExtractionUnit, documentType: DocumentType): string {
   return [
     `Document type: ${TYPE_LABELS[documentType]}. Page ${unit.page}.`,
-    `Earlier text, for context only: ${unit.context ? sanitize(unit.context) : 'none'}`,
+    `Earlier text, for context only: ${unit.context ? tail(sanitize(unit.context), CONTEXT_CHARS) : 'none'}`,
     '<block>',
     sanitize(unit.block.text),
     '</block>',

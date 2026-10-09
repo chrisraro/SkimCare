@@ -13,8 +13,20 @@ import type { CompletionRequest, CompletionRunner } from './localLlmEngine';
 import type { ModelSpec } from './models';
 import { isSmokeTestReply, SMOKE_TEST_MESSAGES, type ReadinessProbe } from './readiness';
 
-/** Extraction chunk (~750 tokens) + prompt (~500) + output (≤1024) fits with headroom. */
-export const CONTEXT_TOKENS = 4096;
+/**
+ * System prompt (~690 tokens) + context (≤300 chars) + one block + output (≤200)
+ * stays under ~1,500 tokens; 2048 leaves headroom. The KV cache is ~112 KB per
+ * token for Qwen3 0.6B, so 4096 reserved ~470 MB that a 4 GB phone needs elsewhere.
+ */
+export const CONTEXT_TOKENS = 2048;
+
+/** CPU placement for llama.cpp. Undefined = llama.rn's default (4 threads). Set from the device benchmark. */
+export interface CpuSettings {
+  n_threads?: number;
+  /** Cores to run on, e.g. "6-7" for the two fast cores of a 2+6 big.LITTLE chip. */
+  cpu_mask?: string;
+}
+export const CPU_SETTINGS: CpuSettings = {};
 
 export function modelFile(spec: ModelSpec): File {
   return new File(Paths.document, 'models', spec.fileName);
@@ -38,9 +50,47 @@ function serial<T>(task: () => Promise<T>): Promise<T> {
 async function contextFor(path: string): Promise<LlamaContext> {
   if (loaded?.path === path) return loaded.context;
   if (loaded) await release();
-  const context = await initLlama({ model: path, n_ctx: CONTEXT_TOKENS, n_gpu_layers: 0, use_mlock: false });
+  const context = await initLlama({ model: path, n_ctx: CONTEXT_TOKENS, n_gpu_layers: 0, use_mlock: false, ...cpuParams(CPU_SETTINGS) });
   loaded = { path, context };
   return context;
+}
+
+function cpuParams(cpu: CpuSettings) {
+  return { n_threads: cpu.n_threads, cpu_mask: cpu.cpu_mask, cpu_strict: cpu.cpu_mask ? true : undefined };
+}
+
+export interface BenchRow {
+  model: string;
+  cpu: CpuSettings;
+  promptTokensPerSecond: number;
+  generatedTokensPerSecond: number;
+  loadMs: number;
+}
+
+/**
+ * Dev-only speed test (no document text: llama.cpp's synthetic bench). Loads each
+ * model file with each CPU setting, one at a time through the serial queue, and
+ * releases it again. Used to pick `CPU_SETTINGS` and the default model per device.
+ */
+export function benchmark(models: ModelSpec[], cpus: CpuSettings[], onRow: (row: BenchRow) => void): Promise<void> {
+  return serial(async () => {
+    await release();
+    for (const spec of models) {
+      const file = modelFile(spec);
+      if (!file.exists) continue;
+      for (const cpu of cpus) {
+        const started = Date.now();
+        const context = await initLlama({ model: file.uri, n_ctx: 512, n_gpu_layers: 0, use_mlock: false, ...cpuParams(cpu) });
+        const loadMs = Date.now() - started;
+        try {
+          const r = await context.bench(128, 32, 1, 1);
+          onRow({ model: `${spec.name} ${spec.quantization}`, cpu, promptTokensPerSecond: r.speedPp, generatedTokensPerSecond: r.speedTg, loadMs });
+        } finally {
+          await context.release();
+        }
+      }
+    }
+  });
 }
 
 async function release(): Promise<void> {

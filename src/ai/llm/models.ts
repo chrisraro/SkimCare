@@ -44,6 +44,7 @@ export const MODEL_CANDIDATES: readonly ModelSpec[] = [
     quantization: 'Q4_0',
     sizeBytes: 382_156_480,
     sha256: '33bcc57074ec7b6eada5a90651ee546ec0c2b271002c22baf9f1b2dd1e8f75cb',
+    md5: '14d5eac045fd3991175cdc77373925e4',
     license: 'Apache-2.0',
     sourceUrl: `${UNSLOTH_06B}/Qwen3-0.6B-Q4_0.gguf`,
   },

@@ -27,7 +27,7 @@ Review (S11–S17)  Overview · Terms · Finding (SourceQuote + AiNote) · Sourc
 | Capture | `src/features/capture/scanner.ts` | expo-document-scanner (ML Kit Document Scanner), camera fallback | same — device-verify; Play services downloads module once |
 | Digital PDF text | `src/ai/sources/pdfTextLayer.ts` via `src/ai/recognize.ts` | expo-pdf-text-extract (PDFBox); image-only pages of a mixed PDF go to OCR | same |
 | OCR | `OcrEngine` in `src/ai/engines.ts` (`recognize` for photos, optional `recognizePdf` for scans) | Demo: fixture text. Local: `modules/local-ocr` (bundled ML Kit Text Recognition v2) + `src/ai/ocr/` (reading order, sentence blocks, bboxes, digit repair); scanned PDFs rendered in memory with `PdfRenderer` | same; verify on the demo phone |
-| LLM | `LlmEngine` | Demo fixture candidates. Local (opt-in `EXPO_PUBLIC_ENGINE=local`): llama.rn + Qwen3 0.6B, one call per block (`extract-v3`) | pick 0.6B vs 1.7B on the demo phone |
+| LLM | `LlmEngine` | Demo fixture candidates. Local (opt-in `EXPO_PUBLIC_ENGINE=local`): llama.rn + Qwen3 0.6B, one call per block (`extract-v4`); boilerplate and repeated headers/footers skipped in code; all model calls serialized | pick quantization, threads and 0.6B vs 1.7B on the demo phone |
 | Readiness | `InferenceEngine.checkReadiness` | Demo: honest "not ready". Local: `checkLocalReadiness` — model file, MD5, storage, OCR self-test (reads a drawn test image), smoke inference | same |
 | Storage | `DocumentRepository` in `src/db/repository.ts` | In-memory Zustand | expo-sqlite + SQLCipher, key in expo-secure-store, encrypted page files |
 

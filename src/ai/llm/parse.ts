@@ -4,7 +4,6 @@
  * decide what is true. Every candidate still goes through `validateCandidates`.
  */
 import type { FindingType } from '@/domain/schema';
-import { moneyAmountsIn } from '../evidenceGate';
 import type { ExtractionUnit } from './chunking';
 
 export type ParseResult = { ok: true; candidates: unknown[] } | { ok: false; error: 'no_json' | 'invalid_json' | 'wrong_shape' };
@@ -81,12 +80,10 @@ export function parseModelOutput(output: string, unit: ExtractionUnit, language:
         id: `${block.id}_f`,
         type: r.type,
         title: readableTitle(r.title, r.type, language),
-        // A money value only means something if the block has an amount; otherwise the model copied it from elsewhere.
-        normalizedValue: moneyAmountsIn(block.text).length ? str(r.normalized_value) : undefined,
         // The citation is the block the model was asked about — never model-written.
+        // Fields outside the extract-v4 schema (e.g. a model-written amount) are ignored.
         evidence: { page: block.page, blockId: block.id, quote: block.text },
         explanation: r.explanation,
-        uncertainty: str(r.uncertainty),
         reviewStatus: r.review_status,
         questions: Array.isArray(r.questions) ? r.questions.filter((q) => typeof q === 'string' && q.trim()) : [],
       },
