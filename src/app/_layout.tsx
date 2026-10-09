@@ -7,8 +7,10 @@ import {
 import { Newsreader_400Regular, Newsreader_500Medium, Newsreader_600SemiBold, useFonts } from '@expo-google-fonts/newsreader';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { registerServiceWorker } from '@/features/pwa/pwa';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
@@ -30,6 +32,8 @@ export default function RootLayout() {
     Newsreader_500Medium,
     Newsreader_600SemiBold,
   });
+  // Web only, production only: lets the app shell open offline after one visit.
+  useEffect(registerServiceWorker, []);
   // A failed font load falls back to system fonts rather than blocking the app.
   if (!loaded && !error) return null;
 
