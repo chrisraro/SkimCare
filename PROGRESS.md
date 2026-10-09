@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Landing page: mobile check of the live site, clause-tick fix
+- Live site at 390×844 (mobile UA, touch): page exactly 390px wide (no horizontal scroll), 0 CSP violations, 0 JS errors, fonts load, all 7 Exhibit A screens switch on scroll, hero/demo/stats/people/signing lay out correctly.
+- Bug: "Watch it read" never ticked in the clause list (also on desktop). Exhibit A is ~4,400px tall, so at most ~13% is ever on screen and the 15% intersection threshold never fired. `site/main.js`: clause observer now uses threshold 0 (caught when the top edge enters the upper 70% of the viewport).
+- Verified locally (390×844): 11/11 clauses tick on a normal scroll; `npx eslint site/main.js` ✅. Step dots are 32×32 px (above the WCAG 2.2 24px minimum; below 44px, acceptable for a secondary control).
+
 ### 2026-10-10 — Claude (with Chris) — EAS (Expo) setup for the first Android APK
 - **Account:** the PC was signed into Expo as `teamocsph` through a user-level `EXPO_TOKEN` env var, which overrides `eas login`. Removed it (regenerate at expo.dev if teamocsph is needed again); EAS now uses the saved `chrisraro` login.
 - **Project:** created and linked **`@chrisraro/skimcare`** (https://expo.dev/accounts/chrisraro/projects/skimcare, ID `d6996f92-328f-4417-af3f-ef6bd6691ccf`); `app.json` gained `owner` + `extra.eas.projectId`.
