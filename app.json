@@ -24,7 +24,14 @@
       "favicon": "./assets/favicon.png",
       "output": "single"
     },
-    "plugins": ["expo-router", "expo-status-bar", "expo-font", "expo-image"],
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      "expo-image",
+      "llama.rn",
+      "./plugins/withLlamaFromSource"
+    ],
     "experiments": {
       "typedRoutes": true
     }

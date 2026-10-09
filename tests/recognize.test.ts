@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import type { InferenceEngine, OcrEngine } from '@/ai/engines';
 import type { PdfTextResult } from '@/ai/sources/pdfTextLayer';
+import type { DocumentPage } from '@/domain/schema';
 
 const mockExtract = jest.fn<(uri: string) => Promise<PdfTextResult>>();
 jest.mock('@/ai/sources/pdfTextLayer', () => ({
@@ -53,6 +55,51 @@ describe('recognizeDocument', () => {
   it('uses OCR for photos and scans', async () => {
     const r = await recognizeDocument({ engine: demoEngine, captured });
     expect(r.source).toBe('ocr');
+    expect(r.note).toBeUndefined(); // Demo sample text: no claim about how it was read
     expect(mockExtract).not.toHaveBeenCalled();
+  });
+});
+
+describe('recognizeDocument with on-device OCR', () => {
+  const scannedPage = (n: number, text: string): DocumentPage => ({ number: n, blocks: pageTextToBlocks(n, text).map((b) => ({ ...b, origin: 'ocr' as const })) });
+  const recognizePdf = jest.fn<NonNullable<OcrEngine['recognizePdf']>>();
+  const recognize = jest.fn<OcrEngine['recognize']>();
+  const engine: InferenceEngine = { ...demoEngine, info: { ...demoEngine.info, kind: 'local' }, ocr: { recognize, recognizePdf } };
+
+  beforeEach(() => {
+    mockExtract.mockReset();
+    recognizePdf.mockReset();
+    recognize.mockReset();
+  });
+
+  it('reads scanned PDFs on the device and says so', async () => {
+    mockExtract.mockResolvedValue({ status: 'no_text_layer', pageCount: 1 });
+    recognizePdf.mockResolvedValue([scannedPage(1, 'The fee is PHP 5,000.')]);
+    const r = await recognizeDocument({ engine, captured, pdfUri: 'file:///scan.pdf' });
+    expect(recognizePdf).toHaveBeenCalledWith('file:///scan.pdf', { signal: undefined });
+    expect(r.source).toBe('ocr');
+    expect(r.note).toMatch(/is a scan.*Check the amounts/);
+  });
+
+  it('recognizes only the image pages of a mixed PDF and keeps the exact text of the rest', async () => {
+    mockExtract.mockResolvedValue({
+      status: 'ok',
+      pages: [
+        { number: 1, blocks: pageTextToBlocks(1, 'The fee is PHP 5,000.') },
+        { number: 2, blocks: [] },
+      ],
+    });
+    recognizePdf.mockResolvedValue([scannedPage(2, 'Signed by both parties.')]);
+    const r = await recognizeDocument({ engine, captured, pdfUri: 'file:///mixed.pdf' });
+    expect(recognizePdf).toHaveBeenCalledWith('file:///mixed.pdf', { pages: [2], signal: undefined });
+    expect(r.pages.map((p) => p.blocks[0]?.origin)).toEqual(['pdf_text', 'ocr']);
+    expect(r.source).toBe('ocr');
+    expect(r.note).toMatch(/Page 2 is a scan/);
+  });
+
+  it('names pages where nothing could be read', async () => {
+    recognize.mockResolvedValue([scannedPage(1, 'The fee is PHP 5,000.'), { number: 2, blocks: [] }, { number: 3, blocks: [] }]);
+    const r = await recognizeDocument({ engine, captured });
+    expect(r.note).toMatch(/Pages 2 and 3 had no readable text/);
   });
 });

@@ -50,9 +50,9 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 | # | Milestone | Status | Notes |
 |---|-----------|--------|-------|
 | 0 | Project setup, UI/UX design system, frontend structure | ✅ Done | Expo SDK 57, Router, all 19 H1 screens on Demo engine; Liquid Glass UI (floating tab bar, glass header, real Android blur); landing page in `site/` |
-| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | ⬜ Not started | Needs dev build; pick Qwen3 0.6B vs 1.7B after device test |
-| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; document scanner + digital-PDF text layer wired (untested on device); ML Kit text recognition bridge pending (`modules/local-ocr`) |
-| 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; needs real model output |
+| 1 | Prove local AI — llama.rn + GGUF extraction offline on device | 🟨 Partial | Runtime-independent engine done (`src/ai/llm/`: extraction + quiz prompts, JSON schemas, parsers, retry, readiness, pinned GGUF candidates); 30-contract eval set + scorer; llama.rn 0.12.9 adapter + local engine (opt-in `EXPO_PUBLIC_ENGINE=local`); **real Qwen3 0.6B inference passes on the emulator, also in airplane mode**; native prompt-token logging removed (patched source build); per-block `extract-v3` scores precision 79% / recall 75% / 0 injection citations on the 30-contract eval (`npm run eval:llm`); next: wrong-type errors, speed on the phone, 0.6B vs 1.7B on the real phone (`docs/LOCAL_LLM.md`) |
+| 2 | Prove document evidence — bundled ML Kit OCR, stable block IDs | 🟨 Partial | Evidence gate + source viewer done; digital-PDF text layer ✅ on emulator; **bundled ML Kit OCR (`modules/local-ocr`) ✅ on emulator** for scanned PDFs (stable `p{page}_b{n}` blocks, bboxes, digit repair); still to verify: photos/scanner capture on device, real phone (arm64), real-world scans |
+| 3 | Prove differentiated UX — scenarios, Understand-It-Back, questions | 🟨 Partial | UI + deterministic rules done; local Understand-It-Back generation done (`src/ai/llm/comprehension.ts`); needs real model output |
 | 4 | Prove reliability — SQLCipher, encrypted files, airplane-mode rehearsal | ⬜ Not started | Store is in-memory today (`src/db/repository.ts` contract) |
 
 ## Screen tracker (PRD §07)
@@ -61,11 +61,11 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 |----|--------|-------|--------|
 | S01 | Launch | `src/app/index.tsx` | ✅ UI |
 | S02 | Welcome & privacy | `src/app/welcome.tsx` | ✅ UI |
-| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design) |
+| S03 | Model readiness | `src/app/readiness.tsx` | ✅ UI (Demo engine reports not-ready, by design); local engine runs real checks (model, MD5, storage, OCR self-test, inference) — all pass on the emulator |
 | S04 | Home | `src/app/(tabs)/index.tsx` | ✅ UI |
 | S05 | Add document | `src/app/review/new.tsx` | ✅ UI (scan / gallery / PDF wired) |
 | S06 | Capture | `src/app/review/capture.tsx` | ✅ ML Kit document scanner, camera fallback (device test pending) |
-| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI; digital PDFs read via text layer (scanned-PDF render + OCR pending) |
+| S07 | Preview | `src/app/review/preview.tsx` | ✅ UI; digital PDFs via text layer, scanned/mixed PDFs via on-device OCR (local engine) |
 | S08 | OCR verification | `src/app/review/verify.tsx` | ✅ UI |
 | S09 | Analysis preferences | `src/app/review/preferences.tsx` | ✅ UI |
 | S10 | Processing | `src/app/review/processing.tsx` | ✅ UI |
@@ -83,6 +83,121 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 ---
 
 ## Log
+
+### 2026-10-10 — Claude (with Glenn) — Real-contract OCR benchmark, llama.rn concurrent-call crash fixed, dev OCR stats
+- **Crash fixed:** two model calls at once crash llama.rn natively (SIGSEGV, null dereference in `llm_graph_context::build_inp_out_ids`). Seen on the emulator when "Run checks again" was tapped while readiness was still running. The same would happen if readiness ran during a background review. `src/ai/llm/llamaRuntime.ts` now runs every model operation (load, completion, release) through one serial queue.
+  - `tests/llamaRuntime.test.ts` uses a fake llama.rn: at most 1 operation in flight, and the queue keeps working after a failed call. The test fails without the queue (4 overlapping).
+  - Emulator: double-tapping "Run checks again" gives no crash; the 3 smoke tests ran one after another.
+- **Dev-only OCR stats:** `src/ai/ocr/devStats.ts`, printed as one `[ocr-stats]` line in the Metro log by S07 in `__DEV__` builds. Counts and confidences only, never text, so real documents can be measured without their content showing up anywhere.
+- **Benchmark on a real document:** Glenn's 10-page signed services contract, an image-only scan. The file is kept outside the repo and never committed, and its text wasn't viewed during the test.
+  - 10/10 pages read, none empty; 203 blocks, ≈3,300 words.
+  - 74–92 s on the emulator (≈7–9 s/page with the PC under load); deterministic across two runs.
+  - 36 critical blocks (17 with PHP amounts).
+  - Confidence: median 0.86, mean 0.84, p10 0.74, min 0.36. 10 blocks below 0.7, none of them critical.
+  - 0 digit repairs; 11 tokens mixing letters and digits (possible misreads or codes); 0 blocks flagged as AI instructions (no false positives).
+  - 138 blocks would go to the model.
+  - **Type guess wrong:** "employment". `guessDocumentType` takes the first keyword match, and services contracts often say "no employer-employee relationship". Fix: count hits per type. The user can already correct it on S09.
+  - OCR accuracy against the paper still needs Glenn's own check on S08.
+- **Review speed problem:** a full 138-block review on the emulator slowed from ≈8 to 0.8 tok/s because the PC had 0.5 GB free and the emulator was swapping (≈1 GB). Not workable on the emulator. Planned optimizations:
+  1. `n_ctx` 4096 → 2048, saving ≈235 MB of KV cache.
+  2. Skip boilerplate and page headers/footers repeated on every page.
+  3. Shorter model answers (flatter JSON, one-sentence explanation, at most one question), checked with `npm run eval:llm`.
+  4. llama.rn parallel slots (`context.parallel`, `n_parallel`) on the phone.
+  5. Q4_0 on ARM.
+  6. Progressive results with critical blocks first (needs Chris for the UI).
+- Dev gotcha: editing code while a recognition runs makes Fast Refresh reload the JS, which drops the in-flight recognition (it stopped after page 5). Don't edit during device runs.
+- Verified: typecheck ✅, tests ✅ 160/160, lint ✅; emulator runs as above.
+
+### 2026-10-10 — Claude (with Glenn) — On-device OCR (bundled ML Kit), scanned & mixed PDFs, digit repair; second native log leak fixed
+- **`modules/local-ocr` (new Expo module, Android/Kotlin):** bundled ML Kit Text Recognition v2, Latin (`com.google.mlkit:text-recognition:16.0.1`). The model ships in the APK (≈13 MB per ABI: 11 MB `.so` + 2 MB models).
+  - `selfTest()` draws a test string and reads it back.
+  - `recognizeImage(uri, rotation)` applies EXIF orientation plus the user's rotation; the long side ends up between 1600 and 3200 px.
+  - `pdfPageCount` / `recognizePdfPage` render a page in memory with `PdfRenderer` (white background, 2400 px), never written to disk.
+  - Errors are codes only; recognized text is never logged. Contract and privacy notes are in the module README.
+  - `.gitignore` now ignores `modules/*/android/build/`, which Gradle creates inside local modules.
+- **`src/ai/ocr/layout.ts`** turns ML Kit lines into evidence blocks:
+  - Reading order: top to bottom; side-by-side regions (columns, signature blocks) left to right.
+  - Splits at sentence ends, headings and clause numbers (`1.`, `2.3`, `(a)`, but not "15 days"), and rejoins a sentence split across regions. Hyphenated breaks are joined.
+  - Normalized bbox; confidence is that of the weakest line; same `critical` rule as the PDF text layer.
+  - **Digit repair:** inside a token that is otherwise a number, look-alike letters become digits ("PHP 6,40o" → "PHP 6,400", "1oth" → "10th", "2o26" → "2026"). This happens only when the result is a well-formed number; words, codes and "4,000only" are never touched. A repaired block's confidence is capped at 0.5, so S08 always shows it as "Hard to read" and asks the user to check it. Found on the emulator: without the repair, "PHP 6,40o" parses as **PHP 640**.
+- **`src/ai/ocr/mlKitOcr.ts`** is the `OcrEngine`: page by page, cancel between pages, scanned PDFs over 30 pages refused, user messages without document text. New optional `OcrEngine.recognizePdf`.
+- **`src/ai/recognize.ts`:**
+  - Scanned PDF → on-device OCR.
+  - Mixed PDF → text layer plus OCR for the image-only pages only; source is reported as `ocr`.
+  - Pages with no readable text are named in the note.
+  - The Demo engine gets no "read on this phone" note.
+- **Local engine:** uses ML Kit when the module is linked, otherwise refuses photos and scans with a clear message. Readiness "On-device text recognition" is now a real self-test, not "is linked".
+- **Evidence gate fix:** a low-confidence critical block the user **confirmed** ("Matches the paper") no longer turns findings into "Cannot verify". The gate only checked `correctedAt`; `ARCHITECTURE.md` and the S08 copy already said "not verified". Test added.
+- **Extraction:** numbered section headings ("2. MONTHLY INSTALLMENTS") are skipped like other headings, saving one model call each.
+- UI copy (small): the S08 note banner is `info` (not `success`) when OCR was used; the S07 PDF banner mentions scanned pages only when the engine can read them.
+- **Emulator verification** (fictional 2-page installment contract, made with headless Chrome, never real data):
+  - **Readiness: every check passes → "Ready to work offline"**, the first time on any device.
+  - **Image-only PDF** (tilted 0.5–0.7°, slight blur, Georgia old-style numerals): OCR ≈2 s/page. Text exact except digit look-alikes, which the repair fixed and flagged. Type detected as installment. Full review after confirming the 5 details: 9 terms, 6 to clarify, 0 cannot verify, 1 discarded, 3 quiz items. Findings carry the repaired amounts correctly ("PHP 6,400 paid upon signing", "PHP 32,000 … PHP 4,000 each, due on the 10th").
+  - **Mixed PDF** (page 1 text, page 2 image): note "Page 2 is a scan…", page 1 exact. Full review: 9 terms, 3 quiz items.
+  - ML Kit logs only "OCR process succeeded" (no text).
+- ⚠️ **Second native privacy leak — fixed:** llama.rn's chat parser can't parse Qwen3's output (empty `<think></think>` prefix) and logged the **whole model reply at WARN on every call** (`cpp/common/chat.cpp:3566`): explanations with party names and amounts. `patches/llama.rn+0.12.9.patch` now covers `chat.cpp` too (lengths only; DEBUG lines with the full output and parsed message removed). Verified in the rebuilt APK (old strings absent) and at runtime: 16 calls, logcat shows only token/char counts. `docs/LOCAL_LLM.md` updated with a re-check procedure for upgrades.
+- **Speed:** llama.rn reuses the KV cache for the shared system prompt. Only the first call evaluates ≈690 prompt tokens (30 s); later blocks evaluate ≈60–70 (≈4 s). Generation (≈110 tokens at 8 tok/s on the emulator) dominates: ≈5 min for a 2-page contract on the emulator.
+- **ML Kit metrics:** inputs and outputs stay on the device (ML Kit terms), but when online ML Kit sends usage metrics (device/app info, sizes, error codes) to Google. The terms require disclosing this to users, so the privacy copy needs a line. Decision for Glenn/Chris: disclose only, or also try blocking it.
+- Notes for Chris:
+  - `pickPdf` (S05) doesn't catch `getDocumentAsync` rejections. After the system picker crashed once on the emulator, the next tap raised "Different document picking in progress" as an uncaught error.
+  - The Overview says "1 outputs were discarded" (plural).
+  - S05's "Import PDF — Digital PDFs are read exactly, no scanning needed" could now mention scans.
+  - The processing screen has no per-block progress, although `onProgress` exists.
+- Not done: photos/gallery and the document scanner through OCR on the device (only PDFs exercised); arm64 build on the real phone; OCR quality on real-world scans and photos. The user's signed contract is the planned benchmark, run on the device only and reported as counts, not text.
+- Verified: typecheck ✅, tests ✅ 158/158 (new `ocr` 16; `recognize` +3; gate, chunking and eval checks extended), lint ✅; Android debug build ✅ (x86_64); emulator runs as above.
+
+### 2026-10-10 — Claude (with Glenn) — Extraction quality pass: per-block prompting, eval harness, injection skip (extract-v3)
+- **Why:** the first on-device review found 1 of 5 terms. Scored on all 30 fictional eval contracts, `extract-v1` (one call per page) had recall 12%.
+- **Results** (Qwen3 0.6B Q4_K_M, 30 contracts / 161 labelled terms, llama.cpp on the PC CPU):
+
+  | Prompt | Precision | Recall | Injection text cited | Echoed titles | Time |
+  |---|---|---|---|---|---|
+  | `extract-v1` (per page) | 56% | 12% | 0 | 14 | 133 s |
+  | `extract-v2` (per block), before guards | 79% | 62% | **2** | 0 | 631 s (PC swapping) |
+  | `extract-v2` + guards | 79% | 71% | 0 | 0 | 391 s |
+  | **`extract-v3`** (current) | **79%** | **75%** | **0** | 0 | 333 s |
+
+  v3 recall by category: service 74%, installment 76%, mixed EN/FIL 58%, injection contracts 90%. No verdict-language rejections and no incomplete pages in any v2/v3 run.
+- **Per-block extraction** (`src/ai/llm/chunking.ts`, `prompt.ts`, `parse.ts`, `localLlmEngine.ts`): one call per non-trivial block (headings and fragments skipped), with the previous block on the page as labelled read-only context. The model only answers `{relevant, finding{type,title,explanation,uncertainty,review_status,questions,normalized_value}}`. The citation (page, block id, exact quote) is filled in by code from the block it asked about, so the model can't misquote. Includes a fictional worked example, readable EN/FIL fallback titles when the model echoes the type name (`TYPE_TITLES`), `normalized_value` dropped when the block has no amount, `maxTokens` 384, retry once, then the page is marked incomplete. `onProgress(done, total)` replaces `onChunk`.
+- **Injection skip** (`src/ai/injection.ts`, `looksLikeInstruction`, EN + FIL): blocks addressed to AI tools ("SYSTEM:", "ignore previous instructions", "PAALALA SA AI", …) are never sent to the model. Found in the v2 run: on inj-01 the model cited the injection sentence as a real term ("No payment conditions…"). Now flags all 5 eval injection blocks plus demo `p2_b4`, with no false positives on the 30 contracts. The gate still checks everything that is sent.
+- **Evidence gate** (`src/ai/evidenceGate.ts`): new rule. Any PHP amount in a finding's title, explanation or uncertainty must appear in the cited block, otherwise `value_not_in_source`. This catches amounts borrowed from the context block and model arithmetic: in v3 the model titled svc-01's "Half of the fee is due upon signing" as "PHP 9,000 paid upon signing" (half of PHP 18,000 from the sentence before), and the gate rejected it. `moneyAmountsIn` is now exported.
+- **Prompt contamination fixed (`extract-v3`):** the v2 prompt's examples used PHP 18,000 and PHP 12,000, which also appear in eval contracts (svc-01 and two others), so the eval could reward copying the example. v3 uses amounts that appear in no fixture and adds "use only amounts written inside `<block>`; never copy the earlier text's amounts". New test in `tests/evalSet.test.ts` fails if any amount in the system prompt (EN or FIL) appears in an eval contract.
+- **Eval harness:** `npm run eval:llm` (`scripts/eval-extraction.ts`, `tsx` dev dependency) runs the real prompt → parser → gate → scorer against a local OpenAI-compatible server. Refuses any non-localhost `LLM_URL`; sends fictional fixtures only. Flags: `--ids`, `--limit`, `--verbose` (prints rejections and injection citations). Setup in `docs/LOCAL_LLM.md` › "Measuring extraction quality" (official llama.cpp `b11524` Windows CPU build, SHA-256 checked, kept outside the repo).
+- **What still loses terms (next tuning targets):**
+  1. **Wrong type** (29 in v3): the term is found but given a different type, e.g. due_date vs payment_condition. Check the labels for missing acceptable types before changing the prompt.
+  2. **Context borrowing** (12 rejections in v3): the model still copies amounts from the previous block into explanations. The gate catches every one, but each is a lost term. Try context-free prompting for blocks that have no pronoun or "the fee"-style reference.
+  3. **Mixed EN/FIL** is the weakest category (58%).
+  4. **Speed:** per-block means one call per block (v3 is 2.5× v1's time on the PC). On the phone, check whether llama.rn reuses the KV cache for the shared system-prompt prefix between calls; if not, a long document will be slow. Compare with 1.7B there.
+- Tests rewritten for the per-block design (`tests/localLlm.test.ts`, `tests/evalSet.test.ts`, `tests/comprehension.test.ts`).
+- Not done: re-running the review on the emulator/phone with v3 (the emulator was shut down for low memory); OCR (`modules/local-ocr`); arm64 APK + in-app model import for the real phone.
+- ⚠️ A real signed contract PDF sits untracked in the repo root for upcoming OCR testing. **Never commit it**; it should be moved out of the repo.
+- Verified: typecheck ✅, tests ✅ 139/139, lint ✅; `npm run eval:llm` full runs for v2 + guards and v3 (above).
+
+### 2026-10-09 — Claude (with Glenn) — Local LLM engine (pre-llama.rn), verdict guardrail, readiness, eval set, first dev build
+- New `src/ai/llm/` — the real `LlmEngine`, independent of the model runtime:
+  - `chunking.ts`: per-page chunks (≤3000 chars, blocks never split, pages never mixed).
+  - `prompt.ts`: `PROMPT_VERSION = 'extract-v1'`; system prompt (source text is untrusted data, cite one block + exact quote, no legal/fair/safe verdicts, no sign advice, abstain via `uncertainty`); `<source>`-delimited `[block_id] text` lines; `EXTRACTION_JSON_SCHEMA` (snake_case, PRD §12) for llama.rn grammar-constrained output.
+  - `parse.ts`: strips Qwen3 `<think>` and Markdown fences, maps snake_case → domain candidates, page derived from `block_id`. Shape mapping only — the evidence gate still decides.
+  - `localLlmEngine.ts`: `createLocalLlmEngine(runner)`; one completion per chunk, retry once on unusable JSON, dedupe same type+block, abort between chunks, `onChunk` progress (counts only, no text logged). The llama.rn adapter only needs to implement `CompletionRunner`.
+- `RawExtraction.incompletePages` (`src/ai/engines.ts`) → `runAnalysis` now reports pages whose output failed after retry as not read (`coverage.incomplete`).
+- `package.json`: `expo prebuild` switched `android`/`ios` scripts to `expo run:android|ios` (dev build). `android/` generated, gitignored.
+- Understand-It-Back (`src/ai/llm/comprehension.ts`, `quiz-v1`): one item per verified finding (max 3, most important first, one per block). Evidence is taken from the finding (not the model), the answer position is shuffled deterministically, and "I'm not sure" / "Hindi ako sigurado" is added by code. Items are dropped when the correct answer has numbers not written in the source (no LLM arithmetic). New optional `LlmEngine.comprehend()`; `runAnalysis` calls it after the gate, else uses `RawExtraction.comprehension` (Demo engine unchanged).
+- Readiness (`src/ai/llm/readiness.ts`): `checkLocalReadiness(spec, probe)` is offline-ready only when the model is present, size + SHA-256 match, bundled OCR is linked and a smoke inference answered. Never loads an unverified file; low storage only warns. Device access via injected `ReadinessProbe` (adapter TODO). The smoke prompt is fixed and has no user data.
+- Models (`src/ai/llm/models.ts`): Qwen3 0.6B Q4_K_M (default), 0.6B Q4_0, 1.7B Q4_K_M with pinned size/SHA-256/revision (Apache-2.0).
+- llama.rn research → `docs/LOCAL_LLM.md`: pin **0.12.9** (npm `latest` tag is 0.13.0-rc.7, so `npx expo install llama.rn` alone would pull an RC); New Arch required (we have it); arm64-v8a + x86_64; Expo config plugin; prebuilt JNI libs fetched at install time; API mapping for the adapter; open questions (model location, native SHA-256).
+- Eval set (`tests/fixtures/contracts.ts`): 30 fictional contracts — 10 service, 10 installment, 5 mixed EN/FIL, 5 prompt-injection — each block labelled with its accepted finding types. `src/ai/eval/score.ts` scores precision/recall, type mismatches, abstentions and injection citations. Image categories (photos/PDFs, blurry pages) still need real files.
+- Dev build: Gradle's NDK 27.1 auto-download stalled at 417 MB; Glenn installed it with `sdkmanager`. Gradle then installed Build-Tools 35/36 and Platform 36 itself. First full build **failed at link time** for nitro-modules, worklets and screens (`undefined symbol: std::__ndk1::…`, `__cxa_throw`). Cause: the SDK path contains spaces (`C:\Users\ACER NITRO V15\…`), so CMake's Ninja generator invokes `clang++.exe` by its 8.3 short name `CLANG_~1.EXE`; clang picks C vs C++ mode from its file name, so it linked as C and dropped libc++. **Windows workaround:** junction without spaces, `mklink /J C:\Android\Sdk "%LOCALAPPDATA%\Android\Sdk"`, then build with `ANDROID_HOME=C:\Android\Sdk`. Next failure: `ninja: error: Stat(…RNGestureHandlerDetectorShadowNode.cpp.o): Filename longer than 260 characters` (gesture-handler codegen object path ≈377 chars; still ≈295 even at a drive root). Fix: Windows `LongPathsEnabled=1` (admin) + CMake 3.31.6 from the SDK (ships Ninja 1.12.1; default 3.22.1 has Ninja 1.10.2). The app's CMake version is not set by RN (`CMAKE_VERSION` env only affects building RN from source), so it is pinned in machine-local `android/local.properties`: `sdk.dir=C\:\\Android\\Sdk` and `cmake.dir=C\:\\Android\\Sdk\\cmake\\3.31.6`. Re-add after `expo prebuild --clean`.
+- **Dev build ✅ on emulator** (`test_device`, x86_64): `npx expo run:android --no-bundler --device test_device`, then `npx expo start --dev-client` + `adb reverse tcp:8081 tcp:8081`. Welcome → readiness → Home render; custom fonts and glass tab bar work. Readiness: Demo engine, not offline-ready (correct); **document scanner ✅ and PDF text reader ✅ load** (Nitro `ExpoDocumentScanner` registered, PDFBox initialized). First launch after install showed a blank screen until a force-stop + relaunch (likely the deep-link intent arrived during a reload). Dev warning: require cycle `FloatingTabBar → ReviewAccessory → ui/index → Screen → FloatingTabBar`. Scanner capture, PDF import and blur performance not exercised yet. Emulator `test_device` (API 34, x86_64, 2 GB) boots; `ambagan_playstore` is missing its system image. No physical phone connected yet (Windows does not see it — cable/driver).
+- **llama.rn integrated** (commit after `43b528e`): `llama.rn@0.12.9` (+ config plugin) and `expo-file-system` as a direct dependency. Adapter `src/ai/llm/llamaRuntime.ts` (model at `<documents>/models/<fileName>`, `initLlama` n_ctx 4096 CPU, JSON-schema `response_format`, `enable_thinking: false`, temperature 0, abort → `stopCompletion`, `releaseModel()`), engine `src/ai/localEngine.ts` (kind `local`; photo OCR refused with a clear `RecognizeError` instead of sample text; keyword type guess, user confirms on S09). `getEngine()` returns it only when Metro runs with `EXPO_PUBLIC_ENGINE=local`; default stays Demo. Readiness hash is now MD5 on the phone (expo-file-system has no SHA-256) against an MD5 pinned after verifying the SHA-256 on the PC.
+- **First real on-device inference ✅ (emulator):** Qwen3 0.6B Q4_K_M pushed via `adb` + `run-as` (steps in `docs/LOCAL_LLM.md`). Readiness: model ✅, MD5 ✅, storage ✅, inference ✅ (**3.8 tok/s** on the 2-thread x86_64 emulator — not representative), works without internet ✅, OCR ❌ → correctly **not** offline-ready. Re-ran with emulator **airplane mode on** (`ping` unreachable): inference still passes. Full extraction on a fixture contract not run yet.
+- ⚠️ **Privacy blocker before real documents:** llama.rn's prebuilt native lib logs every prompt's token IDs to logcat at INFO (`cpp/rn-completion.cpp:402`, `loadPrompt: prompt_tokens = …`); token IDs decode straight back to text, so contract text would reach the system log (PRD §14). No runtime switch (`toggleNativeLog` doesn't cover it). **Fix:** `patches/llama.rn+0.12.9.patch` (patch-package, re-applied by `postinstall`) replaces that log with a token count and drops the token text (`tokens_to_str`) from the eval-failure ERROR log (`:1011`). VERBOSE logs with text stay compiled out (`RNLLAMA_VERBOSE` undefined). `plugins/withLlamaFromSource.js` (in `app.json`) sets `rnllamaBuildFromSource=true` so the patched C++ is compiled instead of the prebuilt `.so`. Source build needs **Python 3** (llama.rn's CMake `find_package(Python3 REQUIRED)` for OpenCL kernel embedding; the arm64 build has an `_hexagon_opencl` variant) — on Windows: `winget install -e --id Python.Python.3.12 --scope user`. **Verified in the built APK** (x86_64): the prebuilt lib contains `prompt_tokens = ` and `n_threads: %d, embd: %s`; our source-built `librnllama*.so` contains neither and has the new `prompt tokenized, num_prompt_tokens` message. Runtime logcat check on the emulator still to do. Source-built Debug libs are 96 MB unstripped (≈10 MB each after AGP strips them in the APK; debug APK 112 MB). One `packageDebug` failure with no cause was transient (passed on retry).
+- Prebuild note: `expo prebuild` (even without `--clean`) deletes `android/local.properties` on SDK 57 — re-create it (sdk.dir + cmake.dir) after every prebuild.
+- **First end-to-end review with the real model ✅ (emulator, fictional `svc-01` as a Chrome-printed digital PDF):** import PDF → text layer read exactly → user confirmed 2 critical blocks → type guessed "service agreement" → Qwen3 0.6B extraction (538-token prompt, ~43 s) → evidence gate → quiz generation (198-token prompt) → Overview "reviewed on this phone · Qwen3 0.6B Q4_K_M". Runtime logcat shows only `prompt tokenized, num_prompt_tokens: N` (no token dump) ✅. Results: **1 of 5 labelled terms found** (payment_condition on `p1_b5`, quote exact, shown as SourceQuote + AiNote correctly); title was the raw type name `payment_condition`; explanation vague ("The fee is split as specified in the agreement"); 1 quiz item, sensible, answer grounded in the source. **Quality is the next problem:** low recall and weak wording from 0.6B — try a few-shot example in the prompt, one-finding-per-block prompting, a readable fallback title when the model echoes the type, and 1.7B on the phone; score with `tests/fixtures/contracts.ts`.
+- UI notes for Chris: the processing screen says "up to a minute" (true on a phone, not the emulator); the disabled "Matches the paper" button draws a white rectangle over itself on Android (S08).
+- Not done: extraction quality work + scoring all 30 eval contracts on device; `modules/local-ocr`; 0.6B vs 1.7B on the real phone (arm64 APK sideload + an in-app model import, since USB debugging isn't available yet).
+- Verified (this commit): typecheck ✅, tests ✅ 133/133, lint ✅; Android debug build ✅ (llama.rn from patched source).
+- Guardrail: `containsVerdict()` in `src/ai/evidenceGate.ts` — new rejection reason `verdict_language`. Rejects findings whose title/explanation/uncertainty/questions call the agreement or a clause legal/illegal, (un)fair, (un)safe, (un)enforceable, a scam, or advise whether to sign, in English and Filipino. Runs before the evidence check, so it also covers findings without evidence. Understand-It-Back items (prompt + choices) are filtered the same way in `pipeline.ts`. Closes the gap where a correctly-quoted finding on injection text (fixture `p2_b4`) could say "safe to sign". Patterns are deliberately narrow (factual paraphrase like "the Client should sign the acceptance form" or "not legally yours until paid" passes) — extend `VERDICT_PATTERNS` when real model output shows new phrasings.
+- Verified: typecheck ✅, tests ✅ 132/132 (new: `localLlm` 11, verdict 22, `readiness` 9, `comprehension` 10, `evalSet` 35), lint ✅. Device: emulator dev build launches (see above); no physical phone yet.
 
 ### 2026-10-09 — Claude (with Chris) — Landing page deploy workflow (GitHub Pages)
 - `.github/workflows/pages.yml` publishes `site/` to GitHub Pages on pushes to `main` that touch `site/**`; `site/.nojekyll` serves files as-is.

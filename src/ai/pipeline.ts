@@ -12,7 +12,7 @@ import {
   type ExtractedFact,
   type Finding,
 } from '@/domain/schema';
-import { findBlock, normalizeText, validateCandidates } from './evidenceGate';
+import { containsVerdict, findBlock, normalizeText, validateCandidates } from './evidenceGate';
 import { throwIfAborted, type InferenceEngine } from './engines';
 import { parsePhpAmount } from './scenarioRules';
 
@@ -89,6 +89,7 @@ function validateComprehension(raw: unknown[], pages: DocumentPage[]): Comprehen
   return raw.flatMap((r) => {
     const parsed = ComprehensionItem.safeParse(r);
     if (!parsed.success) return [];
+    if ([parsed.data.prompt, ...parsed.data.choices.map((c) => c.label)].some(containsVerdict)) return [];
     const { evidence } = parsed.data;
     const b = findBlock(pages, evidence.page, evidence.blockId);
     return b && normalizeText(b.text).includes(normalizeText(evidence.quote)) ? [parsed.data] : [];
@@ -108,16 +109,21 @@ export async function runAnalysis(opts: RunOptions): Promise<AnalysisRun> {
   onStage?.('validate');
   throwIfAborted(signal);
   const { accepted, rejected } = validateCandidates(raw.findings, pages);
-  const comprehension = validateComprehension(raw.comprehension, pages);
 
   onStage?.('explain');
+  const rawComprehension = engine.llm.comprehend
+    ? await engine.llm.comprehend({ pages, findings: accepted, language: opts.language }, signal)
+    : raw.comprehension;
+  throwIfAborted(signal);
+  const comprehension = validateComprehension(rawComprehension, pages);
   const facts = deriveFacts(pages, accepted);
   const questions = deriveQuestions(accepted);
 
   onStage?.('save');
   throwIfAborted(signal);
 
-  const unreadable = pages.some((p) => p.blocks.length === 0);
+  const failed = new Set(raw.incompletePages ?? []);
+  const pagesRead = pages.filter((p) => p.blocks.length > 0 && !failed.has(p.number)).length;
   return {
     id: `run_${Date.now().toString(36)}`,
     startedAt,
@@ -136,9 +142,9 @@ export async function runAnalysis(opts: RunOptions): Promise<AnalysisRun> {
     questions,
     rejectedCount: rejected.length,
     coverage: {
-      pagesRead: pages.filter((p) => p.blocks.length > 0).length,
+      pagesRead,
       pagesTotal: pages.length,
-      incomplete: unreadable,
+      incomplete: pagesRead < pages.length,
     },
   };
 }

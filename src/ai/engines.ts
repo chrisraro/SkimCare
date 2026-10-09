@@ -4,7 +4,7 @@
  *   OcrEngine  → modules/local-ocr (bundled ML Kit Text Recognition v2)
  *   LlmEngine  → llama.rn + quantized GGUF (Qwen3 0.6B / 1.7B candidate)
  */
-import type { DocumentPage, DocumentType } from '@/domain/schema';
+import type { DocumentPage, DocumentType, Finding } from '@/domain/schema';
 
 export interface EngineInfo {
   kind: 'demo' | 'local';
@@ -42,6 +42,11 @@ export interface CapturedPage {
 
 export interface OcrEngine {
   recognize(pages: CapturedPage[], signal?: AbortSignal): Promise<DocumentPage[]>;
+  /**
+   * Scanned PDFs: render pages on the device and recognize them. `pages` are
+   * 1-based page numbers (all pages when omitted). Absent on engines without real OCR.
+   */
+  recognizePdf?(uri: string, opts?: { pages?: number[]; signal?: AbortSignal }): Promise<DocumentPage[]>;
 }
 
 export interface ExtractionRequest {
@@ -54,10 +59,24 @@ export interface ExtractionRequest {
 export interface RawExtraction {
   findings: unknown[];
   comprehension: unknown[];
+  /** Pages the model could not analyze (output unusable after retry) — reported as incomplete coverage. */
+  incompletePages?: number[];
+}
+
+export interface ComprehensionRequest {
+  pages: DocumentPage[];
+  /** Findings that already passed the evidence gate. */
+  findings: Finding[];
+  language: 'en' | 'fil';
 }
 
 export interface LlmEngine {
   extract(req: ExtractionRequest, signal?: AbortSignal): Promise<RawExtraction>;
+  /**
+   * Optional: Understand-It-Back items generated from verified findings (still untrusted).
+   * When absent, the pipeline uses `RawExtraction.comprehension`.
+   */
+  comprehend?(req: ComprehensionRequest, signal?: AbortSignal): Promise<unknown[]>;
 }
 
 export interface InferenceEngine {

@@ -15,6 +15,7 @@ export default function Verify() {
   const recognized = useDraft((s) => s.recognized);
   const updateBlock = useDraft((s) => s.updateBlock);
   const textNote = useDraft((s) => s.textNote);
+  const textSource = useDraft((s) => s.textSource);
   const [editing, setEditing] = useState<string | null>(null);
   const [text, setText] = useState('');
 
@@ -36,7 +37,7 @@ export default function Verify() {
     >
       <DemoBanner />
       <AppText tone="subtle">{t('verify_body')}</AppText>
-      {textNote ? <Banner tone="success">{textNote}</Banner> : null}
+      {textNote ? <Banner tone={textSource === 'pdf_text' ? 'success' : 'info'}>{textNote}</Banner> : null}
 
       {critical.length === 0 ? <Banner tone="info">No amounts, dates or names were detected.</Banner> : null}
 

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
+import { ocrStats } from '@/ai/ocr/devStats';
 import { recognizeDocument, RecognizeError } from '@/ai/recognize';
 import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
@@ -28,10 +29,14 @@ export default function Preview() {
     setError(null);
     try {
       const engine = getEngine();
+      const started = Date.now();
       const result = await recognizeDocument({ engine, captured: pages, pdfUri });
+      const ms = Date.now() - started;
       setRecognized(result.pages, result.source, result.note);
       const { type } = await engine.classify(result.pages);
       setType(type, true);
+      // Counts only, never text (src/ai/ocr/devStats.ts).
+      if (__DEV__) console.log(`[ocr-stats] ${JSON.stringify({ source: result.source, ms, type, ...ocrStats(result.pages) })}`);
       router.push('/review/verify');
     } catch (e) {
       setError(
@@ -49,7 +54,11 @@ export default function Preview() {
       <DemoBanner />
       <AppText tone="subtle">{t('preview_body')}</AppText>
       {source === 'pdf' ? (
-        <Banner tone="info">Digital PDFs are read from their built-in text. Page previews for PDFs are coming.</Banner>
+        <Banner tone="info">
+          {getEngine().ocr.recognizePdf
+            ? 'PDFs are read from their built-in text. Scanned pages are read with text recognition on this phone. Page previews for PDFs are coming.'
+            : 'Digital PDFs are read from their built-in text. Page previews for PDFs are coming.'}
+        </Banner>
       ) : null}
       {error ? <Banner tone="danger">{error}</Banner> : null}
 
