@@ -129,8 +129,11 @@
   /** Scrolls a replica screen's content like a finger would (translates its body). */
   function scrollBody(s, steps, start = 0) {
     const body = $(s, '.a-body');
-    let from = start;
-    steps.forEach(([to, at]) => {
+    // Never scroll past the end of the content (the app screen is 844 tall).
+    const max = Math.max(0, body.offsetHeight - 844);
+    let from = Math.min(start, max);
+    steps.forEach(([target, at]) => {
+      const to = Math.min(target, max);
       anim(body, [{ transform: `translateY(${-from}px)` }, { transform: `translateY(${-to}px)` }], {
         duration: T.crawl * 0.8, delay: at, fill: 'forwards', easing: 'cubic-bezier(.45,0,.2,1)',
       });

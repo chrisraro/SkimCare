@@ -131,6 +131,14 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Landing page: Exhibit A screens rebuilt 1:1 with the app
+- Chris flagged that the phone mockups (esp. header and bottom nav) didn't match the app. The app's web build can't run right now (`llama.rn` is native-only and is imported via the tab bar → jobStore → engines), so the spec came from the source: `src/theme/tokens.ts`, `GlassSurface`, `FloatingTabBar`, `GlassHeader`, `Screen`, the screen routes, and `src/ai/demo/fixtures.ts`.
+- `site/`: each of the 7 screens is now built at the app's real size (390×844) with its tokens and scaled into the frame: floating glass tab bar (Home/Documents/Settings pill + separate search circle), glass back circle + title capsule header with frosted veil, footers, DemoBanner on review screens, StatusBadge/FindingCard/SourceQuote/AiNote as in the app. Icons are the app's own Ionicons, subset to 35 glyphs (`site/assets/ionicons-subset.woff2`, 5.5 KB, MIT).
+- Content now uses the app's built-in sample, "Installment Agreement — Laptop Purchase" (PHP 2,000/month, PHP 100 fixed late charge, due the 15th) instead of an invented one; Processing shows the real 5-step checklist; What-if shows ₱2,000.00 / ₱2,100.00 after both values are confirmed.
+- Motion follows real app states (steps advancing, "Matches the paper" → Confirmed, value confirmation → result) plus scripted scrolling clamped to content height.
+- `site/vercel.json`: CSP `font-src` now allows `'self'` for the icon font.
+- Verified locally: headless Chrome at 1440×900 (all 7 screens screenshotted after their sequences) and 390×844; Ionicons font loads; no JS errors; `npx eslint site/main.js` ✅. Not verified against a real device screenshot (none available); please compare with the phone.
+
 ### 2026-10-10 — Claude (with Chris) — Landing page: mobile check of the live site, clause-tick fix
 - Live site at 390×844 (mobile UA, touch): page exactly 390px wide (no horizontal scroll), 0 CSP violations, 0 JS errors, fonts load, all 7 Exhibit A screens switch on scroll, hero/demo/stats/people/signing lay out correctly.
 - Bug: "Watch it read" never ticked in the clause list (also on desktop). Exhibit A is ~4,400px tall, so at most ~13% is ever on screen and the 15% intersection threshold never fired. `site/main.js`: clause observer now uses threshold 0 (caught when the top edge enters the upper 70% of the viewport).
