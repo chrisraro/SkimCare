@@ -84,6 +84,11 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 
 ## Log
 
+### 2026-10-09 — Claude (with Chris) — Landing page deploy workflow (GitHub Pages)
+- `.github/workflows/pages.yml` publishes `site/` to GitHub Pages on pushes to `main` that touch `site/**`; `site/.nojekyll` serves files as-is.
+- **Not live yet:** needs a one-time manual setup — repo Settings › Pages › Source: "GitHub Actions". Pages on a private repo needs GitHub Pro / a paid org plan.
+- Status: workflow committed; deployment not enabled or verified.
+
 ### 2026-10-09 — Claude (with Chris) — Pause frontend; backend handover
 - Added the "Handover — backend" section at the top of this file (state, swap points, priorities, device checklist, rules) and updated the milestone tracker.
 - No code changes. Working tree clean; all commits pushed to `origin/main`.
