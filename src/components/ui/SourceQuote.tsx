@@ -43,10 +43,8 @@ export function SourceQuote({ evidence, onViewSource }: { evidence: EvidenceRef;
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.quoteBg,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.quoteRule,
-    borderRadius: radius.sm,
-    padding: space.md,
+    borderRadius: radius.lg,
+    padding: space.lg,
     gap: space.sm,
   },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

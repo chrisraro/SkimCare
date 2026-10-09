@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
-import { colors, radius, shadow, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 
 interface CardProps {
   children: ReactNode;
@@ -13,7 +13,7 @@ interface CardProps {
 const toneBg = { default: colors.surface, muted: colors.surfaceMuted, brand: colors.header };
 
 export function Card({ children, onPress, accessibilityLabel, style, tone = 'default' }: CardProps) {
-  const base = [styles.card, { backgroundColor: toneBg[tone] }, tone === 'default' && shadow.card, style];
+  const base = [styles.card, { backgroundColor: toneBg[tone] }, style];
   if (!onPress) return <View style={base}>{children}</View>;
   return (
     <Pressable
@@ -29,11 +29,9 @@ export function Card({ children, onPress, accessibilityLabel, style, tone = 'def
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     padding: space.lg,
     gap: space.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  pressed: { transform: [{ scale: 0.98 }] },
 });

@@ -6,6 +6,18 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
       "port": 8081
+    },
+    {
+      "name": "web-alt",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8095"],
+      "port": 8095
+    },
+    {
+      "name": "web-review",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8097"],
+      "port": 8097
     }
   ]
 }

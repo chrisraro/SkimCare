@@ -1,69 +1,45 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { getEngine } from '@/ai/demoEngine';
-import { runAnalysis, STAGES, type StageId } from '@/ai/pipeline';
+import { STAGES } from '@/ai/pipeline';
 import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
-import { useDocuments } from '@/features/documents/store';
-import { useDraft } from '@/features/review/draftStore';
+import { useReviewJob } from '@/features/review/jobStore';
 import { useT } from '@/i18n/useT';
 import { colors, palette, space } from '@/theme/tokens';
 
-/** S10 Processing — stage status, cancel, safe recovery. Never implies the AI certified anything. */
+/**
+ * S10 Processing — stage status, minimize, cancel, safe recovery. The review runs in
+ * the job store, so minimizing keeps it going behind the tab bar accessory.
+ * Never implies the AI certified anything.
+ */
 export default function Processing() {
   const t = useT();
-  const draft = useDraft();
-  const save = useDocuments((s) => s.save);
-  const [stage, setStage] = useState<StageId>('organize');
-  const [error, setError] = useState<string | null>(null);
-  const controller = useRef<AbortController | null>(null);
+  const stage = useReviewJob((s) => s.stage);
+  const status = useReviewJob((s) => s.status);
+  const error = useReviewJob((s) => s.error ?? null);
+  const docId = useReviewJob((s) => s.docId);
+  const { start, cancel, setMinimized, clear } = useReviewJob.getState();
 
-  const launch = () => {
-    const ac = new AbortController();
-    controller.current = ac;
-    const now = new Date().toISOString();
-    const id = `doc_${Date.now().toString(36)}`;
-
-    runAnalysis({
-      engine: getEngine(),
-      pages: draft.recognized,
-      ocrRevision: 0,
-      documentType: draft.documentType ?? 'other',
-      language: draft.language,
-      onStage: setStage,
-      signal: ac.signal,
-    })
-      .then((run) => {
-        save({
-          id,
-          title: draft.title || 'Untitled agreement',
-          type: draft.documentType ?? 'other',
-          language: draft.language,
-          createdAt: now,
-          updatedAt: now,
-          pages: draft.recognized,
-          ocrRevision: 0,
-          analysis: run,
-          analysisStale: false,
-        });
-        draft.reset();
-        // Pop the capture flow back to Home, then open the review on top so Back returns Home.
-        router.dismissTo('/(tabs)');
-        router.push({ pathname: '/doc/[id]', params: { id } });
-      })
-      .catch((e: Error) => {
-        if (ac.signal.aborted) return;
-        setError(`${e.message}. Your pages are safe — you can try again.`);
-      });
-  };
-
+  // Opening this screen (first run, or reopened from the accessory) brings the review to the front.
   useEffect(() => {
-    launch();
-    return () => controller.current?.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setMinimized(false);
+    if (useReviewJob.getState().status === 'idle') start();
+  }, [setMinimized, start]);
+
+  // Finished while on screen: pop the capture flow back to Home, then open the review on top so Back returns Home.
+  useEffect(() => {
+    if (status !== 'done' || !docId || useReviewJob.getState().minimized) return;
+    clear();
+    router.dismissTo('/(tabs)');
+    router.push({ pathname: '/doc/[id]', params: { id: docId } });
+  }, [status, docId, clear]);
+
+  const minimize = () => {
+    setMinimized(true);
+    router.dismissTo('/(tabs)');
+  };
 
   const currentIndex = STAGES.findIndex((s) => s.id === stage);
 
@@ -71,23 +47,19 @@ export default function Processing() {
     <Screen
       footer={
         error ? (
-          <Button
-            label="Try again"
-            icon="refresh"
-            onPress={() => {
-              setError(null);
-              launch();
-            }}
-          />
+          <Button label="Try again" icon="refresh" onPress={start} />
         ) : (
-          <Button
-            label={t('processing_cancel')}
-            variant="secondary"
-            onPress={() => {
-              controller.current?.abort();
-              router.back();
-            }}
-          />
+          <>
+            <Button label="Keep using the app" icon="chevron-down" onPress={minimize} />
+            <Button
+              label={t('processing_cancel')}
+              variant="ghost"
+              onPress={() => {
+                cancel();
+                router.back();
+              }}
+            />
+          </>
         )
       }
     >

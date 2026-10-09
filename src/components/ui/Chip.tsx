@@ -22,11 +22,9 @@ const styles = StyleSheet.create({
   chip: {
     minHeight: 40,
     justifyContent: 'center',
-    paddingHorizontal: space.md,
+    paddingHorizontal: space.lg,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
   },
-  selected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  selected: { backgroundColor: colors.header },
 });

@@ -23,7 +23,10 @@ export default function Settings() {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
+      <AppText variant="display" accessibilityRole="header">
+        {t('settings_title')}
+      </AppText>
       <SectionLabel>{t('settings_language')}</SectionLabel>
       <View style={styles.row}>
         <Chip label="English" selected={locale === 'en'} onPress={() => setLocale('en')} />

@@ -31,7 +31,10 @@ export default function Documents() {
     ]);
 
   return (
-    <Screen>
+    <Screen edges={['top']}>
+      <AppText variant="display" accessibilityRole="header">
+        {t('docs_title')}
+      </AppText>
       <View style={styles.search}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
         <TextInput
@@ -120,10 +123,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: space.md,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.lg,
   },
   input: { flex: 1, minHeight: touch.min, fontSize: 16, color: colors.text },
   renameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

@@ -4,6 +4,7 @@ export { Banner } from './Banner';
 export { Button } from './Button';
 export { Card } from './Card';
 export { Chip } from './Chip';
+export { GlassSurface, useReduceTransparency } from './GlassSurface';
 export { ListRow } from './ListRow';
 export { Screen } from './Screen';
 export { SectionLabel } from './SectionLabel';

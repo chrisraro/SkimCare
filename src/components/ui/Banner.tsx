@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors, palette, radius, space } from '@/theme/tokens';
+import { palette, radius, space } from '@/theme/tokens';
 import { AppText } from './AppText';
 
 type Tone = 'info' | 'warning' | 'danger' | 'success';
@@ -37,10 +37,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space.sm,
     padding: space.md,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     alignItems: 'flex-start',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   body: { flex: 1, gap: space.sm },
 });
