@@ -1,11 +1,13 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { setDemoFixture } from '@/ai/demoEngine';
 import { DEMO_FIXTURES } from '@/ai/demo/fixtures';
-import { AppText, Banner, ListRow, Screen, SectionLabel } from '@/components/ui';
+import { AppText, Banner, Button, ListRow, Screen, SectionLabel } from '@/components/ui';
 import { useDraft } from '@/features/review/draftStore';
+import { useReviewJob } from '@/features/review/jobStore';
 import { useT } from '@/i18n/useT';
 import { space } from '@/theme/tokens';
 
@@ -16,6 +18,13 @@ export default function AddDocument() {
   const t = useT();
   const start = useDraft((s) => s.start);
   const addPages = useDraft((s) => s.addPages);
+  const jobStatus = useReviewJob((s) => s.status);
+  const jobTitle = useReviewJob((s) => s.title);
+
+  // A finished review is already saved; starting a new one simply retires its "ready" notice.
+  useEffect(() => {
+    if (jobStatus === 'done') useReviewJob.getState().clear();
+  }, [jobStatus]);
 
   const pickImages = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -46,6 +55,20 @@ export default function AddDocument() {
     addPages(fixture.pages.map(() => ({ id: pageId(), rotation: 0 as const })));
     router.push('/review/preview');
   };
+
+  // One review at a time: a new capture would otherwise replace the pages the running review depends on.
+  if (jobStatus === 'running' || jobStatus === 'error') {
+    return (
+      <Screen footer={<Button label="See the review in progress" icon="arrow-forward" onPress={() => router.replace('/review/processing')} />}>
+        <Stack.Screen options={{ title: t('add_title') }} />
+        <Banner tone="info">
+          {jobStatus === 'running'
+            ? `“${jobTitle}” is still being reviewed. You can start the next one when it finishes.`
+            : `The review of “${jobTitle}” stopped. Try it again or discard it before starting a new one.`}
+        </Banner>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

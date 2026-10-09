@@ -73,7 +73,7 @@ export default function Welcome() {
           <AppText variant="display" tone="inverse" accessibilityRole="header">
             {t('welcome_title')}
           </AppText>
-          <AppText style={{ color: '#C9D4E0' }}>{t('welcome_body')}</AppText>
+          <AppText style={{ color: palette.navy200 }}>{t('welcome_body')}</AppText>
         </View>
 
         <View style={styles.panel}>
@@ -84,7 +84,7 @@ export default function Welcome() {
                 <AppText variant="bodyStrong" tone="inverse">
                   {t(p.title)}
                 </AppText>
-                <AppText variant="small" style={{ color: '#C9D4E0' }}>
+                <AppText variant="small" style={{ color: palette.navy200 }}>
                   {t(p.body)}
                 </AppText>
               </View>
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 16 },
     elevation: 10,
   },
-  highlight: { backgroundColor: '#F3D27F', color: colors.text, fontSize: 15, lineHeight: 23 },
+  highlight: { backgroundColor: palette.highlight, color: colors.text, fontSize: 15, lineHeight: 23 },
   hero: { gap: space.md },
   panel: { backgroundColor: palette.navy800, borderRadius: radius.sheet - 6, padding: space.lg, gap: space.lg },
   point: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },

@@ -76,6 +76,15 @@ export function ReviewAccessory({ compact }: { compact?: boolean }) {
   );
 }
 
+/**
+ * Bottom spacer for tab screens: keeps the last item clear of the floating
+ * progress capsule while a review is running or waiting to be opened.
+ */
+export function AccessorySpacer() {
+  const visible = useReviewJob((s) => s.status !== 'idle');
+  return visible ? <View style={{ height: 72 }} accessibilityElementsHidden importantForAccessibility="no" /> : null;
+}
+
 const styles = StyleSheet.create({
   row: {
     flex: 1,

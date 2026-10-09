@@ -3,14 +3,16 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { EmptyState } from '@/components/EmptyState';
+import { AccessorySpacer } from '@/components/ReviewAccessory';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
 import { colors, palette, radius, space } from '@/theme/tokens';
 
-/** How far each recent review peeks out from under the one in front (Wallet-style stack). */
-const PEEK = 76;
+/** Wallet-style stack: each card behind the front one keeps a full touch target (≥48dp) and its title visible. */
+const BACK_HEIGHT = 96;
+const VISIBLE = 64;
 
 /** S04 Home — new review, recent documents as a stack, offline status. */
 export default function Home() {
@@ -76,6 +78,7 @@ export default function Home() {
           ))}
         </View>
       )}
+      <AccessorySpacer />
     </Screen>
   );
 }
@@ -91,23 +94,25 @@ function RecentCard({ doc, front, first }: { doc: DocumentRecord; front: boolean
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${doc.title}. ${findings.length} findings.`}
+      accessibilityLabel={`${doc.title}. ${TYPE_LABELS[doc.type]}, ${new Date(doc.updatedAt).toLocaleDateString()}. ${findings.length} findings.`}
       onPress={() => router.push({ pathname: '/doc/[id]', params: { id: doc.id } })}
       style={({ pressed }) => [
         styles.recent,
-        { backgroundColor: front ? colors.quoteBg : colors.header, marginTop: first ? 0 : -PEEK + space.lg },
-        front ? styles.recentFront : { height: PEEK + space.lg },
+        { backgroundColor: front ? colors.quoteBg : colors.header, marginTop: first ? 0 : -(BACK_HEIGHT - VISIBLE) },
+        front ? styles.recentFront : { height: BACK_HEIGHT },
         pressed && { transform: [{ scale: 0.98 }] },
       ]}
     >
-      <View style={styles.recentMeta}>
-        <AppText variant="small" style={{ color: sub }}>
-          {TYPE_LABELS[doc.type]}
-        </AppText>
-        <AppText variant="small" style={{ color: sub }}>
-          {new Date(doc.updatedAt).toLocaleDateString()}
-        </AppText>
-      </View>
+      {front ? (
+        <View style={styles.recentMeta}>
+          <AppText variant="small" style={{ color: sub }}>
+            {TYPE_LABELS[doc.type]}
+          </AppText>
+          <AppText variant="small" style={{ color: sub }}>
+            {new Date(doc.updatedAt).toLocaleDateString()}
+          </AppText>
+        </View>
+      ) : null}
       <AppText variant="title" numberOfLines={front ? 2 : 1} style={{ color: ink, fontSize: 21, lineHeight: 26 }}>
         {doc.title}
       </AppText>
@@ -116,9 +121,9 @@ function RecentCard({ doc, front, first }: { doc: DocumentRecord; front: boolean
           {attention ? <Count n={attention} label="attention" bg={palette.coral100} fg={palette.coral700} /> : null}
           {clarify ? <Count n={clarify} label="to clarify" bg={palette.amber100} fg={palette.amber700} /> : null}
           {explained ? <Count n={explained} label="explained" bg={palette.teal100} fg={palette.teal700} /> : null}
-          {findings.length === 0 ? (
+          {!doc.analysis || findings.length === 0 ? (
             <AppText variant="small" tone="muted">
-              Not reviewed yet
+              {!doc.analysis ? 'Not reviewed yet' : 'No verified findings'}
             </AppText>
           ) : null}
         </View>

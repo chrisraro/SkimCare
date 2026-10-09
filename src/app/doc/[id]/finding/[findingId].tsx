@@ -41,7 +41,8 @@ export default function FindingDetail() {
       {doc.analysisStale ? <Banner tone="warning">{t('overview_stale')}</Banner> : null}
 
       <StatusBadge status={finding.reviewStatus} />
-      <AppText variant="title" accessibilityRole="header">
+      {/* Model-written title: sans, never the serif reserved for contract wording (PRD §06 D). */}
+      <AppText variant="heading" accessibilityRole="header" style={{ fontSize: 24, lineHeight: 30 }}>
         {finding.title}
       </AppText>
 

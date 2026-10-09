@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
+import { AccessorySpacer } from '@/components/ReviewAccessory';
 import { AppText, ListRow, Screen } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
 import { useT } from '@/i18n/useT';
@@ -113,6 +114,7 @@ export default function Documents() {
       <AppText variant="small" tone="muted" center>
         Stored only on this phone. If you lose the phone, these reviews cannot be recovered.
       </AppText>
+      <AccessorySpacer />
     </Screen>
   );
 }

@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { STAGES } from '@/ai/pipeline';
 import { DemoBanner } from '@/components/DemoBanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
+import { useDraft } from '@/features/review/draftStore';
 import { useReviewJob } from '@/features/review/jobStore';
 import { useT } from '@/i18n/useT';
 import { colors, palette, space } from '@/theme/tokens';
@@ -20,7 +21,8 @@ export default function Processing() {
   const status = useReviewJob((s) => s.status);
   const error = useReviewJob((s) => s.error ?? null);
   const docId = useReviewJob((s) => s.docId);
-  const { start, cancel, setMinimized, clear } = useReviewJob.getState();
+  const hasPages = useDraft((s) => s.recognized.length > 0);
+  const { start, cancel, discard, setMinimized, clear } = useReviewJob.getState();
 
   // Opening this screen (first run, or reopened from the accessory) brings the review to the front.
   useEffect(() => {
@@ -47,7 +49,17 @@ export default function Processing() {
     <Screen
       footer={
         error ? (
-          <Button label="Try again" icon="refresh" onPress={start} />
+          <>
+            {hasPages ? <Button label="Try again" icon="refresh" onPress={start} /> : null}
+            <Button
+              label="Discard this review"
+              variant={hasPages ? 'ghost' : 'primary'}
+              onPress={() => {
+                discard();
+                router.dismissTo('/(tabs)');
+              }}
+            />
+          </>
         ) : (
           <>
             <Button label="Keep using the app" icon="chevron-down" onPress={minimize} />

@@ -11,6 +11,7 @@ export const palette = {
   navy700: '#1D3654',
   navy500: '#4A6380',
   navy300: '#9AABBF',
+  navy200: '#C9D4E0',
   teal700: '#0A6E6C',
   teal600: '#0E8584',
   teal500: '#12A09E',
@@ -31,6 +32,7 @@ export const palette = {
   white: '#FFFFFF',
   quoteBg: '#FFFBF2',
   quoteRule: '#D9B45C',
+  highlight: '#F3D27F',
 } as const;
 
 export const colors = {

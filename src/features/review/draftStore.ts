@@ -8,6 +8,8 @@ import type { TextSource } from '@/ai/recognize';
 import type { DocumentPage, DocumentType } from '@/domain/schema';
 
 interface DraftState {
+  /** Changes on every start(), so a running review can tell whether this is still its draft. */
+  sessionId: string;
   source: 'camera' | 'gallery' | 'pdf' | 'sample' | null;
   captured: CapturedPage[];
   /** Set for PDF imports — the text layer is read from this file. */
@@ -34,6 +36,7 @@ interface DraftState {
 }
 
 const initial = {
+  sessionId: '',
   source: null,
   captured: [],
   pdfUri: undefined,
@@ -48,7 +51,8 @@ const initial = {
 
 export const useDraft = create<DraftState>((set) => ({
   ...initial,
-  start: (source, title = '', pdfUri) => set({ ...initial, source, title, pdfUri }),
+  start: (source, title = '', pdfUri) =>
+    set({ ...initial, sessionId: `draft_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`, source, title, pdfUri }),
   addPages: (pages) => set((s) => ({ captured: [...s.captured, ...pages] })),
   replacePage: (id, uri) => set((s) => ({ captured: s.captured.map((p) => (p.id === id ? { ...p, uri } : p)) })),
   removePage: (id) => set((s) => ({ captured: s.captured.filter((p) => p.id !== id) })),

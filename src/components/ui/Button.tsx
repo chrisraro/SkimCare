@@ -34,7 +34,7 @@ export function Button({ label, onPress, variant = 'primary', icon, disabled, lo
   const content = (
     <View style={styles.row}>
       {loading ? <ActivityIndicator color={color} /> : icon ? <Ionicons name={icon} size={20} color={color} /> : null}
-      <AppText variant="bodyStrong" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={{ color, fontWeight: '700', flexShrink: 1 }}>
+      <AppText variant="bodyStrong" numberOfLines={2} style={{ color, fontWeight: '700', flexShrink: 1, textAlign: 'center' }}>
         {label}
       </AppText>
     </View>
