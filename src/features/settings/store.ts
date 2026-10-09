@@ -11,7 +11,7 @@ interface SettingsState {
   completeOnboarding: () => void;
 }
 
-// TODO(persistence): back with the encrypted store (src/db) once SQLCipher is wired.
+// locale and onboarded are persisted by src/features/storage/persistence.ts; offlineReady is per session.
 export const useSettings = create<SettingsState>((set) => ({
   locale: 'en',
   onboarded: false,

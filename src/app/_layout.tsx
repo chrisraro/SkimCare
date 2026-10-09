@@ -6,9 +6,12 @@ import {
 } from '@expo-google-fonts/instrument-sans';
 import { Newsreader_400Regular, Newsreader_500Medium, Newsreader_600SemiBold, useFonts } from '@expo-google-fonts/newsreader';
 import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { openStorage } from '@/db/openStorage';
+import { initPersistence } from '@/features/storage/persistence';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
@@ -30,8 +33,15 @@ export default function RootLayout() {
     Newsreader_500Medium,
     Newsreader_600SemiBold,
   });
+  // Saved reviews and settings load before any route renders, so Home and the
+  // onboarding redirect see them. initPersistence never rejects: on failure the app
+  // keeps working in memory and Settings says so.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    void initPersistence(openStorage).then(() => setHydrated(true));
+  }, []);
   // A failed font load falls back to system fonts rather than blocking the app.
-  if (!loaded && !error) return null;
+  if ((!loaded && !error) || !hydrated) return null;
 
   return (
     <SafeAreaProvider>

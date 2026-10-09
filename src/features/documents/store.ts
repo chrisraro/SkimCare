@@ -1,6 +1,7 @@
 /**
- * Document vault (F16). In-memory today; see src/db/repository.ts for the
- * encrypted SQLCipher contract this store will be backed by.
+ * Document vault (F16). The UI's source of truth. On Android/iOS it is hydrated
+ * from and written back to the SQLCipher database by src/features/storage/persistence.ts
+ * (started from the root layout); without that call (tests, web) it is memory only.
  */
 import { create } from 'zustand';
 import type { AnalysisRun, ClarificationQuestion, DocumentRecord } from '@/domain/schema';

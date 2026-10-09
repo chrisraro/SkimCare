@@ -13,7 +13,7 @@ Processing (S10)  src/ai/pipeline.ts runAnalysis()
  organize ─▶ extract (engine.llm.extract → RAW, untrusted)
          ─▶ validate (evidenceGate.validateCandidates: schema, page/block exists, quote matches, amounts in source)
          ─▶ explain (deriveFacts, deriveQuestions — deterministic)
-         ─▶ save (documents store; later SQLCipher)
+         ─▶ save (documents store → SQLCipher via src/features/storage/persistence.ts)
                                                                                          │
                                                                                          ▼
 Review (S11–S17)  Overview · Terms · Finding (SourceQuote + AiNote) · Source viewer (corrections → analysisStale)
@@ -29,7 +29,7 @@ Review (S11–S17)  Overview · Terms · Finding (SourceQuote + AiNote) · Sourc
 | OCR | `OcrEngine` in `src/ai/engines.ts` (`recognize` for photos, optional `recognizePdf` for scans) | Demo: fixture text. Local: `modules/local-ocr` (bundled ML Kit Text Recognition v2) + `src/ai/ocr/` (reading order, sentence blocks, bboxes, digit repair); scanned PDFs rendered in memory with `PdfRenderer` | same; verify on the demo phone |
 | LLM | `LlmEngine` | Demo fixture candidates. Local (opt-in `EXPO_PUBLIC_ENGINE=local`): llama.rn + Qwen3 0.6B, one call per block (`extract-v4`); boilerplate and repeated headers/footers skipped in code; all model calls serialized | pick quantization, threads and 0.6B vs 1.7B on the demo phone |
 | Readiness | `InferenceEngine.checkReadiness` | Demo: honest "not ready". Local: `checkLocalReadiness` — model file, MD5, storage, OCR self-test (reads a drawn test image), smoke inference | same |
-| Storage | `DocumentRepository` in `src/db/repository.ts` | In-memory Zustand | expo-sqlite + SQLCipher, key in expo-secure-store, encrypted page files |
+| Storage | `DocumentRepository` in `src/db/repository.ts` | Android/iOS: `src/db/sqliteRepository.ts` over expo-sqlite + SQLCipher (`src/db/encryptedDb.ts`, random 32-byte key in expo-secure-store); page images copied to `Paths.document/pages/<docId>/` (`src/db/pageFiles.ts`); stores hydrated/persisted by `src/features/storage/persistence.ts` (started from the root layout). Web (`openStorage.web.ts`): memory only. Open failure: memory only + Settings banner | encrypt page files; device-verify |
 
 Switch engines in one place: `getEngine()` in `src/ai/demoEngine.ts`.
 

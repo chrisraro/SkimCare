@@ -9,6 +9,8 @@ import { scannerAvailable } from '@/features/capture/scanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
 import { ModelImportCard } from '@/components/ModelImportCard';
 import { useSettings } from '@/features/settings/store';
+import { withStorageStatus } from '@/features/storage/readiness';
+import { useStorageStatus } from '@/features/storage/store';
 import { useT } from '@/i18n/useT';
 import { colors, palette, space } from '@/theme/tokens';
 
@@ -32,12 +34,12 @@ export default function Readiness() {
   }, [report, setOfflineReady]);
 
   useEffect(() => {
-    engine.checkReadiness().then(setReport);
+    engine.checkReadiness().then((r) => setReport(withStorageStatus(r, useStorageStatus.getState().status)));
   }, [engine]);
 
   const recheck = () => {
     setReport(null);
-    engine.checkReadiness().then(setReport);
+    engine.checkReadiness().then((r) => setReport(withStorageStatus(r, useStorageStatus.getState().status)));
   };
 
   const proceed = () => {
