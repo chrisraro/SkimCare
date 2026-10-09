@@ -138,6 +138,15 @@ Branch `feat/local-llm-engine` (pushed; no PR yet). Details are in the log entri
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Landing page ready for Vercel
+- Repo is private (now `chrisraro/SkimCare`), so the page no longer links to it: removed "Read the source on GitHub", the footer repo link and the GitHub Releases download link (all would 404 for visitors). Removed the `[TEAM NAMES]` placeholder.
+- Signing clause: download button is now a non-clickable "Android build coming soon" (`.btn-soon`) with "The download goes live with the first public release." Witness line reads "AppBuilders PH Local AI Hackathon". Swap in a real `<a class="btn btn-primary">` when a public APK exists.
+- Added `site/vercel.json`: CSP (only `main.js` + Google Fonts; `'unsafe-inline'` styles for inline style attributes; `frame-ancestors 'none'`), `nosniff`, `Referrer-Policy`, `Permissions-Policy`, clean URLs.
+- Removed the GitHub Pages workflow (`.github/workflows/pages.yml`) and `site/.nojekyll`: deploying with Vercel instead.
+- `site/README.md`: Vercel settings (Root Directory `site`, preset Other, no build, no env vars, Ignored Build Step `git diff --quiet HEAD^ HEAD -- .`).
+- Verified: page loaded with the CSP enforced in a headless browser: 0 violations, both fonts load, 7/7 clauses reveal, no GitHub links left. `npm run typecheck` ✅, `npm test` ✅ (162), `npx eslint site/main.js` ✅. `npm run lint` ❌ pre-existing on main (not from this change): `import/no-unresolved` for `expo-file-system` and `llama.rn` — those packages aren't installed locally; run `npm install` after pulling the local-LLM PR.
+- Next (Chris): create the Vercel project with the settings above; check the live URL on desktop + phone.
+
 ### 2026-10-10 — Claude (with Glenn) — First run on a physical phone; speed work (extract-v4, 2048 context, boilerplate skip, device bench)
 - **Physical phone:** TECNO Spark 50 5G (MediaTek MT6835: 2×A76 2.5 GHz + 6×A55 2.0 GHz, arm64 with dotprod, no i8mm; 3.7 GB RAM; Android 16).
   - USB debugging first failed: Windows saw no device at all (cable or USB mode); it worked after reconnecting.

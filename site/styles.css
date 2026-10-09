@@ -26,6 +26,8 @@ a:hover{color:#14273E}
 
 .btn-ghost:hover{color:#14273E;box-shadow:inset 0 0 0 1.5px #14273E}
 
+.btn-soon{background:#E6EAF0;color:#3D4A5A;cursor:default}
+.btn-soon:hover,.btn-soon:active{transform:none}
 .btn-nav{min-height:44px;padding:0 20px;font-size:15px;background:#FFFBF2;color:#14273E}
 
 .btn-nav:hover{background:#F2D27A;color:#14273E}
