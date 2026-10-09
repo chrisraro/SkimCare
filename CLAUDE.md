@@ -1,4 +1,4 @@
-# PirmaBago — agent instructions
+# SkimCare (formerly PirmaBago) — agent instructions
 
 Read `AGENTS.md` (Expo SDK rules) and `docs/ARCHITECTURE.md` first. Spec: `PirmaBago_Product_Requirements_Document.pdf`.
 

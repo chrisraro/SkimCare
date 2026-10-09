@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- SkimCare app icon, mark C "The Peek": an owl with a brass monocle reading down a page. -->
+  <rect width="1024" height="1024" fill="#14273E"/>
+  <g id="peek" transform="translate(0 -48)">
+    <path d="M310 470 L286 268 L454 366 Z" fill="#12A09E"/>
+    <path d="M714 470 L738 268 L570 366 Z" fill="#12A09E"/>
+    <ellipse cx="512" cy="540" rx="236" ry="200" fill="#12A09E"/>
+    <ellipse cx="430" cy="500" rx="96" ry="92" fill="#0E8584"/>
+    <ellipse cx="594" cy="500" rx="96" ry="92" fill="#0E8584"/>
+    <circle cx="430" cy="500" r="66" fill="#FFFBF2"/>
+    <circle cx="436" cy="530" r="30" fill="#0F1E31"/>
+    <path d="M365 488 A66 66 0 0 1 495 488 Q430 454 365 488 Z" fill="#0E8584"/>
+    <circle cx="594" cy="500" r="66" fill="#FFFBF2"/>
+    <circle cx="600" cy="530" r="32" fill="#0F1E31"/>
+    <circle cx="611" cy="517" r="9" fill="#FFFBF2"/>
+    <circle cx="594" cy="500" r="92" fill="none" stroke="#D9B45C" stroke-width="26"/>
+    <path d="M512 556 L494 584 L512 614 L530 584 Z" fill="#E0A63A"/>
+    <rect x="196" y="640" width="632" height="520" rx="32" fill="#FFFBF2"/>
+    <rect x="300" y="614" width="42" height="56" rx="21" fill="#12A09E"/>
+    <rect x="352" y="614" width="42" height="56" rx="21" fill="#12A09E"/>
+    <rect x="630" y="614" width="42" height="56" rx="21" fill="#12A09E"/>
+    <rect x="682" y="614" width="42" height="56" rx="21" fill="#12A09E"/>
+    <rect x="260" y="714" width="380" height="28" rx="14" fill="#14273E" opacity="0.25"/>
+    <rect x="240" y="772" width="528" height="64" rx="16" fill="#F2D27A"/>
+    <rect x="260" y="790" width="360" height="28" rx="14" fill="#14273E"/>
+    <path d="M648 802 l15 15 l32 -34" fill="none" stroke="#0A6E6C" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="260" y="874" width="300" height="28" rx="14" fill="#14273E" opacity="0.25"/>
+    <path d="M680 560 C746 622 772 716 732 772" fill="none" stroke="#D9B45C" stroke-width="13" stroke-linecap="round" stroke-dasharray="1 22"/>
+  </g>
+</svg>

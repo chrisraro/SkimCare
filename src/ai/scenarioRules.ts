@@ -46,7 +46,7 @@ export function lateInstallmentScenario(facts: ExtractedFact[]): ScenarioResult 
         !installment
           ? 'No confirmed installment amount was found in the agreement.'
           : 'No confirmed fixed late charge was found in the agreement.',
-        'PirmaBago will not guess a fee the document does not state.',
+        'SkimCare will not guess a fee the document does not state.',
       ],
       evidence: [installment?.evidence, lateFee?.evidence].filter((e) => e !== undefined),
     };

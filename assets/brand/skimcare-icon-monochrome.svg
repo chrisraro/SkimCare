@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Android 13+ themed icon: single-colour Peek silhouette; only alpha is used by the launcher. -->
+  <defs>
+    <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#000"/>
+      <g transform="translate(512 500) scale(0.74) translate(-512 -540)">
+        <path d="M310 470 L286 268 L454 366 Z" fill="#fff"/>
+        <path d="M714 470 L738 268 L570 366 Z" fill="#fff"/>
+        <ellipse cx="512" cy="540" rx="236" ry="200" fill="#fff"/>
+        <circle cx="430" cy="500" r="66" fill="#000"/>
+        <circle cx="436" cy="530" r="30" fill="#fff"/>
+        <circle cx="594" cy="500" r="92" fill="none" stroke="#000" stroke-width="50"/>
+        <circle cx="594" cy="500" r="66" fill="#000"/>
+        <circle cx="600" cy="530" r="32" fill="#fff"/>
+        <circle cx="594" cy="500" r="92" fill="none" stroke="#fff" stroke-width="24"/>
+        <path d="M512 556 L494 584 L512 614 L530 584 Z" fill="#000"/>
+        <rect x="180" y="624" width="664" height="560" rx="44" fill="#000"/>
+        <rect x="196" y="640" width="632" height="520" rx="32" fill="#fff"/>
+        <rect x="300" y="614" width="42" height="56" rx="21" fill="#fff"/>
+        <rect x="352" y="614" width="42" height="56" rx="21" fill="#fff"/>
+        <rect x="630" y="614" width="42" height="56" rx="21" fill="#fff"/>
+        <rect x="682" y="614" width="42" height="56" rx="21" fill="#fff"/>
+        <rect x="260" y="714" width="380" height="28" rx="14" fill="#000"/>
+        <rect x="240" y="772" width="528" height="64" rx="16" fill="#000"/>
+        <rect x="260" y="874" width="300" height="28" rx="14" fill="#000"/>
+      </g>
+    </mask>
+  </defs>
+  <rect width="1024" height="1024" fill="#FFFFFF" mask="url(#m)"/>
+</svg>

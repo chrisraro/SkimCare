@@ -3,7 +3,7 @@
  * and follow the language style guide in PRD §15.
  */
 const en = {
-  appName: 'PirmaBago',
+  appName: 'SkimCare',
   tagline: 'Understand what you are signing.',
   promise: 'Unawain bago pirmahan.',
 
@@ -21,7 +21,7 @@ const en = {
   // Welcome
   welcome_title: 'Read it. Understand it. Then decide.',
   welcome_body:
-    'PirmaBago helps you understand an agreement before you sign. It reads your document on this phone — nothing is uploaded.',
+    'SkimCare helps you understand an agreement before you sign. It reads your document on this phone — nothing is uploaded.',
   welcome_point_local: 'Everything stays on this phone',
   welcome_point_local_body: 'No account. No cloud. Works in airplane mode once set up.',
   welcome_point_source: 'Every finding shows its source',
@@ -61,7 +61,7 @@ const en = {
   add_pdf_body: 'Digital PDFs are read exactly, no scanning needed',
   add_sample: 'Try a sample agreement',
   add_sample_body: 'Fictional contracts for practice',
-  add_privacy: 'Files are opened through the system picker. PirmaBago cannot see your other files.',
+  add_privacy: 'Files are opened through the system picker. SkimCare cannot see your other files.',
 
   capture_title: 'Capture pages',
   preview_title: 'Check your pages',
@@ -150,7 +150,7 @@ const en = {
   settings_erase: 'Erase all documents',
   settings_erase_confirm: 'Erase every saved document, page and review from this phone?',
   settings_disclaimer:
-    'PirmaBago is a document comprehension and legal-information aid. It is not legal advice, a licensed attorney, a contract certification service, or an instruction to sign or refuse any document.',
+    'SkimCare is a document comprehension and legal-information aid. It is not legal advice, a licensed attorney, a contract certification service, or an instruction to sign or refuse any document.',
   settings_diagnostics: 'Inference diagnostics',
 
   demo_banner: 'Demo engine — showing sample findings, not your document.',
@@ -176,7 +176,7 @@ const fil: Partial<Record<StringKey, string>> = {
   questionsToAsk: 'Mga tanong bago pumirma',
   welcome_title: 'Basahin. Unawain. Saka magpasya.',
   welcome_body:
-    'Tinutulungan ka ng PirmaBago na maunawaan ang kasunduan bago pumirma. Sa phone na ito binabasa ang dokumento — walang ina-upload.',
+    'Tinutulungan ka ng SkimCare na maunawaan ang kasunduan bago pumirma. Sa phone na ito binabasa ang dokumento — walang ina-upload.',
   welcome_point_local: 'Nananatili ang lahat sa phone na ito',
   welcome_point_local_body: 'Walang account. Walang cloud. Gumagana kahit naka-airplane mode.',
   welcome_point_source: 'May pinanggalingan ang bawat paliwanag',

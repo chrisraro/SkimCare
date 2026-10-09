@@ -1,10 +1,12 @@
-# PirmaBago
+# SkimCare
 
 **Understand what you are signing.** — *Unawain bago pirmahan.*
 
 A private, on-device agreement-understanding companion for Filipinos. Scan or import an agreement; on-device OCR and a quantized language model extract terms, explain them in plain English or Filipino, and link every finding back to the exact source passage — without internet, accounts, or uploads.
 
-> PirmaBago is a document comprehension and legal-information aid. It is not legal advice.
+> SkimCare is a document comprehension and legal-information aid. It is not legal advice.
+
+SkimCare was formerly named PirmaBago; the Expo slug, URL scheme and Android package id still use `pirmabago`.
 
 Built for the AppBuilders PH Local AI Hackathon. Full spec: [`PirmaBago_Product_Requirements_Document.pdf`](PirmaBago_Product_Requirements_Document.pdf). Progress: [`PROGRESS.md`](PROGRESS.md).
 
