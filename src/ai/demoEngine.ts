@@ -10,6 +10,7 @@
 import type { DocumentPage } from '@/domain/schema';
 import { DEMO_FIXTURES, type DemoFixture } from './demo/fixtures';
 import { throwIfAborted, type InferenceEngine } from './engines';
+import { getLocalEngine } from './localEngine';
 
 const wait = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
@@ -89,7 +90,10 @@ export const demoEngine: InferenceEngine = {
   },
 };
 
-/** Single switch point for wiring the real local engine later. */
+/**
+ * Single switch point. The real local engine is opt-in while it is being proven
+ * (Milestone 1): build with `EXPO_PUBLIC_ENGINE=local`. Default stays the Demo engine.
+ */
 export function getEngine(): InferenceEngine {
-  return demoEngine;
+  return process.env.EXPO_PUBLIC_ENGINE === 'local' ? getLocalEngine() : demoEngine;
 }

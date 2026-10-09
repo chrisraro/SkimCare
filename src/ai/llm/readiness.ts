@@ -19,8 +19,8 @@ export interface SmokeTestResult {
 export interface ReadinessProbe {
   /** The installed model file, or undefined when it is missing. */
   modelFile(): Promise<{ path: string; sizeBytes: number } | undefined>;
-  /** SHA-256 (hex) of the file, computed natively — never read a GGUF into JS memory. */
-  sha256(path: string): Promise<string>;
+  /** Hash of the file computed natively — never read a GGUF into JS memory. */
+  hash(path: string): Promise<{ algorithm: 'sha256' | 'md5'; hex: string }>;
   /** Free app storage in bytes, or undefined when the OS will not say. */
   freeStorageBytes(): Promise<number | undefined>;
   ocrAvailable(): Promise<boolean>;
@@ -75,13 +75,22 @@ export async function checkLocalReadiness(spec: ModelSpec, probe: ReadinessProbe
   } else if (installed.sizeBytes !== spec.sizeBytes) {
     add({ id: 'checksum', label: 'Model checksum', status: 'fail', detail: `File size ${mb(installed.sizeBytes)} does not match the expected ${mb(spec.sizeBytes)}. The file may be incomplete.` });
   } else {
-    const hash = await attempt(() => probe.sha256(installed.path));
-    verified = hash.value?.toLowerCase() === spec.sha256;
+    const hash = await attempt(() => probe.hash(installed.path));
+    const algorithm = hash.value?.algorithm;
+    const name = algorithm === 'md5' ? 'MD5' : 'SHA-256';
+    const expected = algorithm === 'md5' ? spec.md5 : spec.sha256;
+    verified = Boolean(expected) && hash.value?.hex.toLowerCase() === expected;
     add({
       id: 'checksum',
       label: 'Model checksum',
       status: verified ? 'pass' : 'fail',
-      detail: verified ? 'SHA-256 matches the expected model.' : hash.error ? `Could not verify: ${hash.error}` : 'SHA-256 does not match. The file is damaged or a different model.',
+      detail: hash.error
+        ? `Could not verify: ${hash.error}`
+        : !expected
+          ? `No pinned ${name} for this model, so it cannot be verified.`
+          : verified
+            ? `${name} matches the expected model.`
+            : `${name} does not match. The file is damaged or a different model.`,
     });
   }
 

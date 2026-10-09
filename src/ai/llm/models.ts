@@ -2,7 +2,9 @@
  * GGUF model candidates for Milestone 1 (PRD §10: Qwen3 0.6B or 1.7B, chosen
  * after device testing). Sizes and SHA-256 come from the Hugging Face LFS
  * metadata at the pinned revision; readiness verifies the installed file
- * against them before reporting offline-ready.
+ * against them before reporting offline-ready. The phone can only hash MD5
+ * natively (expo-file-system), so `md5` is computed on a developer machine from
+ * a download whose SHA-256 matched, and pinned here.
  *
  * `sourceUrl` is for developers placing the file (e.g. `adb push`). The app
  * itself never downloads anything.
@@ -14,6 +16,8 @@ export interface ModelSpec {
   quantization: string;
   sizeBytes: number;
   sha256: string;
+  /** MD5 of the same bytes, recorded after the SHA-256 was verified. */
+  md5?: string;
   license: string;
   sourceUrl: string;
 }
@@ -29,6 +33,7 @@ export const MODEL_CANDIDATES: readonly ModelSpec[] = [
     quantization: 'Q4_K_M',
     sizeBytes: 396_705_472,
     sha256: 'ac2d97712095a558e31573f62f466a3f9d93990898b0ec79d7c974c1780d524a',
+    md5: '45349ac9dec6a388775cbd720be5f8df',
     license: 'Apache-2.0',
     sourceUrl: `${UNSLOTH_06B}/Qwen3-0.6B-Q4_K_M.gguf`,
   },

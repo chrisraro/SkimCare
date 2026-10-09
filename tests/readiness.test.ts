@@ -9,7 +9,7 @@ const GB = 1024 * 1024 * 1024;
 function probe(overrides: Partial<ReadinessProbe> = {}): ReadinessProbe {
   return {
     modelFile: async () => ({ path: `/data/models/${spec.fileName}`, sizeBytes: spec.sizeBytes }),
-    sha256: async () => spec.sha256,
+    hash: async () => ({ algorithm: 'sha256' as const, hex: spec.sha256 }),
     freeStorageBytes: async () => 4 * GB,
     ocrAvailable: async () => true,
     smokeTest: async () => ({ ok: true, tokensPerSecond: 18.4 }),
@@ -36,16 +36,16 @@ describe('local readiness', () => {
   });
 
   it('fails a truncated file without hashing it', async () => {
-    const sha256 = jest.fn(async () => spec.sha256);
-    const report = await checkLocalReadiness(spec, probe({ modelFile: async () => ({ path: '/m', sizeBytes: 1000 }), sha256 }));
+    const hash = jest.fn(async () => ({ algorithm: 'sha256' as const, hex: spec.sha256 }));
+    const report = await checkLocalReadiness(spec, probe({ modelFile: async () => ({ path: '/m', sizeBytes: 1000 }), hash }));
     expect(status(report, 'checksum')).toBe('fail');
-    expect(sha256).not.toHaveBeenCalled();
+    expect(hash).not.toHaveBeenCalled();
     expect(report.offlineReady).toBe(false);
   });
 
   it('never loads a model whose checksum does not match', async () => {
     const smokeTest = jest.fn(async () => ({ ok: true }));
-    const report = await checkLocalReadiness(spec, probe({ sha256: async () => 'deadbeef', smokeTest }));
+    const report = await checkLocalReadiness(spec, probe({ hash: async () => ({ algorithm: 'sha256' as const, hex: 'deadbeef' }), smokeTest }));
     expect(status(report, 'checksum')).toBe('fail');
     expect(status(report, 'inference')).toBe('fail');
     expect(smokeTest).not.toHaveBeenCalled();
@@ -61,6 +61,14 @@ describe('local readiness', () => {
     const thrown = await checkLocalReadiness(spec, probe({ smokeTest: async () => Promise.reject(new Error('dlopen failed')) }));
     expect(thrown.offlineReady).toBe(false);
     expect(thrown.checks.find((c) => c.id === 'inference')?.detail).toContain('dlopen failed');
+  });
+
+  it('verifies with the pinned MD5 when the phone can only hash MD5', async () => {
+    const ok = await checkLocalReadiness(spec, probe({ hash: async () => ({ algorithm: 'md5' as const, hex: spec.md5!.toUpperCase() }) }));
+    expect(status(ok, 'checksum')).toBe('pass');
+    const unpinned = await checkLocalReadiness({ ...spec, md5: undefined }, probe({ hash: async () => ({ algorithm: 'md5' as const, hex: 'abc' }) }));
+    expect(status(unpinned, 'checksum')).toBe('fail');
+    expect(unpinned.offlineReady).toBe(false);
   });
 
   it('is not ready without bundled OCR', async () => {

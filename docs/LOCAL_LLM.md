@@ -38,8 +38,28 @@ Pinned in `src/ai/llm/models.ts` (size + SHA-256 from Hugging Face LFS metadata 
 
 The emulator (`test_device`, 2 GB RAM, x86_64) can only test the 0.6B model, and its speed doesn't reflect the phone. Make the 0.6B vs 1.7B decision on the demo phone.
 
+## Running the local engine (development)
+
+The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngine.ts`. The local engine is opt-in: Metro inlines `EXPO_PUBLIC_ENGINE=local`, otherwise the app keeps the Demo engine.
+
+1. Download the GGUF from `sourceUrl` in `models.ts` and check its SHA-256 (`sha256sum`). If the model has no `md5` pinned yet, record it (`md5sum`).
+2. Place it in the app's private files (debug build only — `run-as` needs a debuggable app):
+   ```bash
+   export MSYS_NO_PATHCONV=1   # Git Bash on Windows, so /data paths are not rewritten
+   adb push Qwen3-0.6B-Q4_K_M.gguf /data/local/tmp/
+   adb shell run-as ph.appbuilders.pirmabago mkdir -p files/models
+   adb shell run-as ph.appbuilders.pirmabago cp /data/local/tmp/Qwen3-0.6B-Q4_K_M.gguf files/models/
+   adb shell run-as ph.appbuilders.pirmabago chmod 600 files/models/Qwen3-0.6B-Q4_K_M.gguf
+   adb shell rm /data/local/tmp/Qwen3-0.6B-Q4_K_M.gguf
+   ```
+   Reinstalling the debug APK keeps this file; uninstalling removes it.
+3. Start Metro with the local engine: `EXPO_PUBLIC_ENGINE=local npx expo start --dev-client` (PowerShell: `$env:EXPO_PUBLIC_ENGINE="local"; npx expo start --dev-client`).
+
+**Checksum on the phone:** SDK 57 `expo-file-system` hashes files natively with MD5 only (`file.info({ md5: true })`; no SHA-256). The SHA-256 is verified on the developer machine against Hugging Face, the MD5 of the same bytes is pinned in `models.ts`, and readiness compares MD5 on the phone. This guards against truncation, corruption and the wrong file; it is not a defence against a deliberately crafted collision. The call is synchronous, so the JS thread pauses for a few seconds on a 400 MB file.
+
 ## Still to decide / verify
 
-- **Model location:** ship it inside the app (APK grows by roughly 400 MB to 1 GB) or place it separately (development: `adb push`, then copy into the app's files directory with `run-as`). Readiness reports a missing file either way.
-- **SHA-256 of a 400 MB+ file** must be computed natively and in a streaming way. In-memory digests (e.g. `expo-crypto` over a byte array) are not suitable. Check what SDK 57's `expo-file-system` offers before adding a native helper.
+- **Model location for the demo build:** ship it inside the app (APK grows by roughly 400 MB to 1 GB) or place it separately as above. Readiness reports a missing file either way.
+- **Memory:** check peak RAM and `context.release()` behaviour on the demo phone (PRD §12 low-memory row).
+- **Native prompt logging — fixed:** the prebuilt `librnllama.so` logged every prompt's token IDs to logcat (`cpp/rn-completion.cpp:402`) and token text on eval failure (`:1011`). `patches/llama.rn+0.12.9.patch` removes both, and `plugins/withLlamaFromSource.js` sets `rnllamaBuildFromSource=true` so the patched source is compiled. The source build needs Python 3 on the build machine. When upgrading llama.rn, re-check these logs and regenerate the patch (`npx patch-package llama.rn --include "rn-completion\.cpp$"`).
 - **Context size:** start with `n_ctx` 4096. Extraction chunks are ≤3000 characters (~750 tokens) plus about 500 prompt tokens and ≤1024 output tokens.
