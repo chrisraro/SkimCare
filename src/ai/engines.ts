@@ -92,6 +92,11 @@ export interface InferenceEngine {
   ocr: OcrEngine;
   llm: LlmEngine;
   checkReadiness(): Promise<ReadinessReport>;
+  /**
+   * Optional one-time setup the user starts themselves (web: download the model into
+   * this browser's storage). Never called automatically. Progress is bytes only.
+   */
+  prepare?(onProgress: (loaded: number, total: number) => void, signal?: AbortSignal): Promise<void>;
   classify(pages: DocumentPage[]): Promise<{ type: DocumentType; confidence: number }>;
 }
 

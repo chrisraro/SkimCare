@@ -17,7 +17,8 @@ import { join, relative, sep } from 'node:path';
 
 const DIST = process.argv[2] ?? 'dist';
 const MAX_BYTES = 50 * 1024 * 1024; // Skip anything this large; it does not belong in an install-time precache.
-const SKIP = [/^sw\.js$/, /\.map$/, /(^|\/)\./, /\.DS_Store$/];
+// vendor/ holds the in-browser engine runtimes (~50 MB); cacheFirst stores only the files a browser actually uses.
+const SKIP = [/^sw\.js$/, /^vendor\//, /\.map$/, /(^|\/)\./, /\.DS_Store$/];
 
 function walk(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

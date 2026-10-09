@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export -p web && node scripts/build-sw.mjs",
+  "buildCommand": "node scripts/copy-web-assets.mjs && npx expo export -p web && node scripts/build-sw.mjs",
   "outputDirectory": "dist",
   "framework": null,
   "rewrites": [

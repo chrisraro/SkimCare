@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import type { CheckStatus, ReadinessReport } from '@/ai/engines';
@@ -12,7 +12,7 @@ import { useSettings } from '@/features/settings/store';
 import { withStorageStatus } from '@/features/storage/readiness';
 import { useStorageStatus } from '@/features/storage/store';
 import { useT } from '@/i18n/useT';
-import { colors, palette, space } from '@/theme/tokens';
+import { colors, palette, radius, space } from '@/theme/tokens';
 
 const statusIcon: Record<CheckStatus, { name: 'checkmark-circle' | 'warning' | 'close-circle'; color: string; word: string }> = {
   pass: { name: 'checkmark-circle', color: palette.teal700, word: 'Passed' },
@@ -41,6 +41,30 @@ export default function Readiness() {
     setReport(null);
     engine.checkReadiness().then((r) => setReport(withStorageStatus(r, useStorageStatus.getState().status)));
   };
+
+  // Web: the model is downloaded only when the user asks, once, into this browser.
+  const [download, setDownload] = useState<{ loaded: number; total: number } | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
+  const modelMissing = report?.checks.some((c) => c.id === 'model_present' && c.status === 'fail') ?? false;
+
+  const startDownload = async () => {
+    if (!engine.prepare) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setDownloadError(null);
+    setDownload({ loaded: 0, total: 0 });
+    try {
+      await engine.prepare((loaded, total) => setDownload({ loaded, total }), controller.signal);
+      setDownload(null);
+      recheck();
+    } catch (e) {
+      setDownload(null);
+      if (!controller.signal.aborted) setDownloadError(e instanceof Error ? e.message : 'The download failed.');
+    }
+  };
+  const downloadPct = download && download.total > 0 ? Math.min(100, Math.round((download.loaded / download.total) * 100)) : 0;
 
   const proceed = () => {
     if (onboarded) return router.back();
@@ -78,6 +102,40 @@ export default function Readiness() {
           {engine.info.runtime}
         </AppText>
       </Card>
+
+      {engine.prepare && (modelMissing || download) ? (
+        <Card>
+          <AppText variant="label" tone="muted">
+            LANGUAGE MODEL
+          </AppText>
+          <AppText>
+            The AI runs inside this browser. It needs a one-time download of the {engine.info.llmModel} model. It is stored in this
+            browser only, and works offline afterwards. Your documents are never uploaded.
+          </AppText>
+          {download ? (
+            <View
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel="Model download"
+              accessibilityValue={{ min: 0, max: 100, now: downloadPct }}
+              style={{ gap: space.xs }}
+            >
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${downloadPct}%` }]} />
+              </View>
+              <AppText variant="small" tone="muted">
+                {download.total > 0 && download.loaded >= download.total
+                  ? 'Downloaded · checking the file…'
+                  : `Downloading · ${downloadPct}% (${Math.round(download.loaded / 1048576)} of ${Math.round(download.total / 1048576) || '≈400'} MB)`}
+              </AppText>
+              <Button label="Cancel download" variant="ghost" icon="close" onPress={() => abortRef.current?.abort()} />
+            </View>
+          ) : (
+            <Button label="Download the model (≈400 MB, once)" icon="download-outline" onPress={startDownload} disabled={!report} />
+          )}
+          {downloadError ? <Banner tone="warning">{`Download not finished · ${downloadError}`}</Banner> : null}
+        </Card>
+      ) : null}
 
       {!report ? (
         <View style={styles.loading}>
@@ -154,5 +212,7 @@ export default function Readiness() {
 
 const styles = StyleSheet.create({
   loading: { flexDirection: 'row', gap: space.sm, alignItems: 'center', justifyContent: 'center', padding: space.xl },
+  track: { height: 8, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted, overflow: 'hidden' },
+  fill: { height: 8, backgroundColor: colors.primary },
   check: { flexDirection: 'row', gap: space.md, paddingVertical: space.sm, alignItems: 'flex-start' },
 });
