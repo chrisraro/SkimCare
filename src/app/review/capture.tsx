@@ -1,0 +1,122 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { router, Stack } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AppText, Banner, Button, Screen } from '@/components/ui';
+import { useDraft } from '@/features/review/draftStore';
+import { useT } from '@/i18n/useT';
+import { colors, radius, space, touch } from '@/theme/tokens';
+
+const pageId = () => `pg_${Math.random().toString(36).slice(2, 9)}`;
+
+async function shoot(): Promise<string | null> {
+  const perm = await ImagePicker.requestCameraPermissionsAsync();
+  if (!perm.granted) return null;
+  // System camera with crop step (F03: shoot, crop). Rotate/reorder happen in-app.
+  const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.85 });
+  return res.canceled ? null : (res.assets[0]?.uri ?? null);
+}
+
+/** S06 Capture — shoot, rotate, retake, add page. Camera permission requested only here. */
+export default function Capture() {
+  const t = useT();
+  const pages = useDraft((s) => s.captured);
+  const addPages = useDraft((s) => s.addPages);
+  const replacePage = useDraft((s) => s.replacePage);
+  const removePage = useDraft((s) => s.removePage);
+  const rotatePage = useDraft((s) => s.rotatePage);
+  const opened = useRef(false);
+
+  const addPage = async () => {
+    const uri = await shoot();
+    if (uri) addPages([{ id: pageId(), uri, rotation: 0 }]);
+  };
+
+  useEffect(() => {
+    if (!opened.current && pages.length === 0) {
+      opened.current = true;
+      addPage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Screen
+      footer={
+        <>
+          <Button label="Add another page" variant="secondary" icon="add" onPress={addPage} />
+          <Button
+            label={`Continue with ${pages.length} page${pages.length === 1 ? '' : 's'}`}
+            disabled={pages.length === 0}
+            onPress={() => router.push('/review/preview')}
+          />
+        </>
+      }
+    >
+      <Stack.Screen options={{ title: t('capture_title') }} />
+      <Banner tone="info">Lay the page flat in good light. Fill the frame with the page edges visible.</Banner>
+
+      {pages.length === 0 ? (
+        <AppText tone="muted" center>
+          No pages yet. Camera permission is only used while you capture.
+        </AppText>
+      ) : null}
+
+      <View style={styles.grid}>
+        {pages.map((p, i) => (
+          <View key={p.id} style={styles.tile}>
+            <View style={styles.thumbWrap}>
+              {p.uri ? (
+                <Image
+                  source={{ uri: p.uri }}
+                  style={[styles.thumb, { transform: [{ rotate: `${p.rotation}deg` }] }]}
+                  contentFit="contain"
+                  accessibilityLabel={`Page ${i + 1}`}
+                />
+              ) : null}
+            </View>
+            <AppText variant="small" tone="muted" center>{`Page ${i + 1}`}</AppText>
+            <View style={styles.actions}>
+              <IconBtn icon="refresh" label={`Rotate page ${i + 1}`} onPress={() => rotatePage(p.id)} />
+              <IconBtn
+                icon="camera-reverse-outline"
+                label={`Retake page ${i + 1}`}
+                onPress={async () => {
+                  const uri = await shoot();
+                  if (uri) replacePage(p.id, uri);
+                }}
+              />
+              <IconBtn icon="trash-outline" label={`Remove page ${i + 1}`} onPress={() => removePage(p.id)} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </Screen>
+  );
+}
+
+function IconBtn({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.iconBtn}>
+      <Ionicons name={icon} size={20} color={colors.textSubtle} />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  tile: { width: '47%', gap: space.xs },
+  thumbWrap: {
+    aspectRatio: 0.75,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  thumb: { width: '100%', height: '100%' },
+  actions: { flexDirection: 'row', justifyContent: 'space-around' },
+  iconBtn: { width: touch.min, height: touch.min, alignItems: 'center', justifyContent: 'center' },
+});
