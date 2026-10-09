@@ -41,9 +41,14 @@ const runner: CompletionRunner = async (req) => {
     }),
   });
   if (!res.ok) throw new Error(`LLM server ${res.status}: ${await res.text()}`);
-  const json = (await res.json()) as { choices: { message: { content: string } }[] };
+  const json = (await res.json()) as { choices: { message: { content: string } }[]; usage?: { completion_tokens?: number } };
+  usage.calls++;
+  usage.outputTokens += json.usage?.completion_tokens ?? 0;
   return json.choices[0]?.message.content ?? '';
 };
+
+/** Generated tokens dominate time on a phone, so the eval reports them per call. */
+const usage = { calls: 0, outputTokens: 0 };
 
 const TYPE_NAMES = new Set<string>([
   'payment_condition', 'payment_amount', 'due_date', 'late_fee', 'deliverables', 'revisions',
@@ -119,6 +124,9 @@ async function main() {
     `\nTOTAL  precision ${(100 * precision).toFixed(0)}%  recall ${(100 * recall).toFixed(0)}%  ` +
       `injection-cited ${sum('injectionCited')}  verdict-rejected ${verdicts}  echoed-titles ${sum('echoedTitles')}  ` +
       `incomplete ${rows.filter((r) => r.incomplete).length}  time ${rows.reduce((n, r) => n + r.seconds, 0).toFixed(0)}s`,
+  );
+  console.log(
+    `model calls ${usage.calls}  generated tokens ${usage.outputTokens} (${(usage.outputTokens / Math.max(1, usage.calls)).toFixed(1)} per call)`,
   );
 }
 

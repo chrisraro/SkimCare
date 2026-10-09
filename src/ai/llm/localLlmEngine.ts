@@ -25,14 +25,14 @@ export interface CompletionRequest {
 export type CompletionRunner = (req: CompletionRequest) => Promise<string>;
 
 export interface LocalLlmOptions {
-  /** Output budget per block; one finding fits well within this. */
+  /** Output budget per block; an extract-v4 finding is ~60–90 tokens. */
   maxTokens?: number;
   /** Called after each block, for progress UI. Counts only — never text. */
   onProgress?: (done: number, total: number) => void;
 }
 
 export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOptions = {}): LlmEngine {
-  const maxTokens = opts.maxTokens ?? 384;
+  const maxTokens = opts.maxTokens ?? 200;
 
   return {
     async extract(req: ExtractionRequest, signal?: AbortSignal): Promise<RawExtraction> {
