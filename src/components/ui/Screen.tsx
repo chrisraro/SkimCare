@@ -2,7 +2,7 @@ import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { tabBarSpace } from '@/components/glass/FloatingTabBar';
+import { tabBarSpace } from '@/components/glass/metrics';
 import { GlassHeader, GlassVeil, HEADER_GAP, HEADER_HEIGHT } from '@/components/glass/GlassHeader';
 import { COMPACT_AFTER, useChrome } from '@/features/chrome/store';
 import { colors, space } from '@/theme/tokens';

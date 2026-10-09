@@ -54,6 +54,7 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
         }
         if (result.ok) findings.push(...result.candidates);
         else incompletePages.add(unit.page);
+        req.onProgress?.(unit.index + 1, units.length);
         opts.onProgress?.(unit.index + 1, units.length);
       }
 

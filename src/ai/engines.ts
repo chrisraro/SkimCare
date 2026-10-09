@@ -53,6 +53,8 @@ export interface ExtractionRequest {
   pages: DocumentPage[];
   documentType: DocumentType;
   language: 'en' | 'fil';
+  /** Progress for this request (blocks done / total). Counts only — never text. */
+  onProgress?: (done: number, total: number) => void;
 }
 
 /** Raw model output — always untrusted until it passes the evidence gate. */

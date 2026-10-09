@@ -33,6 +33,8 @@ export interface RunOptions {
   documentType: DocumentType;
   language: 'en' | 'fil';
   onStage?: (stage: StageId) => void;
+  /** Extraction progress (blocks done / total) for engines that report it. */
+  onProgress?: (done: number, total: number) => void;
   signal?: AbortSignal;
 }
 
@@ -104,7 +106,10 @@ export async function runAnalysis(opts: RunOptions): Promise<AnalysisRun> {
   throwIfAborted(signal);
 
   onStage?.('extract');
-  const raw = await engine.llm.extract({ pages, documentType: opts.documentType, language: opts.language }, signal);
+  const raw = await engine.llm.extract(
+    { pages, documentType: opts.documentType, language: opts.language, onProgress: opts.onProgress },
+    signal,
+  );
 
   onStage?.('validate');
   throwIfAborted(signal);

@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { STAGES } from '@/ai/pipeline';
 import { useReviewJob } from '@/features/review/jobStore';
 import { colors, palette, radius, space } from '@/theme/tokens';
-import { AppText } from './ui';
+import { AppText } from './ui/AppText';
 
 /**
  * Review progress shown above the tab bar while a minimized review runs, and
@@ -14,6 +14,7 @@ import { AppText } from './ui';
 export function ReviewAccessory({ compact }: { compact?: boolean }) {
   const status = useReviewJob((s) => s.status);
   const stage = useReviewJob((s) => s.stage);
+  const blocks = useReviewJob((s) => s.progress);
   const title = useReviewJob((s) => s.title);
   const docId = useReviewJob((s) => s.docId);
   const clear = useReviewJob((s) => s.clear);
@@ -23,8 +24,10 @@ export function ReviewAccessory({ compact }: { compact?: boolean }) {
   const index = Math.max(0, STAGES.findIndex((s) => s.id === stage));
   const done = status === 'done';
   const failed = status === 'error';
-  const progress = done ? 1 : (index + 0.5) / STAGES.length;
-  const line = done ? 'Review ready — tap to open' : failed ? 'Review stopped — tap to retry' : STAGES[index]!.label;
+  const reading = stage === 'extract' && blocks ? blocks.done / Math.max(blocks.total, 1) : 0.5;
+  const progress = done ? 1 : (index + reading) / STAGES.length;
+  const stageLine = stage === 'extract' && blocks ? `${STAGES[index]!.label} · ${blocks.done}/${blocks.total}` : STAGES[index]!.label;
+  const line = done ? 'Review ready — tap to open' : failed ? 'Review stopped — tap to retry' : stageLine;
 
   const open = () => {
     if (done && docId) {

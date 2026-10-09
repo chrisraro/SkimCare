@@ -10,15 +10,9 @@ import { GlassSurface } from '@/components/ui/GlassSurface';
 import { useChrome } from '@/features/chrome/store';
 import { useReviewJob } from '@/features/review/jobStore';
 import { colors, glass, palette, space } from '@/theme/tokens';
+import { ACCESSORY_HEIGHT, TAB_BAR_HEIGHT } from './metrics';
 
-export const TAB_BAR_HEIGHT = 62;
 const BAR_PAD = 6;
-const ACCESSORY_HEIGHT = 52;
-
-/** Space a tab screen leaves at the bottom so its last item clears the bar and the review capsule. */
-export function tabBarSpace(bottomInset: number) {
-  return bottomInset + space.lg + TAB_BAR_HEIGHT + space.md + ACCESSORY_HEIGHT + space.lg;
-}
 
 type IconName = keyof typeof Ionicons.glyphMap;
 

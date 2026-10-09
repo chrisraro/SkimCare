@@ -108,15 +108,16 @@ export default function Verify() {
                       }}
                     />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Button
-                      label={t('verify_looks_right')}
-                      variant={done ? 'ghost' : 'primary'}
-                      icon="checkmark"
-                      disabled={done}
-                      onPress={() => updateBlock(b.id, b.page, { verified: true })}
-                    />
-                  </View>
+                  {/* Once confirmed, the "Confirmed" flag above says so; only "Fix text" stays. */}
+                  {done ? null : (
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        label={t('verify_looks_right')}
+                        icon="checkmark"
+                        onPress={() => updateBlock(b.id, b.page, { verified: true })}
+                      />
+                    </View>
+                  )}
                 </>
               )}
             </View>

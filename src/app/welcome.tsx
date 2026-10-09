@@ -91,6 +91,9 @@ export default function Welcome() {
             </View>
           ))}
         </View>
+        <AppText variant="small" style={{ color: palette.navy300 }}>
+          {t('privacy_mlkit')}
+        </AppText>
       </ScrollView>
       <View style={styles.footer}>
         <Button label={t('welcome_cta')} icon="arrow-forward" onPress={() => router.push('/readiness')} />

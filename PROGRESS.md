@@ -47,7 +47,7 @@ Frontend work is **paused** here; the backend/on-device AI moves to the co-devel
 
 ## Backend status & next steps (2026-10-10, Glenn)
 
-Branch `feat/local-llm-engine` (pushed; no PR yet). Details are in the log entries below.
+Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in the log entries below.
 
 **Finished**
 - **Real on-device AI:** llama.rn 0.12.9 + Qwen3 0.6B GGUF, opt-in with `EXPO_PUBLIC_ENGINE=local`; the Demo engine is still the default.

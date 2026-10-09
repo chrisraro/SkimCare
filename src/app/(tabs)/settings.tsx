@@ -50,6 +50,9 @@ export default function Settings() {
         <AppText variant="small" tone="muted">
           No account, no cloud sync, no analytics on document content. Reviews stay until you delete them.
         </AppText>
+        <AppText variant="small" tone="muted">
+          {t('privacy_mlkit')}
+        </AppText>
       </Card>
       <Button label={t('settings_erase')} variant="danger" icon="trash-outline" onPress={confirmErase} disabled={count === 0} />
 

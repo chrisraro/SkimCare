@@ -13,6 +13,8 @@ export type ReviewJobStatus = 'idle' | 'running' | 'done' | 'error';
 interface ReviewJobState {
   status: ReviewJobStatus;
   stage: StageId;
+  /** Blocks read so far during extraction, when the engine reports it. */
+  progress?: { done: number; total: number };
   title: string;
   /** Set once the finished review is saved. */
   docId?: string;
@@ -67,7 +69,7 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
     controller = ac;
     const now = new Date().toISOString();
     const id = `doc_${Date.now().toString(36)}`;
-    set({ status: 'running', stage: 'organize', title, docId: undefined, error: undefined, draftSessionId: draft.sessionId });
+    set({ status: 'running', stage: 'organize', progress: undefined, title, docId: undefined, error: undefined, draftSessionId: draft.sessionId });
 
     runAnalysis({
       engine: getEngine(),
@@ -77,6 +79,9 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
       language: draft.language,
       onStage: (stage) => {
         if (!ac.signal.aborted) set({ stage });
+      },
+      onProgress: (done, total) => {
+        if (!ac.signal.aborted) set({ progress: { done, total } });
       },
       signal: ac.signal,
     })

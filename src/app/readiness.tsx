@@ -47,7 +47,7 @@ export default function Readiness() {
       footer={
         <>
           <Button label={t('readiness_continue')} onPress={proceed} disabled={!report} />
-          <Button label={t('readiness_recheck')} variant="ghost" icon="refresh" onPress={recheck} />
+          <Button label={t('readiness_recheck')} variant="ghost" icon="refresh" onPress={recheck} disabled={!report} loading={!report} />
         </>
       }
     >

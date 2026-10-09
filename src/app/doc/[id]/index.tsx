@@ -95,7 +95,7 @@ export default function Overview() {
       </View>
 
       {run && run.rejectedCount > 0 ? (
-        <Banner tone="info">{`${run.rejectedCount} ${t('overview_rejected')}`}</Banner>
+        <Banner tone="info">{`${run.rejectedCount} ${t(run.rejectedCount === 1 ? 'overview_rejected_one' : 'overview_rejected_other')}`}</Banner>
       ) : null}
 
       <SectionLabel>{t('overview_next')}</SectionLabel>

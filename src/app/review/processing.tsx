@@ -18,6 +18,7 @@ import { colors, palette, space } from '@/theme/tokens';
 export default function Processing() {
   const t = useT();
   const stage = useReviewJob((s) => s.stage);
+  const progress = useReviewJob((s) => s.progress);
   const status = useReviewJob((s) => s.status);
   const error = useReviewJob((s) => s.error ?? null);
   const docId = useReviewJob((s) => s.docId);
@@ -100,9 +101,20 @@ export default function Processing() {
                   />
                 )}
               </View>
-              <AppText variant={state === 'active' ? 'bodyStrong' : 'body'} tone={state === 'todo' ? 'muted' : 'default'}>
-                {s.label}
-              </AppText>
+              <View style={styles.stageText}>
+                <AppText variant={state === 'active' ? 'bodyStrong' : 'body'} tone={state === 'todo' ? 'muted' : 'default'}>
+                  {s.label}
+                </AppText>
+                {/* Per-section progress while the model reads (engines that report it). */}
+                {s.id === 'extract' && state === 'active' && progress ? (
+                  <View accessible accessibilityLabel={`Section ${progress.done} of ${progress.total}`}>
+                    <AppText variant="small" tone="muted">{`Section ${progress.done} of ${progress.total}`}</AppText>
+                    <View style={styles.track}>
+                      <View style={[styles.fill, { width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }]} />
+                    </View>
+                  </View>
+                ) : null}
+              </View>
             </View>
           );
         })}
@@ -117,4 +129,7 @@ export default function Processing() {
 const styles = StyleSheet.create({
   stage: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
   stageIcon: { width: 24, alignItems: 'center' },
+  stageText: { flex: 1, gap: 4 },
+  track: { height: 4, borderRadius: 2, backgroundColor: palette.slate200, marginTop: 4, overflow: 'hidden' },
+  fill: { height: 4, borderRadius: 2, backgroundColor: colors.primary },
 });

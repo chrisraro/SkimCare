@@ -1,7 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { setDemoFixture } from '@/ai/demoEngine';
 import { DEMO_FIXTURES } from '@/ai/demo/fixtures';
@@ -26,7 +26,19 @@ export default function AddDocument() {
     if (jobStatus === 'done') useReviewJob.getState().clear();
   }, [jobStatus]);
 
-  const pickImages = async () => {
+  const [pickError, setPickError] = useState<string | null>(null);
+
+  /** Runs a system picker; a rejection (e.g. "picking in progress") becomes a message, not a crash. */
+  const safely = (pick: () => Promise<void>) => async () => {
+    setPickError(null);
+    try {
+      await pick();
+    } catch {
+      setPickError(t('add_pick_failed'));
+    }
+  };
+
+  const pickImages = safely(async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
@@ -36,9 +48,9 @@ export default function AddDocument() {
     start('gallery');
     addPages(res.assets.map((a) => ({ id: pageId(), uri: a.uri, rotation: 0 as const })));
     router.push('/review/preview');
-  };
+  });
 
-  const pickPdf = async () => {
+  const pickPdf = safely(async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
     if (res.canceled || !res.assets[0]) return;
     const asset = res.assets[0];
@@ -46,7 +58,7 @@ export default function AddDocument() {
     // Digital PDFs are read from their text layer; page images are not needed for that path.
     addPages([{ id: pageId(), uri: undefined, rotation: 0 }]);
     router.push('/review/preview');
-  };
+  });
 
   const startSample = (id: string) => {
     const fixture = DEMO_FIXTURES.find((f) => f.id === id)!;
@@ -71,6 +83,7 @@ export default function AddDocument() {
 
   return (
     <Screen title={t('add_title')}>
+      {pickError ? <Banner tone="danger">{pickError}</Banner> : null}
       <View style={styles.list}>
         <ListRow
           icon="camera-outline"
