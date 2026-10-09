@@ -86,14 +86,7 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 7. **Milestone 4:** SQLCipher storage and encrypted files, then an airplane-mode rehearsal on the phone.
 8. **iPhone (phase 2, outside PRD H1):** needs EAS Build or a Mac plus an Apple Developer account; Apple Vision OCR; llama.rn built from source (`RNLLAMA_BUILD_FROM_SOURCE=1`, so the log patches apply); in-app model import.
 
-**For Chris (UI):**
-- S05 `pickPdf` has no catch for picker errors.
-- "1 outputs were discarded" (plural).
-- The processing screen has no per-block progress (`onProgress` exists).
-- Disable "Run checks again" while checks run.
-- The "Import PDF" copy could mention scans.
-- The disabled "Matches the paper" button draws a white box.
-- Require cycle `FloatingTabBar → ReviewAccessory → ui/index → Screen`.
+**For Chris (UI):** ✅ all done 2026-10-10 (picker errors, plural, per-section progress, readiness recheck, PDF copy, confirmed-button box, require cycle, ML Kit disclosure); see the log entry "UI fixes Glenn flagged".
 
 **Housekeeping:** fictional test files are on the test phone (`Download/SkimCare-test-scanned.pdf`, `Pictures/SkimCare-test-photo-exif.jpg`). A copy of Glenn's signed contract is in the repo root, untracked; never commit it.
 
