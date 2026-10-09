@@ -53,12 +53,23 @@
   if (reduceMotion || !('IntersectionObserver' in window)) {
     clauses.forEach(catchClause);
   } else {
+    const pending = new Set(clauses);
+    const take = (el) => {
+      pending.delete(el);
+      catchClause(el);
+      observer.unobserve(el);
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          catchClause(entry.target);
-          observer.unobserve(entry.target);
+          if (entry.isIntersecting) take(entry.target);
+        });
+        // A fast scroll on a slow frame can jump a clause from below the
+        // reading line to above it with no intersection in between; anything
+        // already scrolled past counts as read.
+        const line = window.innerHeight * 0.7;
+        pending.forEach((el) => {
+          if (el.getBoundingClientRect().top < line) take(el);
         });
       },
       // Caught once a clause's top edge enters the upper 70% of the viewport.
