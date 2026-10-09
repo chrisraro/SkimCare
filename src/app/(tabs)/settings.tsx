@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { confirmDestructive } from '@/components/confirm';
+import { ModelImportCard } from '@/components/ModelImportCard';
 import { getEngine } from '@/ai/demoEngine';
 import { AppText, Button, Card, Chip, ListRow, Screen, SectionLabel } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
@@ -47,6 +48,7 @@ export default function Settings() {
         />
         <ListRow icon="pulse-outline" title={t('settings_diagnostics')} onPress={() => router.push('/diagnostics')} />
       </View>
+      <ModelImportCard onImported={() => router.push('/readiness')} />
 
       <SectionLabel>{t('settings_storage')}</SectionLabel>
       <Card>

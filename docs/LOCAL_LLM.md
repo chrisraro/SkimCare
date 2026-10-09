@@ -57,6 +57,16 @@ The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngi
 
 **Checksum on the phone:** SDK 57 `expo-file-system` hashes files natively with MD5 only (`file.info({ md5: true })`; no SHA-256). The SHA-256 is verified on the developer machine against Hugging Face, the MD5 of the same bytes is pinned in `models.ts`, and readiness compares MD5 on the phone. This guards against truncation, corruption and the wrong file; it is not a defence against a deliberately crafted collision. The call is synchronous, so the JS thread pauses for a few seconds on a 400 MB file.
 
+## Install the model in the app (no adb)
+
+Android, local engine only (`EXPO_PUBLIC_ENGINE=local`). Code: `src/features/model/importModel.ts`, UI: `src/components/ModelImportCard.tsx`.
+
+1. Get `Qwen3-0.6B-Q4_K_M.gguf` (≈380 MB, `sourceUrl` in `models.ts`) onto the phone once: USB copy to `Download/`, the Files app, or a one-time download in the browser.
+2. In the app, open **Settings › On-device AI › Import model file** (the same card appears on the readiness screen when the model check fails) and pick the file.
+3. The app checks name and size against `models.ts`, copies the file into its private storage (`files/models/<fileName>` of `ph.skimcare.app`, the same place as the adb steps above) under a temporary `.part` name, checks the pinned MD5 natively, and only then moves it into place. A mismatching copy is deleted and an already-installed model is kept. Readiness runs again after a successful import.
+
+Any pinned model with an `md5` can be imported (0.6B Q4_K_M or Q4_0); readiness still checks `DEFAULT_MODEL_ID`. The picker opens the file in place (`copyToCacheDirectory: false`), so there is only one extra copy, and nothing is uploaded. You can delete the file from `Download/` afterwards. The MD5 check is synchronous, so the screen pauses for a few seconds during "Checking the file".
+
 ## Still to decide / verify
 
 - **Model location for the demo build:** ship it inside the app (APK grows by roughly 400 MB to 1 GB) or place it separately as above. Readiness reports a missing file either way.
