@@ -55,6 +55,12 @@ export interface ExtractionRequest {
   language: 'en' | 'fil';
   /** Progress for this request (blocks done / total). Counts only — never text. */
   onProgress?: (done: number, total: number) => void;
+  /**
+   * Raw candidates from each block as soon as it is read, for progressive results.
+   * Untrusted like everything else from the model: callers must pass them through
+   * the evidence gate before showing them. The final RawExtraction still holds all of them.
+   */
+  onCandidates?: (candidates: unknown[]) => void;
 }
 
 /** Raw model output — always untrusted until it passes the evidence gate. */

@@ -35,6 +35,12 @@ export interface RunOptions {
   onStage?: (stage: StageId) => void;
   /** Extraction progress (blocks done / total) for engines that report it. */
   onProgress?: (done: number, total: number) => void;
+  /**
+   * Findings found so far, while extraction runs (engines that report per block).
+   * Each batch passes the evidence gate first; called with the full accumulated list.
+   * Display only: the finished AnalysisRun is computed exactly as without it.
+   */
+  onFindings?: (accepted: Finding[]) => void;
   signal?: AbortSignal;
 }
 
@@ -128,8 +134,19 @@ export async function runAnalysis(opts: RunOptions): Promise<AnalysisRun> {
   throwIfAborted(signal);
 
   onStage?.('extract');
+  const { onFindings } = opts;
+  let found: Finding[] = [];
+  const onCandidates = onFindings
+    ? (batch: unknown[]) => {
+        // Never show ungated output: each partial batch goes through the evidence gate.
+        const { accepted } = validateCandidates(batch, pages);
+        if (!accepted.length || signal?.aborted) return;
+        found = [...found, ...accepted];
+        onFindings(found);
+      }
+    : undefined;
   const raw = await engine.llm.extract(
-    { pages, documentType: opts.documentType, language: opts.language, onProgress: opts.onProgress },
+    { pages, documentType: opts.documentType, language: opts.language, onProgress: opts.onProgress, onCandidates },
     signal,
   );
 

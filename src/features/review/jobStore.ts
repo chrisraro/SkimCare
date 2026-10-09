@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { getEngine } from '@/ai/demoEngine';
 import { runAnalysis, type StageId } from '@/ai/pipeline';
+import type { Finding } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
 import { useDraft } from './draftStore';
 
@@ -15,6 +16,8 @@ interface ReviewJobState {
   stage: StageId;
   /** Blocks read so far during extraction, when the engine reports it. */
   progress?: { done: number; total: number };
+  /** Findings that already passed the evidence gate while the review runs ("Found so far"). */
+  partialFindings: Finding[];
   title: string;
   /** Set once the finished review is saved. */
   docId?: string;
@@ -45,6 +48,7 @@ function clearDraftIfOwn(sessionId: string | undefined) {
 export const useReviewJob = create<ReviewJobState>((set, get) => ({
   status: 'idle',
   stage: 'organize',
+  partialFindings: [],
   title: '',
   minimized: false,
 
@@ -57,6 +61,7 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
       set({
         status: 'error',
         stage: 'organize',
+        partialFindings: [],
         title,
         docId: undefined,
         draftSessionId: draft.sessionId,
@@ -69,7 +74,7 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
     controller = ac;
     const now = new Date().toISOString();
     const id = `doc_${Date.now().toString(36)}`;
-    set({ status: 'running', stage: 'organize', progress: undefined, title, docId: undefined, error: undefined, draftSessionId: draft.sessionId });
+    set({ status: 'running', stage: 'organize', progress: undefined, partialFindings: [], title, docId: undefined, error: undefined, draftSessionId: draft.sessionId });
 
     runAnalysis({
       engine: getEngine(),
@@ -82,6 +87,9 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
       },
       onProgress: (done, total) => {
         if (!ac.signal.aborted) set({ progress: { done, total } });
+      },
+      onFindings: (partialFindings) => {
+        if (!ac.signal.aborted) set({ partialFindings });
       },
       signal: ac.signal,
     })
@@ -113,19 +121,19 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
   cancel: () => {
     controller?.abort();
     controller = null;
-    set({ status: 'idle', minimized: false, error: undefined });
+    set({ status: 'idle', minimized: false, error: undefined, partialFindings: [] });
   },
 
   discard: () => {
     controller?.abort();
     controller = null;
     clearDraftIfOwn(get().draftSessionId);
-    set({ status: 'idle', minimized: false, error: undefined, docId: undefined, draftSessionId: undefined });
+    set({ status: 'idle', minimized: false, error: undefined, docId: undefined, draftSessionId: undefined, partialFindings: [] });
   },
 
   setMinimized: (minimized) => set({ minimized }),
 
-  clear: () => set({ status: 'idle', minimized: false, docId: undefined, error: undefined, draftSessionId: undefined }),
+  clear: () => set({ status: 'idle', minimized: false, docId: undefined, error: undefined, draftSessionId: undefined, partialFindings: [] }),
 
   isBusy: () => {
     const { status } = get();

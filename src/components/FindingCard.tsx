@@ -8,15 +8,16 @@ import { AppText, Card, StatusBadge } from './ui';
 
 interface Props {
   finding: Finding;
-  onPress: (id: string) => void;
+  /** Omit for a read-only preview (e.g. "Found so far" while a review runs): no button, no link. */
+  onPress?: (id: string) => void;
 }
 
 export const FindingCard = memo(function FindingCard({ finding, onPress }: Props) {
   const t = useT();
   // An explicit label replaces the children's text for screen readers, so it must carry the status too.
-  const label = `${t(`status_${finding.reviewStatus}`)}: ${finding.title}${finding.evidence ? `, page ${finding.evidence.page}` : ''}. Opens evidence and explanation.`;
-  return (
-    <Card onPress={() => onPress(finding.id)} accessibilityLabel={label}>
+  const summary = `${t(`status_${finding.reviewStatus}`)}: ${finding.title}${finding.evidence ? `, page ${finding.evidence.page}` : ''}.`;
+  const card = (
+    <Card onPress={onPress ? () => onPress(finding.id) : undefined} accessibilityLabel={`${summary} Opens evidence and explanation.`}>
       <View style={styles.top}>
         <StatusBadge status={finding.reviewStatus} />
         {finding.evidence ? (
@@ -29,13 +30,21 @@ export const FindingCard = memo(function FindingCard({ finding, onPress }: Props
       <AppText tone="subtle" numberOfLines={2}>
         {finding.explanation}
       </AppText>
-      <View style={styles.foot}>
-        <AppText variant="small" tone="primary" style={styles.cta}>
-          {finding.evidence ? 'Evidence & meaning' : 'Why it cannot be verified'}
-        </AppText>
-        <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-      </View>
+      {onPress ? (
+        <View style={styles.foot}>
+          <AppText variant="small" tone="primary" style={styles.cta}>
+            {finding.evidence ? 'Evidence & meaning' : 'Why it cannot be verified'}
+          </AppText>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        </View>
+      ) : null}
     </Card>
+  );
+  if (onPress) return card;
+  return (
+    <View accessible accessibilityLabel={summary}>
+      {card}
+    </View>
   );
 });
 

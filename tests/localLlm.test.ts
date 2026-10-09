@@ -3,7 +3,7 @@ import { serviceAgreement } from '@/ai/demo/fixtures';
 import { demoEngine } from '@/ai/demoEngine';
 import type { InferenceEngine } from '@/ai/engines';
 import { looksLikeInstruction } from '@/ai/injection';
-import { extractionUnits, isTrivialBlock } from '@/ai/llm/chunking';
+import { extractionUnits, isTrivialBlock, prioritizeUnits } from '@/ai/llm/chunking';
 import { createLocalLlmEngine, type CompletionRequest } from '@/ai/llm/localLlmEngine';
 import { extractJsonText, parseModelOutput } from '@/ai/llm/parse';
 import { buildExtractionMessages, CONTEXT_CHARS } from '@/ai/llm/prompt';
@@ -153,7 +153,8 @@ describe('local LLM engine through the evidence gate', () => {
   it('asks about every non-trivial block once and keeps grounded findings', async () => {
     const { run, calls } = fakeRunner({ p3_b12: answer(), p3_b13: answer({ type: 'ownership', title: 'Ownership after full payment' }) });
     const analysis = await analyze(run);
-    expect(calls.filter((c) => c.blockId).map((c) => c.blockId)).toEqual(units.map((u) => u.block.id));
+    // Critical blocks are asked first (prioritizeUnits); every block exactly once.
+    expect(calls.filter((c) => c.blockId).map((c) => c.blockId)).toEqual(prioritizeUnits(units).map((u) => u.block.id));
     expect(analysis.findings.map((f) => f.evidence?.blockId)).toEqual(['p3_b12', 'p3_b13']);
     expect(analysis.coverage).toEqual({ pagesRead: 3, pagesTotal: 3, incomplete: false });
   });
