@@ -14,6 +14,7 @@ import { AbortedError } from '../engines';
 import type { CompletionRequest, CompletionRunner } from '../llm/localLlmEngine';
 import type { ModelSpec } from '../llm/models';
 import { isSmokeTestReply, SMOKE_TEST_MESSAGES, type SmokeTestResult } from '../llm/readiness';
+import { fromLlamaTimings, type LlamaTimings } from '../llm/stats';
 import { sha256OfBlob } from './sha256';
 import { absoluteUrl, importVendor, vendorManifest, VENDOR } from './vendor';
 
@@ -169,6 +170,11 @@ async function complete(wllama: Wllama, req: Omit<CompletionRequest, 'jsonSchema
       max_tokens: req.maxTokens,
       temperature: 0,
       chat_template_kwargs: { enable_thinking: false },
+      // wllama runs llama.cpp's server code: with cache_prompt the slot keeps the previous
+      // prompt in its KV cache and evaluates only the part after the common prefix, so the
+      // shared system prompt is evaluated once per review (prompt.ts). It is the server
+      // default; set explicitly so a library default change cannot silently slow reviews.
+      cache_prompt: true,
       abortSignal: req.signal,
       ...(constrained ? { response_format: { type: 'json_schema' as const, json_schema: { name: 'output', schema: req.jsonSchema, strict: true } } } : {}),
     });
@@ -176,7 +182,9 @@ async function complete(wllama: Wllama, req: Omit<CompletionRequest, 'jsonSchema
     const text = (res.choices[0]?.message.content ?? '').replace(/<think>[\s\S]*?<\/think>/gi, '');
     const seconds = (Date.now() - started) / 1000;
     const tokens = res.usage?.completion_tokens;
-    return { text, tokensPerSecond: tokens && seconds > 0 ? tokens / seconds : undefined };
+    // The non-streaming reply is llama.cpp's server JSON, which carries `timings` (counts and times only).
+    const timings = fromLlamaTimings((res as { timings?: LlamaTimings }).timings);
+    return { text, timings, tokensPerSecond: tokens && seconds > 0 ? tokens / seconds : undefined };
   } catch (e) {
     if (req.signal?.aborted || isAbort(e)) throw new AbortedError();
     if (constrained && isSchemaError(e)) {
@@ -193,7 +201,8 @@ export function createWllamaRunner(spec: ModelSpec): CompletionRunner {
   return (req) =>
     serial(async () => {
       const { wllama } = await runtimeFor(spec);
-      return (await complete(wllama, req)).text;
+      const { text, timings } = await complete(wllama, req);
+      return { text, timings };
     });
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { scoreFindings } from '@/ai/eval/score';
 import { moneyAmountsIn, validateCandidates } from '@/ai/evidenceGate';
 import { extractionUnits } from '@/ai/llm/chunking';
-import { buildExtractionMessages, systemPrompt } from '@/ai/llm/prompt';
+import { buildExplainMessages, buildTriageMessages, systemPrompt } from '@/ai/llm/prompt';
 import type { Finding } from '@/domain/schema';
 import { EVAL_CONTRACTS, type EvalContract } from './fixtures/contracts';
 
@@ -48,8 +48,10 @@ describe('evaluation contract set (PRD §17)', () => {
       const units = extractionUnits(c.pages);
       expect(units.some((u) => c.injectionBlockIds.includes(u.block.id))).toBe(false);
       for (const u of units) {
-        const user = buildExtractionMessages(u, c.type, 'en')[1]!.content;
-        expect(user.match(/<\/block>/g)).toHaveLength(1);
+        for (const user of [buildTriageMessages(u, c.type, 'en')[1]!.content, buildExplainMessages(u, 'other', c.type, 'en')[1]!.content]) {
+          expect(user.match(/<\/block>/g)).toHaveLength(1);
+          for (const id of c.injectionBlockIds) expect(user).not.toContain(textOf(c, id).slice(0, 30));
+        }
       }
     }
   });

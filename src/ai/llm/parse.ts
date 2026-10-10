@@ -1,11 +1,12 @@
 /**
  * Turns raw model text into a finding candidate. This is only a shape mapping
- * (snake_case → domain fields, citation from the unit's own block, a type the block
+ * (compact keys → domain fields, citation from the unit's own block, a type the block
  * contradicts relabelled by typeCheck.ts); it does NOT
  * decide what is true. Every candidate still goes through `validateCandidates`.
  */
 import { FindingType } from '@/domain/schema';
 import type { ExtractionUnit } from './chunking';
+import { STATUS_WORDS } from './prompt';
 import { checkFindingType } from './typeCheck';
 
 export type ParseResult = { ok: true; candidates: unknown[] } | { ok: false; error: 'no_json' | 'invalid_json' | 'wrong_shape' };
@@ -60,7 +61,9 @@ function readableTitle(title: unknown, type: unknown, language: 'en' | 'fil'): u
   return title;
 }
 
-export function parseModelOutput(output: string, unit: ExtractionUnit, language: 'en' | 'fil' = 'en'): ParseResult {
+type JsonError = { ok: false; error: 'no_json' | 'invalid_json' | 'wrong_shape' };
+
+function parseJson(output: string): { ok: true; data: Record<string, unknown> } | JsonError {
   const json = extractJsonText(output);
   if (!json) return { ok: false, error: 'no_json' };
   let data: unknown;
@@ -69,30 +72,53 @@ export function parseModelOutput(output: string, unit: ExtractionUnit, language:
   } catch {
     return { ok: false, error: 'invalid_json' };
   }
-  const d = data as { relevant?: unknown; finding?: unknown } | null;
-  if (!d || typeof d.relevant !== 'boolean') return { ok: false, error: 'wrong_shape' };
-  if (!d.relevant || !d.finding || typeof d.finding !== 'object') return { ok: true, candidates: [] };
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, error: 'wrong_shape' };
+  return { ok: true, data: data as Record<string, unknown> };
+}
 
-  const r = d.finding as Record<string, unknown>;
+export type TriageResult = { ok: true; type: FindingType | null } | JsonError;
+
+/**
+ * Pass 1 reply → the block's type, or null for "not a term". A type the block
+ * contradicts is relabelled in code (typeCheck.ts) before the explanation is asked,
+ * so the explanation is written for the checked type.
+ */
+export function parseTriageOutput(output: string, blockText: string): TriageResult {
+  const parsed = parseJson(output);
+  if (!parsed.ok) return parsed;
+  const t = parsed.data.t;
+  if (t === 'none') return { ok: true, type: null };
+  const known = FindingType.safeParse(t);
+  if (!known.success) return { ok: false, error: 'wrong_shape' };
+  return { ok: true, type: checkFindingType(known.data, blockText) };
+}
+
+/**
+ * Pass 2 reply → one finding candidate for the block the model was asked about.
+ * The type comes from pass 1 (already checked), never from this reply.
+ */
+export function parseExplainOutput(output: string, unit: ExtractionUnit, type: FindingType, language: 'en' | 'fil' = 'en'): ParseResult {
+  const parsed = parseJson(output);
+  if (!parsed.ok) return parsed;
+  const r = parsed.data;
+  if (typeof r.e !== 'string') return { ok: false, error: 'wrong_shape' };
   const { block } = unit;
-  // A known type the block contradicts is relabelled in code (typeCheck.ts); an unknown
-  // type is left as is for the gate to reject. A relabelled finding gets the new type's title.
-  const known = FindingType.safeParse(r.type);
-  const type = known.success ? checkFindingType(known.data, block.text) : r.type;
-  const title = known.success && type !== known.data ? TYPE_TITLES[language][type as FindingType] : readableTitle(r.title, type, language);
+  const status = typeof r.s === 'string' && r.s in STATUS_WORDS ? STATUS_WORDS[r.s as keyof typeof STATUS_WORDS] : undefined;
+  const question = str(r.q);
   return {
     ok: true,
     candidates: [
       {
         id: `${block.id}_f`,
         type,
-        title,
+        title: readableTitle(r.title, type, language),
         // The citation is the block the model was asked about — never model-written.
-        // Fields outside the extract-v4 schema (e.g. a model-written amount) are ignored.
+        // Fields outside the schema (e.g. a model-written amount) are ignored.
         evidence: { page: block.page, blockId: block.id, quote: block.text },
-        explanation: r.explanation,
-        reviewStatus: r.review_status,
-        questions: Array.isArray(r.questions) ? r.questions.filter((q) => typeof q === 'string' && q.trim()) : [],
+        explanation: r.e,
+        // An unknown status stays undefined, so the evidence gate rejects the candidate as malformed.
+        reviewStatus: status,
+        questions: question ? [question] : [],
       },
     ],
   };

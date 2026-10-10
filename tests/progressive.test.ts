@@ -11,6 +11,7 @@ import { useDocuments } from '@/features/documents/store';
 import { useDraft } from '@/features/review/draftStore';
 import { useReviewJob } from '@/features/review/jobStore';
 import { EVAL_CONTRACTS } from './fixtures/contracts';
+import { blockTextOf, replyFor } from './helpers/twoPass';
 
 jest.setTimeout(15_000);
 
@@ -21,12 +22,12 @@ const blocks = pages.flatMap((p) => p.blocks);
 function fakeModel() {
   const order: string[] = [];
   const run = async (req: CompletionRequest) => {
-    const text = /<block>\n([\s\S]*?)\n<\/block>/.exec(req.messages[1]!.content)?.[1];
+    const text = blockTextOf(req);
     const block = blocks.find((b) => b.text === text);
     if (!block) return '{}';
-    order.push(block.id);
+    if (req.kind === 'triage') order.push(block.id);
     const verdict = block.id === 'p3_b14';
-    return JSON.stringify({
+    return replyFor(req, JSON.stringify({
       relevant: true,
       finding: {
         type: 'other',
@@ -35,7 +36,7 @@ function fakeModel() {
         review_status: 'explained',
         questions: [],
       },
-    });
+    }));
   };
   return { run, order };
 }

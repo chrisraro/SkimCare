@@ -13,6 +13,7 @@ import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
+import { logStatsInDev } from './llm/stats';
 import type { InferenceEngine } from './engines';
 import { checkWebReadiness } from './web/readiness';
 import { createTesseractOcr, tesseractSelfTest } from './web/tesseractOcr';
@@ -54,7 +55,7 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
     prepare: (onProgress, signal) => downloadModel(spec, onProgress, signal),
     classify: async (pages) => guessDocumentType(pages),
     ocr: createTesseractOcr(),
-    llm: createLocalLlmEngine(createWllamaRunner(spec)),
+    llm: createLocalLlmEngine(createWllamaRunner(spec), { onStats: logStatsInDev }),
   };
 }
 

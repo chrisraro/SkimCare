@@ -7,7 +7,7 @@ import { createLocalLlmEngine } from '@/ai/llm/localLlmEngine';
 import { runAnalysis } from '@/ai/pipeline';
 
 const pages = serviceAgreement.pages;
-const quietModel = async () => '{"relevant": false}';
+const quietModel = async () => '{"t":"none"}';
 
 describe('per-review progress', () => {
   it('reports progress to the request that asked for it, one step per block', async () => {

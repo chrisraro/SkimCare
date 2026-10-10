@@ -8,6 +8,7 @@
 import type { DocumentPage, OcrBlock } from '@/domain/schema';
 import { looksLikeInstruction } from '../injection';
 import { isCriticalText } from '../textBlocks';
+import { mayStateTerm } from './prefilter';
 
 export interface ExtractionUnit {
   index: number;
@@ -84,6 +85,8 @@ export function extractionUnits(pages: DocumentPage[]): ExtractionUnit[] {
         // Text addressed to AI tools is never a term: skip it rather than ask the model about it.
         looksLikeInstruction(block.text) ||
         isBoilerplate(block.text) ||
+        // No number, money, deadline, obligation or party signal: cannot carry a finding (prefilter.ts).
+        !mayStateTerm(block.text) ||
         (block.text.length <= REPEATED_MAX_CHARS && !isCriticalText(block.text) && repeated.has(repeatKey(block.text)));
       if (!skip) units.push({ index: units.length, page: page.number, block, context: previous });
       // Text kept away from the model must not reach it as the next block's context either.
