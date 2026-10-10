@@ -10,11 +10,14 @@ Team **ESG**'s entry to the **AppBuildersPH Hackathon 2026 · Theme: Local AI**,
 
 ## Try it
 
+**Try it now, no install: [skimcare-app.vercel.app](https://skimcare-app.vercel.app)**. The full app runs in your browser (phone or desktop, including iPhone). Open it, then pick **Start a review › Try a sample agreement**.
+
 | | Link | Notes |
 |---|---|---|
-| **Android app (APK)** | **[APK link — added when the EAS build finishes]** | arm64 phones. After installing, add the model file (below). |
-| Web app | https://skimcare-app.vercel.app | Same app in the browser, for iPhone users. |
+| **Web app** | **https://skimcare-app.vercel.app** | Same app in the browser, no install. Works on iPhone too. |
+| Android app (APK) | Link coming after the EAS build | arm64 phones. After installing, download the model in the app (below). |
 | Landing page | https://skimcare.vercel.app | Includes an animated walkthrough of the screens. |
+| Showcase video | `video/` | 60-second demo built with Remotion; voiceover with Kokoro (kokoro-js), original music. |
 
 **Add the model to the Android app** (≈380 MB, once; it is not bundled in the APK):
 1. Open SkimCare. On the readiness screen (or **Settings › On-device AI**), tap **Download the model (≈380 MB, once)** and confirm. Wi-Fi is recommended. Progress shows in a notification, and the download keeps going if you leave the app.

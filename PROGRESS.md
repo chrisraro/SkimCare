@@ -131,6 +131,9 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — README: web app first
+- "Try it" now opens with the web app (no install, works on iPhone) and lists it first in the table; APK row says the link comes after the EAS build (Chris adds it). Showcase video row points to `video/`. Docs only.
+
 ### 2026-10-10 — Claude (with Chris) — Speed fix for the local model (merged before measurement)
 - **Why:** on Chris's phone a ONE-page contract took >5 min with the real model (one long call per block, ~6 KB system prompt each time, ≈80 output tokens per block).
 - **Prefilter** (`src/ai/llm/prefilter.ts`, `mayStateTerm`): only blocks with a term signal (digits, money, dates/durations, deadlines, penalties/termination/renewal, obligation words EN+FIL, parties, delivery/notice) go to the model; `isCriticalText` lines are never skipped. Deliberately loose (recall first). Skipped blocks stay in the source viewer. `tests/prefilter.test.ts`.
