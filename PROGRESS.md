@@ -131,6 +131,12 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Public APK link in README and landing page
+- `README.md`: "Try it" table now links the Android APK (Google Drive).
+- `site/index.html`: header "Get the Android build", hero "Get the Android build" and the Signing-section button (was a "coming soon" placeholder) all open the APK link in a new tab; Signing copy now points to the in-app model download instead of "goes live with the first public release". `site/README.md` note updated.
+- Status: done. Static HTML/docs only; no app code touched.
+- Verified: links checked by grep (3 in `site/index.html`, 1 in `README.md`). typecheck/tests/lint not run: dependencies not installed in this session, and no TS/JS changed.
+
 ### 2026-10-10 — Claude (with Chris) — README: web app first
 - "Try it" now opens with the web app (no install, works on iPhone) and lists it first in the table; APK row says the link comes after the EAS build (Chris adds it). Showcase video row points to `video/`. Docs only.
 

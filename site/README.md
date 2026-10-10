@@ -24,6 +24,6 @@ The repo is private; only `site/` is served, so app code never ships with the pa
 - Settings → Git → Ignored Build Step: `git diff --quiet HEAD^ HEAD -- .` (deploy only when `site/` changes).
 - Keep preview deployments behind Vercel Authentication; leave Web Analytics and Speed Insights off.
 
-Do not link to the private GitHub repo from the page (visitors get a 404). The download button shows "Android build coming soon" until a public APK link exists; swap it for a real `<a class="btn btn-primary" href="...">` then.
+Do not link to the private GitHub repo from the page (visitors get a 404). The "Get the Android build" buttons (header, hero, Signing section) link to the public APK on Google Drive; update all three if the link changes.
 
 Rules from the PRD still apply here: do not present Demo-engine output as real inference, do not claim offline readiness, no invented users or stats.
