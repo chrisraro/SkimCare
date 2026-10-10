@@ -15,11 +15,11 @@ Status key: ✅ ready · ⚠️ needs an action · ⏸ deferred (demo video, per
 
 | # | Action | Who | Status |
 |---|--------|-----|--------|
-| B1 | **Make `chrisraro/SkimCare` public** before 10:00 AM (Settings → General → Danger Zone → Change visibility). Pre-check done: no keys, tokens, `.env` or keystore files in tracked files or git history. | Chris | ⚠️ |
-| B2 | Decide on `docs/local-ai-pipeline-blueprint.pdf` (added by Glenn as a general reference). If it isn't the team's own work, remove it or add its source and licence before going public. | Chris / Glenn | ⚠️ |
-| B3 | **Team members:** full names and team name exactly as on the official list at appbuildersph.com/hackathon. Members not on the list are disqualified. | Chris | ⚠️ |
+| B1 | Repo public. Verified unauthenticated via the GitHub API (`visibility: public`). Secret scan of tracked files and history was clean. | Chris | ✅ |
+| B2 | `docs/local-ai-pipeline-blueprint.pdf` kept. It was generated in Chris's Google AI Mode session and is disclosed under existing assets. | Chris | ✅ |
+| B3 | Team **ESG**: Christian Raro, Glenn Viola. Must match the official list at appbuildersph.com/hackathon. | Chris | ✅ |
 | B4 | **README for judges:** the FAQ says the app need not be deployed live if the repo has instructions to recreate it. The README still says the app "runs on a Demo engine" and only covers dev mode. It should say how to try it (web app, APK) and how to build it (EAS, model placement). | Claude | ⚠️ |
-| B5 | Confirm the **AI development tools** list below (add Devin or anything else used). | Chris / Glenn | ⚠️ |
+| B5 | AI development tools confirmed by Chris. Skills and tools taken from the Claude Code session logs, git history and `PROGRESS.md`. | Chris | ✅ |
 
 ---
 
@@ -33,9 +33,11 @@ Status key: ✅ ready · ⚠️ needs an action · ⏸ deferred (demo video, per
 
 > *Longer:* Most people skim contracts and sign. SkimCare is an Android app (with a web version) for Filipinos about to sign a freelance, service, installment or loan agreement. You scan or import the pages; on-device text recognition reads them; a quantized Qwen3 0.6B model running locally finds the terms that matter (fees, due dates, renewals, penalties); every finding must pass an evidence check against the page before it is shown, and money/date "what-ifs" are computed by fixed rules, not the model. It never says whether to sign. *Unawain bago pirmahan.*
 
-**Team members:** ⚠️ B3. Christian (Chris) and Glenn. Full names and team name must match the official list.
+**Team name:** ESG
 
-**Public GitHub repository:** https://github.com/chrisraro/SkimCare ⚠️ B1 (currently private). The project was renamed from PirmaBago; old links redirect.
+**Team members:** Christian Raro, Glenn Viola
+
+**Public GitHub repository:** https://github.com/chrisraro/SkimCare (public). The project was renamed from PirmaBago; old links redirect.
 
 **Other links (optional, useful for judges):**
 - Landing page: https://skimcare.vercel.app
@@ -93,14 +95,22 @@ Status key: ✅ ready · ⚠️ needs an action · ⏸ deferred (demo video, per
 - Open-source libraries listed above, used as dependencies (one `patch-package` patch to llama.rn).
 - Model weights: Qwen3 0.6B (Apache-2.0), via Unsloth's GGUF conversion.
 - Fonts: Instrument Sans and Newsreader (SIL OFL). Icons: Ionicons (MIT); the landing page ships a 35-glyph subset.
-- ⚠️ B2: `docs/local-ai-pipeline-blueprint.pdf` (reference document added by Glenn).
-- The product requirements document (`PirmaBago_Product_Requirements_Document.pdf`) is dated Oct 9. ⚠️ Confirm it was written during the hackathon. If it was written earlier, disclose it as an existing asset.
+- `docs/local-ai-pipeline-blueprint.pdf`: a general local-AI pipeline reference, generated in Chris's **Google AI Mode** session and used as background reading. Where SkimCare differs from it is noted in `PROGRESS.md`.
+- `PirmaBago_Product_Requirements_Document.pdf` (the product spec): written **during the hackathon, after the participant briefing (Oct 9)**, with **ChatGPT**.
 - All app code was written during the hackathon (repo created Oct 9; see git history and `PROGRESS.md`).
 
-**AI development tools:** ⚠️ B5. Confirm.
-- **Claude Code** (Anthropic): coding, design and QA, logged per change in `PROGRESS.md`.
-- Plugins/skills used through Claude Code: ECC skills and agents, Impeccable (design), Jev MCP (`typesafe-jev`, scope and decision gates).
-- Others? (e.g. Devin. The Cognition / Devin Award requires strong use of Devin.)
+**AI development tools:**
+- **ChatGPT** (OpenAI): wrote the product requirements document after the briefing.
+- **Google AI Mode** (Google Search): generated `docs/local-ai-pipeline-blueprint.pdf`.
+- **Gemini** (Google): used during the build.
+- **Claude Code** (Anthropic): most of the code, plus design, QA, docs and the landing page. Each change is logged in `PROGRESS.md`. It ran with:
+  - **ECC** (Everything Claude Code) plugin: skills `ecc:motion-advanced`, `ecc:motion-ui`, `ecc:ios-icon-gen`; its hooks (GateGuard) and the Chrome DevTools MCP.
+  - **Impeccable** skill (design direction, landing page and app UI).
+  - **gpt-taste** and **vercel-react-native-skills** skills.
+  - **Jev** (`typesafe-jev` MCP): scope checks, decision gates and per-finding probability checks in the project-wide QA.
+  - **Claude Code workflows** (`workflow-authoring`): the `skimcare-qa` multi-agent QA run (reviewers plus one adversarial verifier per finding), and parallel sub-agents on separate git worktrees.
+  - **Claude Design** canvas (app screen designs, logo explorations) and Puppeteer / in-app browser for visual checks.
+- No other people helped; all tools above are AI tools used by the two team members.
 
 ## 4. Every submission must answer
 
@@ -116,11 +126,11 @@ Status key: ✅ ready · ⚠️ needs an action · ⏸ deferred (demo video, per
 
 ## Pre-submit check (right before pressing submit)
 
-- [ ] B1 repo is public; open it in a private window to confirm.
-- [ ] B2 blueprint PDF decided.
-- [ ] B3 names and team name copied from the official list.
+- [x] B1 repo is public (verified).
+- [x] B2 blueprint PDF kept and disclosed.
+- [ ] B3 double-check ESG / Christian Raro / Glenn Viola against the official list.
 - [ ] B4 README updated and pushed **before 10:00 AM** (code freezes then).
-- [ ] B5 AI tools confirmed.
+- [x] B5 AI tools confirmed.
 - [ ] Links open: repo, landing page, web app (and its engine mode is what we claim).
 - [ ] Nothing in the form claims more than the app does (e.g. don't call the web app "offline-ready" unless its readiness check passes).
 - [ ] ⏸ Demo video + X/LinkedIn post (tag Devin / Cognition, #AppBuildersPH).

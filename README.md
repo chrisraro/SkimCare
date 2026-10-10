@@ -6,7 +6,7 @@ SkimCare reads the agreement you are about to sign, on your phone. On-device tex
 
 > SkimCare is a document comprehension and legal-information aid. It is not legal advice, and it never says whether to sign.
 
-Built for the **AppBuildersPH Hackathon 2026 · Theme: Local AI** by Christian and Glenn. Submission details: [`docs/SUBMISSION.md`](docs/SUBMISSION.md). Change log: [`PROGRESS.md`](PROGRESS.md).
+Team **ESG**'s entry to the **AppBuildersPH Hackathon 2026 · Theme: Local AI**, by Christian Raro and Glenn Viola. Submission details: [`docs/SUBMISSION.md`](docs/SUBMISSION.md). Change log: [`PROGRESS.md`](PROGRESS.md).
 
 ## Try it
 
@@ -131,7 +131,7 @@ Models, frameworks, cloud services, existing assets and AI development tools are
 - **Model:** Qwen3 0.6B (Apache-2.0, Unsloth GGUF).
 - **AI runs:** on the device only.
 - **Cloud services:** Hugging Face (model download), Vercel (hosting), EAS (APK build). No AI APIs.
-- **AI coding assistance:** Claude Code, logged per change in `PROGRESS.md`.
+- **AI development tools:** ChatGPT (product spec), Google AI Mode (pipeline blueprint), Gemini, Claude Code with ECC, Impeccable, Jev and multi-agent workflows (code, design, QA). Every Claude Code change is logged in `PROGRESS.md`.
 
 ## Contributing
 

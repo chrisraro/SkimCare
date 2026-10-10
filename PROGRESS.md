@@ -131,6 +131,13 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Submission: team, assets and AI-tools disclosure
+- Team **ESG**: Christian Raro, Glenn Viola (README + `docs/SUBMISSION.md`). Repo confirmed public via the unauthenticated GitHub API.
+- Existing assets disclosed: `docs/local-ai-pipeline-blueprint.pdf` (generated in Chris's Google AI Mode session, kept); the PRD was written during the hackathon after the briefing, with ChatGPT.
+- AI tools: ChatGPT, Google AI Mode, Gemini, Claude Code with ECC (motion-advanced, motion-ui, ios-icon-gen, GateGuard hooks, Chrome DevTools MCP), Impeccable, gpt-taste, vercel-react-native-skills, Jev (`typesafe-jev`), Claude Code workflows (`skimcare-qa`) and worktree sub-agents, Claude Design canvas, Puppeteer. Skills were taken from a scan of this project's 89 Claude Code session logs plus the git history and this log.
+- GitHub About (description + website) needs Chris to paste it; Claude in Chrome wasn't connected. Text is in the reply.
+- Docs only; checks not run.
+
 ### 2026-10-10 — Claude (with Chris) — README rewritten for judges (submission blocker B4)
 - `README.md`: Try it (APK placeholder until the EAS build finishes, web app, landing page), model import steps (pinned Hugging Face link, 396.7 MB, verified it resolves), how it works, what runs locally vs. needs internet, honest status (phone offline inference ✅; speed, real-world OCR, airplane-mode rehearsal in progress; eval numbers with context), build steps (EAS `preview` profile, dev build, web export with COOP/COEP), project layout, disclosures pointer to `docs/SUBMISSION.md`. Removed the outdated "runs on a Demo engine / planned native" text and the old "slug still pirmabago" note.
 - UI labels in the instructions checked against `src/i18n/strings.ts` and `ModelImportCard.tsx`.
