@@ -11,7 +11,7 @@ Checked 2026-10-09, before installing anything. Re-check versions before upgradi
 | **Architecture** | v0.10+ requires the New Architecture. This project has `newArchEnabled=true` |
 | **ABIs** | arm64-v8a and x86_64, so the `test_device` emulator works |
 | **Expo** | Config plugin: add `"llama.rn"` to `plugins` in `app.json`, then rebuild |
-| **Native libs** | Android builds llama.cpp **from the patched source** in `node_modules/llama.rn` (`rnllamaBuildFromSource=true`, set by `plugins/withLlamaFromSource.js`), so the first `expo run:android` needs the NDK and Python 3 and takes a while (≈27 min for arm64 on the dev PC). `postinstall` still downloads prebuilt libs (SHA-256 checked, install time only), but Android does not use them. **Do not remove the plugin:** the prebuilt libs are unpatched and log document text (see the privacy patches in this doc). On Windows, `npm install` needs `C:\Windows\System32` first on PATH so Windows `tar` unpacks those downloads. The app itself makes no network calls |
+| **Native libs** | Android builds llama.cpp **from the patched source** in `node_modules/llama.rn` (`rnllamaBuildFromSource=true`, set by `plugins/withLlamaFromSource.js`), so the first `expo run:android` needs the NDK and Python 3 and takes a while (≈27 min for arm64 on the dev PC). `postinstall` still downloads prebuilt libs (SHA-256 checked, install time only), but Android does not use them. **Do not remove the plugin:** the prebuilt libs are unpatched and log document text (see the privacy patches in this doc). On Windows, `npm install` needs `C:\Windows\System32` first on PATH so Windows `tar` unpacks those downloads. The app itself makes no network calls apart from the user-started model download (below), which sends no document content |
 | **RN 0.86** | Neither confirmed nor ruled out in the docs or release notes; verify on the first build. 0.13.0-rc.2 lists an iOS fix for RN 0.87 |
 
 ## API mapping (0.12.9 typings)
@@ -57,12 +57,29 @@ The adapter is `src/ai/llm/llamaRuntime.ts`, and the engine is `src/ai/localEngi
 
 **Checksum on the phone:** SDK 57 `expo-file-system` hashes files natively with MD5 only (`file.info({ md5: true })`; no SHA-256). The SHA-256 is verified on the developer machine against Hugging Face, the MD5 of the same bytes is pinned in `models.ts`, and readiness compares MD5 on the phone. This guards against truncation, corruption and the wrong file; it is not a defence against a deliberately crafted collision. The call is synchronous, so the JS thread pauses for a few seconds on a 400 MB file.
 
-## Install the model in the app (no adb)
+## Download the model in the app (default)
 
-Android, local engine only (`EXPO_PUBLIC_ENGINE=local`). Code: `src/features/model/importModel.ts`, UI: `src/components/ModelImportCard.tsx`.
+Phone, local engine only (`EXPO_PUBLIC_ENGINE=local`). Code: `src/features/model/downloadModel.ts` (download → verify → install), `src/features/model/downloadStore.ts` (global Zustand state), `modules/model-download` (Android DownloadManager), UI: `src/components/ModelDownloadCard.tsx`.
+
+1. On the readiness screen (when the model check fails) or **Settings › On-device AI**, tap **Download the model (≈380 MB, once)**. The app asks first, showing the size and a "use Wi-Fi" note.
+2. Free space is checked before starting: model size + 200 MB margin, and twice the model size on the DownloadManager path (the file is downloaded to app-specific external storage, then copied into internal storage).
+3. **Android with the `model-download` module:** Android's DownloadManager fetches `sourceUrl` into `Android/data/ph.skimcare.app/files/model-downloads/<fileName>.part`. The system shows a progress notification and the download keeps going when the user leaves the screen, backgrounds the app, or the app is killed. On the next launch, `_layout.tsx` re-attaches to that job (`findByUrl`) and continues: progress, then install. The app polls the job every second (no events).
+4. **Fallback (iOS, Android builds made before the module, any build where `requireOptionalNativeModule('ModelDownload')` is null):** expo-file-system `File.createDownloadTask` with progress. It runs while the app process is alive; leaving the screen is fine, but a killed app loses the partial file and starts over.
+5. Either way the file is moved to `files/models/<fileName>.part`, checked natively against the pinned size and MD5 (`verifyAndInstall`, shared with import), and only then moved over the real name. Any loaded model is released first. A mismatching file is deleted; an installed model is kept.
+6. Readiness runs its checks again when the install finishes. It still reports offline-ready only when every real check passes.
+
+Progress (%, MB done/total, speed, "waiting for internet") shows on the card and as a small pill on Home; it lives in a global store, so it survives navigation. Status is always icon + words. Cancel removes the partial file.
+
+**Privacy:** the only request is a GET of the public model file at a pinned Hugging Face revision. No document content, identifiers or telemetry are sent, and nothing in the download code logs. Hugging Face/its CDN sees the phone's IP address and the file requested, as with any download.
+
+**Native part:** `modules/model-download/android/.../ModelDownloadModule.kt` exposes `start`, `query`, `findByUrl`, `cancel`, `install`. It needs a new development/EAS build; until then the fallback is used.
+
+## Import the model file instead (no adb)
+
+Android, local engine only (`EXPO_PUBLIC_ENGINE=local`). Code: `src/features/model/importModel.ts`, UI: `src/components/ModelImportCard.tsx` (shown under **Import a file instead** on the download card).
 
 1. Get `Qwen3-0.6B-Q4_K_M.gguf` (≈380 MB, `sourceUrl` in `models.ts`) onto the phone once: USB copy to `Download/`, the Files app, or a one-time download in the browser.
-2. In the app, open **Settings › On-device AI › Import model file** (the same card appears on the readiness screen when the model check fails) and pick the file.
+2. In the app, open **Settings › On-device AI** (or the readiness screen when the model check fails), tap **Import a file instead**, then **Import model file**, and pick the file.
 3. The app checks name and size against `models.ts`, copies the file into its private storage (`files/models/<fileName>` of `ph.skimcare.app`, the same place as the adb steps above) under a temporary `.part` name, checks the pinned MD5 natively, and only then moves it into place. A mismatching copy is deleted and an already-installed model is kept. Readiness runs again after a successful import.
 
 Any pinned model with an `md5` can be imported (0.6B Q4_K_M or Q4_0); readiness still checks `DEFAULT_MODEL_ID`. The picker opens the file in place (`copyToCacheDirectory: false`), so there is only one extra copy, and nothing is uploaded. You can delete the file from `Download/` afterwards. The MD5 check is synchronous, so the screen pauses for a few seconds during "Checking the file".

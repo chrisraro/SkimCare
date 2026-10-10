@@ -44,6 +44,43 @@ const en = {
   readiness_continue: 'Continue',
   readiness_recheck: 'Run checks again',
 
+  // Model download (phone). {placeholders} are filled by fmt().
+  md_label: 'LANGUAGE MODEL',
+  md_body:
+    'The AI runs on this phone. It needs the {model} model (≈{size} MB), downloaded once from Hugging Face. Only the model file is downloaded — your documents never leave this phone.',
+  md_download: 'Download the model (≈{size} MB, once)',
+  md_confirm_title: 'Download the model?',
+  md_confirm_body:
+    'This downloads about {size} MB, once. Use Wi-Fi if you can — on mobile data it can use up your load. Only the model file is downloaded; your documents stay on this phone.',
+  md_confirm_ok: 'Download',
+  md_starting: 'Starting the download…',
+  md_progress: 'Downloading · {pct}% · {done} of {total} MB',
+  md_speed: '{speed} MB/s',
+  md_waiting: 'Paused · waiting for an internet connection',
+  md_background_system: 'You can leave this screen or the app. The download keeps going and shows in your notifications.',
+  md_background_app: 'You can leave this screen. Keep the app open until the download finishes.',
+  md_verifying: 'Downloaded · checking the file (checksum)…',
+  md_done: 'Installed · the checksum matches. The checks below run again.',
+  md_canceled: 'Download canceled · nothing was installed.',
+  md_cancel: 'Cancel download',
+  md_retry: 'Try the download again',
+  md_import_instead: 'Import a file instead',
+  md_import_hide: 'Hide file import',
+  md_failed: 'Download not finished',
+  md_fail_no_space: 'Not enough free space: the download needs about {need} MB and the phone has {free} MB free.',
+  md_fail_network: 'The connection dropped. Check your internet and try again.',
+  md_fail_server: 'The download server did not send the file. Try again later.',
+  md_fail_storage: 'The file could not be saved on this phone.',
+  md_fail_removed: 'The download was stopped outside the app.',
+  md_fail_size: 'The downloaded file is incomplete, so it was removed. Try again.',
+  md_fail_checksum: 'The downloaded file does not match the expected model (checksum differs), so it was removed.',
+  md_fail_check: 'The downloaded file could not be checked, so it was removed. Try again.',
+  md_fail_install: 'The file could not be moved into place. Try again.',
+  md_fail_unknown: 'Something went wrong. Try again.',
+  md_pill_downloading: 'Model {pct}%',
+  md_pill_verifying: 'Checking model',
+  md_pill_failed: 'Model download stopped',
+
   // Home
   home_greeting: 'Kumusta!',
   home_title: 'What are you about to sign?',
@@ -175,6 +212,40 @@ const en = {
 export type StringKey = keyof typeof en;
 
 const fil: Partial<Record<StringKey, string>> = {
+  md_label: 'LANGUAGE MODEL',
+  md_body:
+    'Sa phone na ito tumatakbo ang AI. Kailangan nito ang {model} model (≈{size} MB), na ida-download nang isang beses mula sa Hugging Face. Ang model file lang ang dina-download — hindi lumalabas ng phone ang mga dokumento mo.',
+  md_download: 'I-download ang model (≈{size} MB, isang beses)',
+  md_confirm_title: 'I-download ang model?',
+  md_confirm_body:
+    'Mga {size} MB ang ida-download, isang beses lang. Gumamit ng Wi-Fi kung puwede — baka maubos ang load mo sa mobile data. Ang model file lang ang dina-download; nananatili sa phone ang mga dokumento mo.',
+  md_confirm_ok: 'I-download',
+  md_starting: 'Sinisimulan ang download…',
+  md_progress: 'Dina-download · {pct}% · {done} sa {total} MB',
+  md_waiting: 'Naka-pause · naghihintay ng internet',
+  md_background_system: 'Puwede mong iwan ang screen o ang app. Tuloy ang download at makikita ito sa notifications.',
+  md_background_app: 'Puwede mong iwan ang screen na ito. Panatilihing bukas ang app hanggang matapos ang download.',
+  md_verifying: 'Na-download na · sinusuri ang file (checksum)…',
+  md_done: 'Na-install na · tugma ang checksum. Uulitin ang mga check sa ibaba.',
+  md_canceled: 'Kinansela ang download · walang na-install.',
+  md_cancel: 'Kanselahin ang download',
+  md_retry: 'Subukan ulit ang download',
+  md_import_instead: 'Mag-import na lang ng file',
+  md_import_hide: 'Itago ang pag-import',
+  md_failed: 'Hindi natapos ang download',
+  md_fail_no_space: 'Kulang ang espasyo: mga {need} MB ang kailangan at {free} MB lang ang bakante sa phone.',
+  md_fail_network: 'Naputol ang koneksyon. I-check ang internet at subukan ulit.',
+  md_fail_server: 'Hindi naipadala ng server ang file. Subukan ulit mamaya.',
+  md_fail_storage: 'Hindi ma-save ang file sa phone na ito.',
+  md_fail_removed: 'Itinigil ang download sa labas ng app.',
+  md_fail_size: 'Kulang ang na-download na file kaya binura ito. Subukan ulit.',
+  md_fail_checksum: 'Hindi tugma ang na-download na file sa inaasahang model (iba ang checksum) kaya binura ito.',
+  md_fail_check: 'Hindi masuri ang na-download na file kaya binura ito. Subukan ulit.',
+  md_fail_install: 'Hindi mailipat sa tamang lugar ang file. Subukan ulit.',
+  md_fail_unknown: 'May nagkaproblema. Subukan ulit.',
+  md_pill_downloading: 'Model {pct}%',
+  md_pill_verifying: 'Sinusuri ang model',
+  md_pill_failed: 'Huminto ang download',
   tagline: 'Unawain ang pinipirmahan mo.',
   status_needs_attention: 'Bigyang-pansin',
   status_needs_clarification: 'Kailangan pang linawin',
@@ -246,4 +317,9 @@ export type Locale = keyof typeof STRINGS;
 
 export function translate(locale: Locale, key: StringKey): string {
   return (locale === 'fil' ? fil[key] : undefined) ?? en[key];
+}
+
+/** Fills `{name}` placeholders, e.g. fmt(t('md_download'), { size: 380 }). */
+export function fmt(text: string, vars: Record<string, string | number>): string {
+  return text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
 }

@@ -6,8 +6,12 @@
  * natively (expo-file-system), so `md5` is computed on a developer machine from
  * a download whose SHA-256 matched, and pinned here.
  *
- * `sourceUrl` is for developers placing the file (e.g. `adb push`). The app
- * itself never downloads anything.
+ * `sourceUrl` (Hugging Face, pinned revision) is what the app downloads when the
+ * user taps "Download the model" (src/features/model/downloadModel.ts; the web
+ * build uses src/ai/web/wllamaRuntime.ts), and what developers use for `adb push`.
+ * That download is a plain GET of this public file: it sends no document content,
+ * no identifiers and no telemetry. The downloaded file is checked against `sizeBytes`
+ * and `md5` before it is used.
  */
 export interface ModelSpec {
   id: string;

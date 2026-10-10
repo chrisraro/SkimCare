@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import { EmptyState } from '@/components/EmptyState';
+import { ModelDownloadPill } from '@/components/ModelDownloadCard';
 import { AppText, Banner, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
@@ -32,6 +33,7 @@ export default function Home() {
       <View style={styles.topRow}>
         <AppText tone="muted">{t('home_greeting')}</AppText>
         <View style={styles.pills}>
+          <ModelDownloadPill />
           {isDemo ? (
             <View style={[styles.pill, { backgroundColor: palette.amber100 }]}>
               <Ionicons name="flask-outline" size={13} color={palette.amber700} />

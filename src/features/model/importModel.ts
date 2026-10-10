@@ -22,10 +22,10 @@ export type ImportResult =
   | { status: 'canceled' }
   | { status: 'failed'; message: string };
 
-const mb = (bytes: number) => `${Math.round(bytes / (1024 * 1024))} MB`;
+export const mb = (bytes: number) => `${Math.round(bytes / (1024 * 1024))} MB`;
 
 /** Extra room left free after the copy so the phone can still save reviews. */
-const STORAGE_MARGIN_BYTES = 200 * 1024 * 1024;
+export const STORAGE_MARGIN_BYTES = 200 * 1024 * 1024;
 
 /** Downloads often get renamed "name (1).gguf" or "name-1.gguf"; compare without that suffix. */
 function normalizeName(name: string): string {
@@ -64,11 +64,11 @@ export function validatePickedModel(name: string, sizeBytes: number | undefined,
   return { ok: true, spec: byName };
 }
 
-function modelsDir(): Directory {
+export function modelsDir(): Directory {
   return new Directory(Paths.document, 'models');
 }
 
-function safeDelete(file: File) {
+export function safeDelete(file: File) {
   try {
     if (file.exists) file.delete();
   } catch {
@@ -76,7 +76,7 @@ function safeDelete(file: File) {
   }
 }
 
-function errorMessage(e: unknown): string {
+export function errorMessage(e: unknown): string {
   const text = e instanceof Error ? e.message : String(e);
   if (/picking in progress|different document picking/i.test(text)) {
     return 'A file picker is already open. Close it and try again.';
@@ -132,21 +132,39 @@ export async function importModel(onPhase: (phase: ImportPhase) => void = () => 
   }
 
   onPhase('verifying');
+  const installed = await verifyAndInstall(part, target, spec);
+  if (!installed.ok) return fail(installed.message);
+
+  onPhase('done');
+  return { status: 'done', spec };
+}
+
+export type InstallFailure = 'size' | 'checksum' | 'check' | 'install';
+export type InstallResult = { ok: true } | { ok: false; code: InstallFailure; message: string };
+
+/**
+ * Shared by import and download: checks `part` against the pinned size and MD5
+ * natively (never read into JS), then releases any loaded model and moves it onto
+ * `target`. A mismatching file is deleted; an installed model is only replaced by
+ * a file that passed.
+ */
+export async function verifyAndInstall(part: File, target: File, spec: ModelSpec): Promise<InstallResult> {
+  const fail = (code: InstallFailure, message: string): InstallResult => {
+    safeDelete(part);
+    return { ok: false, code, message };
+  };
   // The native MD5 call is synchronous; yield once so the "Checking" state can render first.
   await new Promise((r) => setTimeout(r, 50));
   try {
     const info = part.info({ md5: true });
     if (info.size !== spec.sizeBytes) {
-      safeDelete(part);
-      return fail(`The copied file is ${mb(info.size ?? 0)}, expected ${mb(spec.sizeBytes)}. The copy did not finish — try again.`);
+      return fail('size', `The copied file is ${mb(info.size ?? 0)}, expected ${mb(spec.sizeBytes)}. The copy did not finish — try again.`);
     }
     if (!info.md5 || info.md5.toLowerCase() !== spec.md5) {
-      safeDelete(part);
-      return fail(`This file does not match ${spec.name} ${spec.quantization} (checksum differs). It is damaged or a different model, so it was removed.`);
+      return fail('checksum', `This file does not match ${spec.name} ${spec.quantization} (checksum differs). It is damaged or a different model, so it was removed.`);
     }
   } catch (e) {
-    safeDelete(part);
-    return fail(`Could not check the file: ${errorMessage(e)}`);
+    return fail('check', `Could not check the file: ${errorMessage(e)}`);
   }
 
   try {
@@ -154,10 +172,7 @@ export async function importModel(onPhase: (phase: ImportPhase) => void = () => 
     await releaseModel();
     await part.move(target, { overwrite: true });
   } catch (e) {
-    safeDelete(part);
-    return fail(`Could not install the file: ${errorMessage(e)}`);
+    return fail('install', `Could not install the file: ${errorMessage(e)}`);
   }
-
-  onPhase('done');
-  return { status: 'done', spec };
+  return { ok: true };
 }
