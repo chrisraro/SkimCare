@@ -10,7 +10,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { getEngine } from '@/ai/demoEngine';
 import { openStorage } from '@/db/openStorage';
+import { useModelDownload } from '@/features/model/downloadStore';
 import { initPersistence } from '@/features/storage/persistence';
 import { registerServiceWorker } from '@/features/pwa/pwa';
 import { colors, fonts } from '@/theme/tokens';
@@ -40,6 +42,10 @@ export default function RootLayout() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     void initPersistence(openStorage).then(() => setHydrated(true));
+  }, []);
+  // Android local engine: re-attach to a model download that kept running (or finished) while the app was closed.
+  useEffect(() => {
+    if (Platform.OS === 'android' && getEngine().info.kind === 'local') void useModelDownload.getState().reattach();
   }, []);
   // Web only, production only: lets the app shell open offline after one visit.
   useEffect(registerServiceWorker, []);

@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import type { CheckStatus, ReadinessReport } from '@/ai/engines';
 import { pdfTextAvailable } from '@/ai/sources/pdfTextLayer';
 import { scannerAvailable } from '@/features/capture/scanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
-import { ModelImportCard } from '@/components/ModelImportCard';
+import { ModelDownloadCard } from '@/components/ModelDownloadCard';
+import { useModelDownload } from '@/features/model/downloadStore';
 import { useSettings } from '@/features/settings/store';
 import { withStorageStatus } from '@/features/storage/readiness';
 import { useStorageStatus } from '@/features/storage/store';
@@ -37,10 +38,11 @@ export default function Readiness() {
     engine.checkReadiness().then((r) => setReport(withStorageStatus(r, useStorageStatus.getState().status)));
   }, [engine]);
 
-  const recheck = () => {
+  const recheck = useCallback(() => {
     setReport(null);
     engine.checkReadiness().then((r) => setReport(withStorageStatus(r, useStorageStatus.getState().status)));
-  };
+  }, [engine]);
+  const phoneDownloadPhase = useModelDownload((s) => s.phase);
 
   // Web: the model is downloaded only when the user asks, once, into this browser.
   const [download, setDownload] = useState<{ loaded: number; total: number } | null>(null);
@@ -166,8 +168,9 @@ export default function Readiness() {
         </Card>
       )}
 
-      {report?.checks.some((c) => (c.id === 'model_present' || c.id === 'checksum') && c.status === 'fail') ? (
-        <ModelImportCard onImported={recheck} />
+      {/* Phone: download (or import) the model. Shown while a download runs even if the checks pass. */}
+      {report?.checks.some((c) => (c.id === 'model_present' || c.id === 'checksum') && c.status === 'fail') || phoneDownloadPhase !== 'idle' ? (
+        <ModelDownloadCard onInstalled={recheck} />
       ) : null}
 
       <Card>
