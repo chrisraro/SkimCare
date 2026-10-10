@@ -1,0 +1,59 @@
+{
+  "fps": 30,
+  "barFrames": 60,
+  "leadS": 0.25,
+  "voice": "af_heart",
+  "speed": 1.12,
+  "totalBars": 29,
+  "scenes": [
+    {
+      "id": "hook",
+      "file": "vo/hook.wav",
+      "voDurationS": 3.2,
+      "bars": 2,
+      "text": "Be honest. You skim contracts. Most of us do."
+    },
+    {
+      "id": "problem",
+      "file": "vo/problem.wav",
+      "voDurationS": 4.35,
+      "bars": 3,
+      "text": "But the fine print is where it costs you. Late fees. Auto-renewals."
+    },
+    {
+      "id": "local",
+      "file": "vo/local.wav",
+      "voDurationS": 6.15,
+      "bars": 4,
+      "text": "A cloud AI would need your name, your ID, and your debts. SkimCare keeps it all on your phone."
+    },
+    {
+      "id": "demo",
+      "file": "vo/demo.wav",
+      "voDurationS": 16.125,
+      "bars": 9,
+      "text": "Scan the pages. A small open model, Qwen 3, reads them right on the device, and explains each term in plain English or Filipino. Every finding quotes its exact sentence, or it is thrown away. The money math is exact rules, never a guess."
+    },
+    {
+      "id": "why",
+      "file": "vo/why.wav",
+      "voDurationS": 9.375,
+      "bars": 5,
+      "text": "Local AI is not a feature here. It is why you can trust it with a contract. In our tests, it skipped all five hidden instructions aimed at the AI."
+    },
+    {
+      "id": "team",
+      "file": "vo/team.wav",
+      "voDurationS": 4.15,
+      "bars": 3,
+      "text": "We are team E S G. Christian Raro, and Glenn Viola."
+    },
+    {
+      "id": "close",
+      "file": "vo/close.wav",
+      "voDurationS": 2.95,
+      "bars": 3,
+      "text": "SkimCare. You skim. We read every line."
+    }
+  ]
+}

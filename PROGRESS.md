@@ -131,6 +131,14 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — 60-second showcase video (`video/`)
+- New Remotion project in `video/` (own package.json; app deps untouched). Output `video/out/SkimCare-ESG-showcase.mp4`: 1920×1080, 30 fps, 60.6 s, audio −14.3 LUFS (git-ignored, rebuilt by the scripts).
+- Story by judging criterion: hook ("You skim contracts") → fine print → why local (name/ID/debts never leave the phone) → 1:1 app demo (scan, reviewing on device with the real 5-step checklist, findings, source quote, what-if ₱2,000/₱2,100) → "Local AI is not a feature here" + proof (5/5 hidden instructions skipped, every finding quotes its source, 0 uploads) + stack → team ESG (Christian Raro, Glenn Viola) → close (links, #AppBuildersPH).
+- Voiceover: Kokoro via `kokoro-js` (local, voice af_heart, speed 1.12), `scripts/voice.mjs`; scene lengths are whole 2-s bars sized to the voice. Script checked with Jev (why-local 0.97, names both members 0.99; unsupported-claim 0.59 → reworded → 0.34).
+- Music: original, synthesized in `scripts/music.mjs` (120 BPM, Am–F–C–G): riser into and impact on every scene cut (4, 10, 18, 36, 46, 52 s), energy per scene, ducked under the voice.
+- Visuals: Remotion skill patterns (TransitionSeries with wipe/slide/fade, springs, staggered word reveals, beat-synced glow); app screens reused 1:1 from `site/` with the app's own fonts and Ionicons.
+- Verified: render OK, contact sheet of 12 frames reviewed, loudness measured. Not done: X/LinkedIn post (tag Devin/Cognition, #AppBuildersPH).
+
 ### 2026-10-10 — Claude (with Chris) — In-app model download with background progress (phone)
 - **Why:** Chris tested the APK — importing the GGUF from a file is clumsy; the app should download the model itself, keep going in the background and show progress.
 - **"Download the model (≈380 MB, once)"** replaces import-first on Readiness and Settings ("Import a file instead" kept). User confirms the size first, with a Wi-Fi note; free space checked (model + 200 MB; 2× + 200 MB on the native path because external → internal is a copy).

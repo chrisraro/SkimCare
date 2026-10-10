@@ -1,0 +1,20 @@
+{
+  "name": "skimcare-showcase-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "voice": "node scripts/voice.mjs",
+    "music": "node scripts/music.mjs",
+    "studio": "remotion studio src/index.tsx",
+    "render": "remotion render src/index.tsx Showcase out/skimcare-showcase.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.534",
+    "@remotion/media": "^4.0.534",
+    "@remotion/transitions": "^4.0.534",
+    "kokoro-js": "^1.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.534"
+  }
+}
