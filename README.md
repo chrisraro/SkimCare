@@ -15,7 +15,7 @@ Team **ESG**'s entry to the **AppBuildersPH Hackathon 2026 · Theme: Local AI**,
 | | Link | Notes |
 |---|---|---|
 | **Web app** | **https://skimcare-app.vercel.app** | Same app in the browser, no install. Works on iPhone too. |
-| Android app (APK) | Link coming after the EAS build | arm64 phones. After installing, download the model in the app (below). |
+| **Android app (APK)** | **[Download the APK](https://drive.google.com/file/d/1gRephxYuJQIPsc-lVkNKmfTeR3444nNT/view?usp=drivesdk)** (Google Drive) | arm64 phones. After installing, download the model in the app (below). |
 | Landing page | https://skimcare.vercel.app | Includes an animated walkthrough of the screens. |
 | Showcase video | `video/` | 60-second demo built with Remotion; voiceover with Kokoro (kokoro-js), original music. |
 
