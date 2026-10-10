@@ -12,9 +12,10 @@ import { AbortedError } from '../engines';
 import type { CompletionRequest, CompletionRunner } from './localLlmEngine';
 import type { ModelSpec } from './models';
 import { isSmokeTestReply, SMOKE_TEST_MESSAGES, type ReadinessProbe } from './readiness';
+import { fromLlamaTimings } from './stats';
 
 /**
- * System prompt (~690 tokens) + context (≤300 chars) + one block + output (≤200)
+ * System prompt (~440 tokens, extract-v5) + context (≤200 chars) + one block + output (≤200 on retry)
  * stays under ~1,500 tokens; 2048 leaves headroom. The KV cache is ~112 KB per
  * token for Qwen3 0.6B, so 4096 reserved ~470 MB that a 4 GB phone needs elsewhere.
  */
@@ -127,7 +128,9 @@ export function createLlamaRunner(spec: ModelSpec): CompletionRunner {
   return (req) =>
     serial(async () => {
       const result = await complete(await contextFor(modelFile(spec).uri), req);
-      return result.content || result.text;
+      // Counts and times only (stats.ts). llama.rn keeps the KV cache between completions
+      // on one context and evaluates only the prompt after the common prefix (`cache_n`).
+      return { text: result.content || result.text, timings: fromLlamaTimings(result.timings) };
     });
 }
 

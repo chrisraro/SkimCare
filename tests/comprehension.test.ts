@@ -7,6 +7,7 @@ import { buildComprehensionMessages, parseComprehensionOutput, selectQuizFinding
 import { createLocalLlmEngine, type CompletionRequest } from '@/ai/llm/localLlmEngine';
 import { runAnalysis } from '@/ai/pipeline';
 import type { Finding } from '@/domain/schema';
+import { replyFor } from './helpers/twoPass';
 
 const pages = serviceAgreement.pages;
 const { accepted } = validateCandidates(serviceAgreement.rawCandidates, pages);
@@ -99,7 +100,7 @@ describe('quiz through the pipeline', () => {
     llm: createLocalLlmEngine(async (req: CompletionRequest) => {
       const user = req.messages[1]!.content;
       if (!user.includes('<block>')) return quiz;
-      return user.includes(quote) && !user.includes('Earlier text, for context only: The final') ? extraction : '{"relevant": false}';
+      return replyFor(req, user.includes(`<block>\n${quote}\n</block>`) ? extraction : '{"relevant": false}');
     }),
   });
   const analyze = (quiz: string) =>

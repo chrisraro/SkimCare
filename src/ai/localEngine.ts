@@ -15,6 +15,7 @@ import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { checkLocalReadiness } from './llm/readiness';
+import { logStatsInDev } from './llm/stats';
 import type { InferenceEngine, OcrEngine } from './engines';
 import { createMlKitOcr } from './ocr/mlKitOcr';
 import { RecognizeError } from './recognize';
@@ -45,7 +46,7 @@ export function createLocalEngine(spec: ModelSpec, nativeOcr: LocalOcrModule | n
     checkReadiness: () => checkLocalReadiness(spec, probe),
     classify: async (pages) => guessDocumentType(pages),
     ocr: nativeOcr ? createMlKitOcr(nativeOcr) : NO_OCR,
-    llm: createLocalLlmEngine(createLlamaRunner(spec)),
+    llm: createLocalLlmEngine(createLlamaRunner(spec), { onStats: logStatsInDev }),
   };
 }
 

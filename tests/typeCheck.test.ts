@@ -2,16 +2,13 @@ import { describe, expect, it } from '@jest/globals';
 import { scoreFindings } from '@/ai/eval/score';
 import { validateCandidates } from '@/ai/evidenceGate';
 import { extractionUnits } from '@/ai/llm/chunking';
-import { parseModelOutput } from '@/ai/llm/parse';
+import { parseExplainOutput, parseTriageOutput } from '@/ai/llm/parse';
 import { checkFindingType } from '@/ai/llm/typeCheck';
 import type { Finding, FindingType } from '@/domain/schema';
 import { EVAL_CONTRACTS } from './fixtures/contracts';
 
-const reply = (type: string, extra: Record<string, unknown> = {}) =>
-  JSON.stringify({
-    relevant: true,
-    finding: { type, title: '', explanation: 'What this sentence says.', review_status: 'explained', questions: [], ...extra },
-  });
+/** An explain-pass reply with an empty title (so the readable type title is used). */
+const reply = () => JSON.stringify({ title: '', e: 'What this sentence says.', s: 'ok', q: '' });
 
 describe('type sanity check', () => {
   it('re-types findings whose type the block contradicts', () => {
@@ -50,7 +47,9 @@ describe('type sanity check', () => {
       const candidates = c.labels.flatMap((l) => {
         const unit = units.find((u) => u.block.id === l.blockId)!;
         const wrong = WRONG.find((t) => !l.types.includes(t))!;
-        const parsed = parseModelOutput(reply(wrong), unit);
+        const typed = parseTriageOutput(JSON.stringify({ t: wrong }), unit.block.text);
+        if (!typed.ok || !typed.type) return [];
+        const parsed = parseExplainOutput(reply(), unit, typed.type);
         return parsed.ok ? parsed.candidates : [];
       });
       const { accepted, rejected } = validateCandidates(candidates, c.pages);
@@ -61,10 +60,12 @@ describe('type sanity check', () => {
     expect(after).toBeLessThan(before * 0.6);
   });
 
-  it('parse output carries the checked type and a matching readable title, and never adds an amount', () => {
+  it('the type pass is checked before the explanation is asked, and parsing never adds an amount', () => {
     const c = EVAL_CONTRACTS.find((x) => x.id === 'svc-04')!;
     const unit = extractionUnits(c.pages).find((u) => u.block.text.startsWith('The fee is due'))!;
-    const parsed = parseModelOutput(reply('late_fee', { title: 'Late fee' }), unit);
+    const typed = parseTriageOutput('{"t":"late_fee"}', unit.block.text);
+    expect(typed).toEqual({ ok: true, type: 'due_date' });
+    const parsed = parseExplainOutput(reply(), unit, 'due_date');
     expect(parsed.ok).toBe(true);
     const [f] = (parsed as { candidates: Finding[] }).candidates;
     expect(f!.type).toBe('due_date');

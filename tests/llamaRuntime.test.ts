@@ -19,7 +19,7 @@ jest.mock('llama.rn', () => ({
           mockNative.failNext = false;
           throw new Error('native failure');
         }
-        return mockOperation({ content: 'OK', text: '', interrupted: false, timings: { predicted_per_second: 5 } });
+        return mockOperation({ content: 'OK', text: '', interrupted: false, timings: { predicted_per_second: 5, prompt_n: 12, cache_n: 300, prompt_ms: 40, predicted_n: 3, predicted_ms: 600 } });
       },
       stopCompletion: async () => undefined,
       release: () => mockOperation(undefined),
@@ -66,6 +66,14 @@ describe('llama.rn runtime', () => {
     mockNative.failNext = true;
     const [first, second] = await Promise.allSettled([run(req), run(req)]);
     expect(first.status).toBe('rejected');
-    expect(second).toEqual({ status: 'fulfilled', value: 'OK' });
+    expect(second).toEqual({ status: 'fulfilled', value: expect.objectContaining({ text: 'OK' }) });
+  });
+
+  it('passes llama.cpp timings through as counts and times only', async () => {
+    const reply = await createLlamaRunner(spec)(req);
+    expect(reply).toEqual({
+      text: 'OK',
+      timings: { promptTokens: 12, cachedTokens: 300, promptMs: 40, generatedTokens: 3, generationMs: 600 },
+    });
   });
 });
