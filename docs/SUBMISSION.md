@@ -60,7 +60,7 @@ Status key: ✅ ready · ⚠️ needs an action · ⏸ deferred (demo video, per
 - **Readiness check:** verifies the model file (MD5), storage, an OCR self-test and an inference smoke test before claiming offline readiness.
 
 **What requires internet:**
-- **Getting the model once** (≈400 MB GGUF, pinned revision on Hugging Face). On Android it is imported from a file (in-app import with checksum check) or pushed with adb; it is not bundled in the APK. The web app downloads it once, then caches it.
+- **Getting the model once** (≈380 MB GGUF, pinned revision on Hugging Face). The user starts the download in the app, which then checks its size and MD5 before installing. Alternatively, import the file from storage. The only request is a GET for the public model file; no document content, identifiers or telemetry are sent. It is not bundled in the APK. The web app downloads it once, then caches it.
 - **First load of the web app.** After the engine has run once, the offline PWA works without a connection.
 - **Installing the APK** (EAS Build download link).
 - **ML Kit usage statistics:** when the phone is online, Google ML Kit may send usage statistics (device/app info, error codes) to Google. Never document text. This is disclosed in the app's privacy copy.

@@ -16,10 +16,10 @@ Team **ESG**'s entry to the **AppBuildersPH Hackathon 2026 · Theme: Local AI**,
 | Web app | https://skimcare-app.vercel.app | Same app in the browser, for iPhone users. |
 | Landing page | https://skimcare.vercel.app | Includes an animated walkthrough of the screens. |
 
-**Add the model to the Android app** (≈400 MB, once; it is not bundled in the APK):
-1. On the phone, download [`Qwen3-0.6B-Q4_K_M.gguf`](https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/50968a4468ef4233ed78cd7c3de230dd1d61a56b/Qwen3-0.6B-Q4_K_M.gguf) (pinned revision).
-2. In SkimCare, open **Settings › On-device AI › Import model file** (the same card appears on the readiness screen) and pick the file. The app checks its size and MD5, then copies it into private storage.
-3. The readiness check runs again. When every check passes it says **Ready to work offline**. From then on you can switch on airplane mode.
+**Add the model to the Android app** (≈380 MB, once; it is not bundled in the APK):
+1. Open SkimCare. On the readiness screen (or **Settings › On-device AI**), tap **Download the model (≈380 MB, once)** and confirm. Wi-Fi is recommended. Progress shows in a notification, and the download keeps going if you leave the app.
+2. The app checks the file's size and MD5, then installs it into private storage. The readiness check runs again, and when every check passes it says **Ready to work offline**. From then on you can switch on airplane mode.
+3. *Alternative:* download [`Qwen3-0.6B-Q4_K_M.gguf`](https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/50968a4468ef4233ed78cd7c3de230dd1d61a56b/Qwen3-0.6B-Q4_K_M.gguf) yourself, then tap **Import a file instead › Import model file** and pick it.
 
 Built-in **sample agreements** (fictional) are under **Start a review › Try a sample agreement**.
 
@@ -48,7 +48,7 @@ Scan / import ──▶ OCR on device ──▶ you confirm amounts, dates, name
 
 | On the device (works in airplane mode) | Needs internet |
 |---|---|
-| OCR, document scanning, PDF text | Downloading the model once (Hugging Face) |
+| OCR, document scanning, PDF text | Downloading the model once (in-app, from Hugging Face; no document data sent) |
 | Language model inference | Installing the APK / first load of the web app |
 | Evidence checks, explanations, questions to ask | ML Kit usage statistics when online (device info and error codes, never document text) |
 | What-if calculations, encrypted storage | |

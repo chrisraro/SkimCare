@@ -147,6 +147,7 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 - Existing assets disclosed: `docs/local-ai-pipeline-blueprint.pdf` (generated in Chris's Google AI Mode session, kept); the PRD was written during the hackathon after the briefing, with ChatGPT.
 - AI tools: ChatGPT, Google AI Mode, Gemini, Claude Code with ECC (motion-advanced, motion-ui, ios-icon-gen, GateGuard hooks, Chrome DevTools MCP), Impeccable, gpt-taste, vercel-react-native-skills, Jev (`typesafe-jev`), Claude Code workflows (`skimcare-qa`) and worktree sub-agents, Claude Design canvas, Puppeteer. Skills were taken from a scan of this project's 89 Claude Code session logs plus the git history and this log.
 - GitHub About (description + website) needs Chris to paste it; Claude in Chrome wasn't connected. Text is in the reply.
+- README "Try it" and SUBMISSION "What requires internet" updated for the in-app model download (`72a7593`): Download is the main path, Import is the fallback. Note: that push also published Chris's local merge `72a7593` (it was committed but not yet pushed).
 - Docs only; checks not run.
 
 ### 2026-10-10 — Claude (with Chris) — README rewritten for judges (submission blocker B4)
