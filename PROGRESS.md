@@ -131,6 +131,17 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — Speed fix for the local model (merged before measurement)
+- **Why:** on Chris's phone a ONE-page contract took >5 min with the real model (one long call per block, ~6 KB system prompt each time, ≈80 output tokens per block).
+- **Prefilter** (`src/ai/llm/prefilter.ts`, `mayStateTerm`): only blocks with a term signal (digits, money, dates/durations, deadlines, penalties/termination/renewal, obligation words EN+FIL, parties, delivery/notice) go to the model; `isCriticalText` lines are never skipped. Deliberately loose (recall first). Skipped blocks stay in the source viewer. `tests/prefilter.test.ts`.
+- **Two passes, `extract-v5`** (`prompt.ts`, `localLlmEngine.ts`, `parse.ts`): pass 1 "type" → `{"t":"late_fee"|…|"none"}` (≈8 tokens); pass 2 "explain" only for terms, compact keys (`title`, `e`, `s`: ok/attention/unclear, `q`). Three short examples of different types (one example made the 0.6B copy its type). Evidence gate, citations-by-code and progressive findings unchanged.
+- **Byte-identical system prompt** for every call of a review, and the explain message starts with the type message, so llama.cpp's KV cache reuses the prefix (llama.rn, wllama, llama-server) instead of re-reading ~1.5k tokens per call.
+- **Timing stats** (`src/ai/llm/stats.ts`): calls, prompt/cached/generated tokens, prefill/decode ms per review — counts and times only; printed as `[llm-stats]` in dev builds and by the eval.
+- Runtime tweaks in `llamaRuntime.ts` / `wllamaRuntime.ts` to return llama.cpp `timings`.
+- **Not measured:** Chris asked to wrap up before the eval finished — **precision/recall vs extract-v4 and the real speed-up are unknown**. Chris tests on the phone with the next APK; run `npm run eval:llm` (needs llama-server, see docs/LOCAL_LLM.md) and compare with v4 (74% / 71%, 38 wrong types) before relying on it. If quality dropped, the prefilter alone can stay and the prompt can go back to v4.
+- Also: `tsconfig.json` now excludes `video/` (the Remotion showcase committed in 2c71ff2 has its own deps and broke `npm run typecheck`). Stopped and removed the model-comparison run (candidate GGUFs deleted; Qwen3 0.6B stays).
+- Verified: typecheck ✅, tests ✅ 298/298 (26 suites), lint ✅, web export ✅.
+
 ### 2026-10-10 — Claude (with Chris) — 60-second showcase video (`video/`)
 - New Remotion project in `video/` (own package.json; app deps untouched). Output `video/out/SkimCare-ESG-showcase.mp4`: 1920×1080, 30 fps, 60.6 s, audio −14.3 LUFS (git-ignored, rebuilt by the scripts).
 - Story by judging criterion: hook ("You skim contracts") → fine print → why local (name/ID/debts never leave the phone) → 1:1 app demo (scan, reviewing on device with the real 5-step checklist, findings, source quote, what-if ₱2,000/₱2,100) → "Local AI is not a feature here" + proof (5/5 hidden instructions skipped, every finding quotes its source, 0 uploads) + stack → team ESG (Christian Raro, Glenn Viola) → close (links, #AppBuildersPH).
