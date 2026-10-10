@@ -131,6 +131,17 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-10 — Claude (with Chris) — In-app model download with background progress (phone)
+- **Why:** Chris tested the APK — importing the GGUF from a file is clumsy; the app should download the model itself, keep going in the background and show progress.
+- **"Download the model (≈380 MB, once)"** replaces import-first on Readiness and Settings ("Import a file instead" kept). User confirms the size first, with a Wi-Fi note; free space checked (model + 200 MB; 2× + 200 MB on the native path because external → internal is a copy).
+- **New local module `modules/model-download`** (Android DownloadManager: `start` / `query` / `findByUrl` / `cancel` / `install`): system progress notification; survives leaving the screen, backgrounding and app kill; the app re-attaches to a running/finished job at launch (`_layout.tsx`). Only `https` URLs and plain file names accepted.
+- **Fallback** where the module isn't linked (web, iOS, older builds, Jest): expo-file-system `File.createDownloadTask` with progress/cancel (stops if the app is killed). Never crashes.
+- `.part` download → size + MD5 check (`verifyAndInstall`, now shared with import) → `releaseModel()` → move into `files/models/`; mismatch deleted.
+- Global store `src/features/model/downloadStore.ts` (idle/starting/downloading/verifying/done/failed/canceled + bytes/total/speed/"waiting for network"). `ModelDownloadCard` (bar, %, MB, speed, Cancel) + Home `ModelDownloadPill` ("Model 42%"). Icon + words; EN + FIL copy (`md_*` keys, `fmt()` helper). Readiness re-runs checks after install; offline-ready still only from real checks.
+- Docs: `models.ts` header (download = plain GET of the pinned public Hugging Face file, no document content, no telemetry); `docs/LOCAL_LLM.md` "Download the model in the app".
+- Reviewed the Kotlin by hand (standard DownloadManager APIs, same module pattern as local-ocr). **Not compiled on this PC (no Android SDK)** — the next EAS build is the compile check. Then test on the phone: Wi-Fi + mobile data, kill the app mid-download and reopen, Readiness reaching offline-ready after the checksum.
+- Verified: typecheck ✅, tests ✅ 286/286 (25 suites; new `tests/modelDownload.test.ts`, 21), lint ✅, web export ✅.
+
 ### 2026-10-10 — Claude (with Chris) — Submission: team, assets and AI-tools disclosure
 - Team **ESG**: Christian Raro, Glenn Viola (README + `docs/SUBMISSION.md`). Repo confirmed public via the unauthenticated GitHub API.
 - Existing assets disclosed: `docs/local-ai-pipeline-blueprint.pdf` (generated in Chris's Google AI Mode session, kept); the PRD was written during the hackathon after the briefing, with ChatGPT.
