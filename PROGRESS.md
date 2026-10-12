@@ -131,6 +131,16 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-12 — Claude (with Chris) — Laya triage training dataset (ml/laya)
+- **Why:** Chris chose to train Laya (open-source ModernBERT/mmBERT "choice" decision model) to replace pass 1 of extraction (triage: block → type or none); Qwen keeps pass 2 (explanations). Model files will be hosted as a GitHub release on chrisraro/SkimCare (`laya-v1`).
+- **Data** (fictional, synthetic): `ml/laya/data/{train,dev,eval}.jsonl`, `labels.json`, `stats.json`, `README.md`; generator + leakage check in `ml/laya/scripts/` (`npx tsx ml/laya/scripts/generate.ts`, seeded).
+  - train 4,834 (none 25.9%; en 58% / fil 19% / taglish 23%; ≥251 per label); dev 537 (own templates and name pools); eval 161 = the 30 fixtures through `extractionUnits()`, with every accepted type in `labels` (39 accept >1). Eval has 0 "none" rows (the app filters unlabelled fixture blocks) → false positives are measured on dev.
+  - Faithful to the app: every example passes chunking/prefilter/injection filters and `checkFindingType`; `context` only where the app sends it (200-char tail); ~10% OCR noise; 142 injection rows labelled none.
+  - Leakage vs the eval fixtures (number-masked 8-grams, short-block containment, trigram Jaccard ≥ 0.4, fixture party names): 105 candidates dropped; 0 flagged in train/dev; no exact overlap between splits.
+- **App gaps found while generating (not fixed yet):** the prefilter drops some genuine Filipino term lines (e.g. "Ang Kontratista ang magbibigay ng lahat ng materyales…", "partido" without "pagitan", "sahod", "serbisyo", "titulo"); `typeCheck` misses "notices", "dismiss", "matatapos"/"wawakasan", "interes", numeric/Filipino-month dates. Fix in a follow-up, then regenerate the data.
+- **Not reviewed by a native speaker:** Filipino/Taglish wording.
+- Checks: typecheck ✅, lint ✅, 301/301 tests ✅, leakage script ✅.
+
 ### 2026-10-12 — Claude (with Chris) — Honest review progress; swipe actions on Home cards
 - **Bug: "2/5" looked like document progress.** The review bar above the tab bar (`ReviewAccessory`) showed `Reviewing · 2/5` = pipeline *stage* 2 of 5, and stage 2 (reading terms with the model) is nearly all of the time, so it sat at "2/5" for minutes regardless of the document. Now:
   - One bar for the whole review, weighted by real stage time (`reviewProgress()` in `src/ai/pipeline.ts`: reading terms = 85%); compact label `Reviewing · 43%`, full line `Reading terms · part 3 of 6`.
