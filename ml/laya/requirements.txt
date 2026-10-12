@@ -1,0 +1,14 @@
+# ml/laya venv (Python 3.11). Install torch first from the CUDA index:
+#   python -m venv ml/laya/.venv
+#   ml/laya/.venv/Scripts/python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+#   ml/laya/.venv/Scripts/python -m pip install -r ml/laya/requirements.txt
+laya==0.4.4
+transformers==5.19.0
+tokenizers==0.23.3
+safetensors==0.8.0
+huggingface_hub==2.2.0
+numpy==2.4.6
+onnx==1.23.2
+onnxruntime==1.31.0
+onnxscript==0.7.2
+pyarrow==26.0.0
