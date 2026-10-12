@@ -1,0 +1,375 @@
+{
+  "seed": 20261012,
+  "train": {
+    "total": 4834,
+    "label": {
+      "payment_condition": 380,
+      "termination": 339,
+      "none": 1251,
+      "late_fee": 360,
+      "revisions": 251,
+      "ownership": 251,
+      "deliverables": 300,
+      "due_date": 400,
+      "other": 331,
+      "party": 251,
+      "payment_amount": 420,
+      "notice_period": 300
+    },
+    "lang": {
+      "en": 2789,
+      "fil": 926,
+      "taglish": 1119
+    },
+    "labelLang": {
+      "payment_condition": {
+        "en": 209,
+        "taglish": 95,
+        "fil": 76
+      },
+      "termination": {
+        "fil": 48,
+        "taglish": 73,
+        "en": 218
+      },
+      "none": {
+        "taglish": 244,
+        "en": 757,
+        "fil": 250
+      },
+      "late_fee": {
+        "taglish": 90,
+        "en": 198,
+        "fil": 72
+      },
+      "revisions": {
+        "en": 138,
+        "taglish": 63,
+        "fil": 50
+      },
+      "ownership": {
+        "en": 154,
+        "fil": 34,
+        "taglish": 63
+      },
+      "deliverables": {
+        "en": 174,
+        "fil": 60,
+        "taglish": 66
+      },
+      "due_date": {
+        "en": 224,
+        "taglish": 100,
+        "fil": 76
+      },
+      "other": {
+        "en": 182,
+        "taglish": 83,
+        "fil": 66
+      },
+      "party": {
+        "taglish": 63,
+        "en": 138,
+        "fil": 50
+      },
+      "payment_amount": {
+        "en": 232,
+        "taglish": 104,
+        "fil": 84
+      },
+      "notice_period": {
+        "en": 165,
+        "taglish": 75,
+        "fil": 60
+      }
+    },
+    "withContext": 714
+  },
+  "dev": {
+    "total": 537,
+    "label": {
+      "termination": 40,
+      "deliverables": 33,
+      "none": 139,
+      "party": 28,
+      "due_date": 44,
+      "other": 36,
+      "payment_condition": 42,
+      "notice_period": 33,
+      "payment_amount": 46,
+      "late_fee": 40,
+      "ownership": 28,
+      "revisions": 28
+    },
+    "lang": {
+      "en": 306,
+      "fil": 101,
+      "taglish": 130
+    },
+    "labelLang": {
+      "termination": {
+        "en": 25,
+        "taglish": 10,
+        "fil": 5
+      },
+      "deliverables": {
+        "fil": 7,
+        "taglish": 8,
+        "en": 18
+      },
+      "none": {
+        "en": 76,
+        "taglish": 35,
+        "fil": 28
+      },
+      "party": {
+        "taglish": 7,
+        "en": 15,
+        "fil": 6
+      },
+      "due_date": {
+        "en": 24,
+        "taglish": 11,
+        "fil": 9
+      },
+      "other": {
+        "fil": 7,
+        "taglish": 8,
+        "en": 21
+      },
+      "payment_condition": {
+        "en": 23,
+        "taglish": 11,
+        "fil": 8
+      },
+      "notice_period": {
+        "taglish": 8,
+        "en": 21,
+        "fil": 4
+      },
+      "payment_amount": {
+        "taglish": 12,
+        "fil": 9,
+        "en": 25
+      },
+      "late_fee": {
+        "taglish": 10,
+        "en": 24,
+        "fil": 6
+      },
+      "ownership": {
+        "taglish": 5,
+        "en": 17,
+        "fil": 6
+      },
+      "revisions": {
+        "fil": 6,
+        "en": 17,
+        "taglish": 5
+      }
+    },
+    "withContext": 55
+  },
+  "eval": {
+    "total": 161,
+    "label": {
+      "party": 30,
+      "deliverables": 20,
+      "payment_amount": 41,
+      "payment_condition": 7,
+      "revisions": 4,
+      "ownership": 11,
+      "termination": 15,
+      "due_date": 18,
+      "late_fee": 12,
+      "other": 2,
+      "notice_period": 1
+    },
+    "lang": {
+      "en": 139,
+      "fil": 18,
+      "taglish": 4
+    },
+    "labelLang": {
+      "party": {
+        "en": 25,
+        "fil": 4,
+        "taglish": 1
+      },
+      "deliverables": {
+        "en": 18,
+        "fil": 2
+      },
+      "payment_amount": {
+        "en": 34,
+        "fil": 5,
+        "taglish": 2
+      },
+      "payment_condition": {
+        "en": 7
+      },
+      "revisions": {
+        "en": 3,
+        "fil": 1
+      },
+      "ownership": {
+        "en": 9,
+        "fil": 1,
+        "taglish": 1
+      },
+      "termination": {
+        "en": 13,
+        "fil": 2
+      },
+      "due_date": {
+        "en": 17,
+        "fil": 1
+      },
+      "late_fee": {
+        "en": 11,
+        "fil": 1
+      },
+      "other": {
+        "en": 2
+      },
+      "notice_period": {
+        "fil": 1
+      }
+    },
+    "withContext": 20
+  },
+  "noisyExamples": 525,
+  "leakageDropped": {
+    "contains_eval": 27,
+    "jaccard": 41,
+    "examples": 105,
+    "ngram8": 66
+  },
+  "rejected": {
+    "train/duplicate": 31254,
+    "train/path_cap": 62165,
+    "train/contains_eval": 27,
+    "train/jaccard": 9,
+    "train/ngram8": 66,
+    "train/type_check": 1644,
+    "train/prefilter": 762,
+    "dev/duplicate": 2075,
+    "dev/path_cap": 2027,
+    "dev/prefilter": 13,
+    "dev/jaccard": 3,
+    "dev/type_check": 2
+  },
+  "rejectedByTemplate": {
+    "train/type_check:due_date/fil/3": 406,
+    "train/type_check:due_date/fil/8": 396,
+    "train/type_check:due_date/fil/5": 214,
+    "train/type_check:due_date/taglish/15": 5,
+    "train/type_check:due_date/taglish/5": 5,
+    "train/type_check:due_date/en/5": 9,
+    "train/type_check:due_date/en/23": 7,
+    "train/prefilter:deliverables/fil/6": 2,
+    "train/prefilter:deliverables/fil/1": 4,
+    "train/prefilter:deliverables/fil/3": 2,
+    "train/prefilter:deliverables/fil/0": 5,
+    "train/prefilter:deliverables/fil/7": 1,
+    "train/prefilter:deliverables/taglish/2": 190,
+    "train/prefilter:deliverables/taglish/3": 70,
+    "train/prefilter:deliverables/taglish/15": 72,
+    "train/prefilter:deliverables/taglish/1": 15,
+    "train/prefilter:deliverables/taglish/6": 87,
+    "train/prefilter:deliverables/taglish/8": 69,
+    "train/prefilter:deliverables/taglish/0": 37,
+    "train/prefilter:deliverables/en/7": 1,
+    "train/prefilter:revisions/fil/2": 7,
+    "train/prefilter:revisions/fil/10": 1,
+    "train/prefilter:ownership/taglish/3": 12,
+    "train/prefilter:ownership/en/12": 6,
+    "train/prefilter:ownership/en/11": 5,
+    "train/prefilter:ownership/en/6": 9,
+    "train/type_check:termination/en/6": 592,
+    "train/type_check:notice_period/en/7": 10,
+    "train/prefilter:party/fil/2": 30,
+    "train/prefilter:none/taglish/46": 78,
+    "train/prefilter:none/en/0": 37,
+    "train/prefilter:none/en/106": 22,
+    "dev/prefilter:payment_condition/en/24": 2,
+    "dev/prefilter:due_date/fil/9": 5,
+    "dev/prefilter:ownership/en/4": 2,
+    "dev/type_check:notice_period/en/4": 2,
+    "dev/prefilter:none/en/104": 4
+  },
+  "templatesPerGroup": {
+    "train/payment_condition/fil": 13,
+    "train/payment_condition/taglish": 16,
+    "train/payment_condition/en": 22,
+    "train/payment_amount/fil": 14,
+    "train/payment_amount/taglish": 17,
+    "train/payment_amount/en": 23,
+    "train/due_date/fil": 12,
+    "train/due_date/taglish": 16,
+    "train/due_date/en": 20,
+    "train/late_fee/fil": 12,
+    "train/late_fee/taglish": 13,
+    "train/late_fee/en": 15,
+    "train/deliverables/fil": 15,
+    "train/deliverables/taglish": 16,
+    "train/deliverables/en": 21,
+    "train/revisions/fil": 9,
+    "train/revisions/taglish": 11,
+    "train/revisions/en": 12,
+    "train/ownership/fil": 12,
+    "train/ownership/taglish": 14,
+    "train/ownership/en": 12,
+    "train/termination/fil": 13,
+    "train/termination/taglish": 16,
+    "train/termination/en": 16,
+    "train/notice_period/fil": 12,
+    "train/notice_period/taglish": 16,
+    "train/notice_period/en": 12,
+    "train/party/fil": 9,
+    "train/party/taglish": 13,
+    "train/party/en": 11,
+    "train/other/fil": 19,
+    "train/other/taglish": 19,
+    "train/other/en": 33,
+    "train/none/fil": 42,
+    "train/none/taglish": 39,
+    "train/none/en": 88,
+    "dev/payment_condition/fil": 3,
+    "dev/payment_condition/taglish": 3,
+    "dev/payment_condition/en": 5,
+    "dev/payment_amount/fil": 3,
+    "dev/payment_amount/taglish": 4,
+    "dev/payment_amount/en": 5,
+    "dev/due_date/fil": 3,
+    "dev/due_date/taglish": 3,
+    "dev/due_date/en": 4,
+    "dev/late_fee/fil": 2,
+    "dev/late_fee/taglish": 3,
+    "dev/late_fee/en": 3,
+    "dev/deliverables/fil": 3,
+    "dev/deliverables/taglish": 3,
+    "dev/deliverables/en": 5,
+    "dev/revisions/fil": 2,
+    "dev/revisions/taglish": 2,
+    "dev/revisions/en": 3,
+    "dev/ownership/fil": 3,
+    "dev/ownership/taglish": 3,
+    "dev/ownership/en": 3,
+    "dev/termination/fil": 3,
+    "dev/termination/taglish": 4,
+    "dev/termination/en": 4,
+    "dev/notice_period/fil": 2,
+    "dev/notice_period/taglish": 3,
+    "dev/notice_period/en": 3,
+    "dev/party/fil": 2,
+    "dev/party/taglish": 3,
+    "dev/party/en": 2,
+    "dev/other/fil": 4,
+    "dev/other/taglish": 4,
+    "dev/other/en": 8,
+    "dev/none/fil": 10,
+    "dev/none/taglish": 9,
+    "dev/none/en": 21
+  }
+}

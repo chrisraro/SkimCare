@@ -1,0 +1,161 @@
+{"text":"This Agreement is made between Bayanihan Bakeshop (\"Client\") and Jose Reyes (\"Designer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-01/p1_b2"}
+{"text":"The Designer shall deliver one logo in three color versions and a one-page brand guide.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-01/p1_b3"}
+{"text":"The total fee is PHP 18,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"The Designer shall deliver one logo in three color versions and a one-page brand guide.","source":"eval-fixture","ref":"svc-01/p1_b4"}
+{"text":"Half of the fee is due upon signing and the balance upon delivery of the final files.","label":"payment_condition","labels":["payment_condition","due_date"],"lang":"en","context":"The total fee is PHP 18,000.","source":"eval-fixture","ref":"svc-01/p1_b5"}
+{"text":"The Client may request up to three (3) revisions.","label":"revisions","labels":["revisions"],"lang":"en","source":"eval-fixture","ref":"svc-01/p1_b6"}
+{"text":"This Agreement is between Tala Logistics Inc. (\"Client\") and Ana Cruz (\"Developer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-02/p1_b2"}
+{"text":"The Developer will build a clickable prototype of the driver app with up to ten (10) screens.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-02/p1_b3"}
+{"text":"The Client shall pay PHP 75,000 in three milestones of PHP 25,000 each.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-02/p1_b4"}
+{"text":"Each milestone payment is due within seven (7) days after the Client approves that milestone.","label":"payment_condition","labels":["payment_condition","due_date"],"lang":"en","source":"eval-fixture","ref":"svc-02/p2_b1"}
+{"text":"Source code and designs become the property of the Client only after full payment.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"svc-02/p2_b2"}
+{"text":"Either party may end this Agreement with thirty (30) days written notice.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"svc-02/p2_b3"}
+{"text":"This contract is between Liza Mendoza (\"Client\") and Lente Studio (\"Photographer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b2"}
+{"text":"The Photographer will cover the ceremony and reception for up to eight (8) hours and deliver 300 edited photos.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b3"}
+{"text":"The package price is PHP 45,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b4"}
+{"text":"A non-refundable reservation fee of PHP 10,000 is due upon signing.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b5"}
+{"text":"Edited photos will be delivered within sixty (60) days after the event.","label":"deliverables","labels":["deliverables","due_date"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b6"}
+{"text":"If the Client cancels less than thirty (30) days before the event, the full package price remains payable.","label":"termination","labels":["termination","payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-03/p1_b7"}
+{"text":"Kusina ni Lola Food Corp. (\"Client\") engages Ramon Villanueva, CPA (\"Consultant\") for bookkeeping.","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-04/p1_b2"}
+{"text":"The Consultant shall prepare monthly financial statements and file monthly tax returns.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-04/p1_b3"}
+{"text":"The retainer fee is PHP 12,000 per month.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-04/p1_b4"}
+{"text":"The fee is due on the 5th day of each month.","label":"due_date","labels":["due_date"],"lang":"en","context":"The retainer fee is PHP 12,000 per month.","source":"eval-fixture","ref":"svc-04/p1_b5"}
+{"text":"A late payment fee of PHP 500 applies for each week of delay.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"svc-04/p1_b6"}
+{"text":"This Agreement continues month to month until either party gives fifteen (15) days written notice.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"svc-04/p1_b7"}
+{"text":"This Agreement is made between Isla Travel Co. (\"Client\") and Bea Santos (\"Writer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-05/p1_b2"}
+{"text":"The Writer shall write copy for six (6) web pages, each up to 500 words.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-05/p1_b3"}
+{"text":"The fee is PHP 2,500 per page, or PHP 15,000 in total.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"The Writer shall write copy for six (6) web pages, each up to 500 words.","source":"eval-fixture","ref":"svc-05/p1_b4"}
+{"text":"Payment will be released once the Client is satisfied with all pages.","label":"payment_condition","labels":["payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-05/p1_b5"}
+{"text":"The Client may request two (2) rounds of edits per page.","label":"revisions","labels":["revisions"],"lang":"en","source":"eval-fixture","ref":"svc-05/p1_b6"}
+{"text":"The Writer may show the published pages in a personal portfolio.","label":"ownership","labels":["ownership","other"],"lang":"en","source":"eval-fixture","ref":"svc-05/p1_b7"}
+{"text":"This Agreement is between Pista Events (\"Organizer\") and Carlo Dizon (\"Host\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-06/p1_b2"}
+{"text":"The Host shall host the product launch on the agreed date for up to four (4) hours.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-06/p1_b3"}
+{"text":"The talent fee is PHP 30,000, inclusive of taxes.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-06/p1_b4"}
+{"text":"The Organizer shall pay the full fee within fifteen (15) days after the event.","label":"due_date","labels":["due_date","payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-06/p1_b5"}
+{"text":"If the event is cancelled by the Organizer, the Host keeps fifty percent (50%) of the fee.","label":"termination","labels":["termination","payment_condition"],"lang":"en","context":"The Organizer shall pay the full fee within fifteen (15) days after the event.","source":"eval-fixture","ref":"svc-06/p1_b6"}
+{"text":"This Agreement is made between Bukid Fresh Produce (\"Client\") and Mia Torres (\"Manager\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-07/p1_b2"}
+{"text":"The Manager will create and post twelve (12) posts per month on two platforms.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-07/p1_b3"}
+{"text":"The monthly fee is PHP 20,000, payable in advance.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-07/p1_b4"}
+{"text":"Invoices are due on the 1st day of each month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"svc-07/p2_b1"}
+{"text":"Content created under this Agreement belongs to the Client once paid for.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"svc-07/p2_b2"}
+{"text":"The Client may end the Agreement at any time; the Manager must give sixty (60) days notice.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"svc-07/p2_b3"}
+{"text":"This Agreement is between Andrea Lim (\"Owner\") and Hiraya Interiors (\"Designer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b2"}
+{"text":"The Designer shall provide a floor plan, a 3D render of the living area and a materials list.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b3"}
+{"text":"The design fee is PHP 40,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b4"}
+{"text":"Final payment is due upon the Owner's written acceptance of the 3D render.","label":"payment_condition","labels":["payment_condition"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b5"}
+{"text":"Additional revisions beyond two (2) rounds are billed at PHP 3,000 each.","label":"revisions","labels":["revisions","payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b6"}
+{"text":"All drawings remain the property of the Designer.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"svc-08/p1_b7"}
+{"text":"This Agreement is between Sinag Media (\"Producer\") and Paolo Garcia (\"Editor\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b2"}
+{"text":"The Editor will edit four (4) episodes of up to twenty (20) minutes each.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b3"}
+{"text":"The Producer shall pay PHP 8,000 per episode.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b4"}
+{"text":"Each episode fee is due within ten (10) business days after the episode is approved.","label":"payment_condition","labels":["payment_condition","due_date"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b5"}
+{"text":"Approval shall not be unreasonably withheld.","label":"payment_condition","labels":["payment_condition","other"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b6"}
+{"text":"The Producer may terminate if an episode is more than seven (7) days late.","label":"termination","labels":["termination"],"lang":"en","source":"eval-fixture","ref":"svc-09/p1_b7"}
+{"text":"This Agreement is between Dagat Shipping Corp. (\"Customer\") and Ulap Tech Solutions (\"Provider\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b2"}
+{"text":"The Provider shall provide helpdesk support on weekdays from 8:00 AM to 5:00 PM.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b3"}
+{"text":"The service fee is PHP 35,000 per month.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b4"}
+{"text":"Payment is due thirty (30) days from the invoice date.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b5"}
+{"text":"Unpaid amounts incur a charge of PHP 1,000 per month of delay.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b6"}
+{"text":"The initial term is twelve (12) months. Early termination requires ninety (90) days notice.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"svc-10/p1_b7"}
+{"text":"This contract is between Arangkada Motors (\"Seller\") and Rico Bautista (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-01/p1_b2"}
+{"text":"The total price of the motorcycle is PHP 96,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"This contract is between Arangkada Motors (\"Seller\") and Rico Bautista (\"Buyer\").","source":"eval-fixture","ref":"ins-01/p1_b3"}
+{"text":"The Buyer shall pay a down payment of PHP 12,000 upon signing.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"ins-01/p1_b4"}
+{"text":"The balance is payable in a monthly installment of PHP 3,500 for twenty-four (24) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"The Buyer shall pay a down payment of PHP 12,000 upon signing.","source":"eval-fixture","ref":"ins-01/p1_b5"}
+{"text":"Each installment is due on the 10th day of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-01/p1_b6"}
+{"text":"A fixed late fee of PHP 250 applies to each late installment.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-01/p1_b7"}
+{"text":"If three (3) installments are missed, the Seller may repossess the motorcycle.","label":"termination","labels":["termination","other"],"lang":"en","source":"eval-fixture","ref":"ins-01/p2_b1"}
+{"text":"Ownership passes to the Buyer only after the last installment is paid.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"ins-01/p2_b2"}
+{"text":"This Agreement is between Gadget Hub (\"Seller\") and Clara Navarro (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-02/p1_b2"}
+{"text":"The Buyer agrees to pay a monthly installment of PHP 2,800 for ten (10) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-02/p1_b3"}
+{"text":"Payments are due on the 25th of each month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-02/p1_b4"}
+{"text":"A flat late fee of PHP 150 is charged for every late payment.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-02/p1_b5"}
+{"text":"The laptop remains the property of the Seller until fully paid.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"ins-02/p1_b6"}
+{"text":"This contract is made between Lamig Appliance Center (\"Seller\") and Teresa Ocampo (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-03/p1_b2"}
+{"text":"The cash price is PHP 32,000; the installment price is PHP 38,400.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"This contract is made between Lamig Appliance Center (\"Seller\") and Teresa Ocampo (\"Buyer\").","source":"eval-fixture","ref":"ins-03/p1_b3"}
+{"text":"The Buyer shall pay PHP 3,200 per month for twelve (12) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-03/p1_b4"}
+{"text":"Each payment is due on the 15th day of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-03/p1_b5"}
+{"text":"Late payments are charged 3% of the unpaid installment per month.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-03/p1_b6"}
+{"text":"Returned items are not refundable.","label":"other","labels":["other"],"lang":"en","source":"eval-fixture","ref":"ins-03/p1_b7"}
+{"text":"This contract is between Luntiang Bukid Realty (\"Developer\") and Mark Aquino (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-04/p1_b2"}
+{"text":"The total contract price of Lot 12, Block 4 is PHP 1,200,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"This contract is between Luntiang Bukid Realty (\"Developer\") and Mark Aquino (\"Buyer\").","source":"eval-fixture","ref":"ins-04/p1_b3"}
+{"text":"The Buyer shall pay a reservation fee of PHP 20,000, which is non-refundable.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"ins-04/p1_b4"}
+{"text":"The balance shall be paid in sixty (60) monthly amortizations of PHP 19,667.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-04/p2_b1"}
+{"text":"Amortizations are due on the 30th day of each month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-04/p2_b2"}
+{"text":"A penalty of PHP 1,000 is charged for each month an amortization is late.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-04/p2_b3"}
+{"text":"The title will be transferred to the Buyer after full payment.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"ins-04/p2_b4"}
+{"text":"The Developer may cancel this contract after written notice if the Buyer misses six (6) amortizations.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"ins-04/p3_b1"}
+{"text":"These terms are between Signal Plus Telecom (\"Provider\") and Joy Ramos (\"Subscriber\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-05/p1_b2"}
+{"text":"The device price of PHP 54,000 is divided into twenty-four (24) monthly charges of PHP 2,250.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-05/p1_b3"}
+{"text":"Monthly charges are billed together with the Subscriber's plan and due on the bill due date.","label":"due_date","labels":["due_date","payment_condition"],"lang":"en","source":"eval-fixture","ref":"ins-05/p1_b4"}
+{"text":"If the plan is cancelled early, the remaining device balance becomes due at once.","label":"termination","labels":["termination","payment_condition"],"lang":"en","context":"Monthly charges are billed together with the Subscriber's plan and due on the bill due date.","source":"eval-fixture","ref":"ins-05/p1_b5"}
+{"text":"This Agreement is between Tahi Supplies (\"Seller\") and Rosa Fernandez (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-06/p1_b2"}
+{"text":"The Buyer shall pay a monthly installment of PHP 1,200 for eighteen (18) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-06/p1_b3"}
+{"text":"Installments are due every 7th day of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-06/p1_b4"}
+{"text":"A fixed late fee of PHP 100 applies per late installment.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-06/p1_b5"}
+{"text":"The Seller will repair the machine for free during the first six (6) months.","label":"deliverables","labels":["deliverables","other"],"lang":"en","source":"eval-fixture","ref":"ins-06/p1_b6"}
+{"text":"This deed is between Eduardo Salazar (\"Seller\") and Grace Pineda (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-07/p1_b2"}
+{"text":"The purchase price of the vehicle is PHP 450,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-07/p1_b3"}
+{"text":"The Buyer pays PHP 150,000 upon signing.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"ins-07/p1_b4"}
+{"text":"The balance of PHP 300,000 is payable in twelve (12) monthly installments of PHP 25,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"The Buyer pays PHP 150,000 upon signing.","source":"eval-fixture","ref":"ins-07/p1_b5"}
+{"text":"Installments are due on the 20th of each month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-07/p1_b6"}
+{"text":"The certificate of registration will be transferred upon full payment.","label":"ownership","labels":["ownership"],"lang":"en","source":"eval-fixture","ref":"ins-07/p1_b7"}
+{"text":"This Agreement is between Narra Home (\"Seller\") and Lito Castillo (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-08/p1_b2"}
+{"text":"The Buyer agrees to pay a monthly installment of PHP 4,000 for six (6) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-08/p1_b3"}
+{"text":"The first installment is due upon delivery.","label":"due_date","labels":["due_date","payment_condition"],"lang":"en","source":"eval-fixture","ref":"ins-08/p1_b4"}
+{"text":"Late payments may result in additional charges.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-08/p1_b5"}
+{"text":"Delivery will be made within fourteen (14) days after signing.","label":"deliverables","labels":["deliverables","due_date"],"lang":"en","source":"eval-fixture","ref":"ins-08/p1_b6"}
+{"text":"This plan is between Mataas na Paaralan ng Liwanag (\"School\") and the parent of the enrolled student (\"Payor\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b2"}
+{"text":"The tuition for the school year is PHP 60,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b3"}
+{"text":"The Payor shall pay PHP 6,000 upon enrollment and nine (9) monthly payments of PHP 6,000.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b4"}
+{"text":"Monthly payments are due on the 1st day of each month from July to March.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b5"}
+{"text":"A late fee of PHP 300 applies to each payment made after the due date.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b6"}
+{"text":"Report cards may be withheld while there is an unpaid balance.","label":"other","labels":["other"],"lang":"en","source":"eval-fixture","ref":"ins-09/p1_b7"}
+{"text":"This contract is between Araw Energy Solutions (\"Installer\") and Nestor Valdez (\"Customer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"ins-10/p1_b2"}
+{"text":"The Installer shall supply and install a 5 kW solar system within thirty (30) days.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"ins-10/p1_b3"}
+{"text":"The system price is PHP 280,000, payable in thirty-six (36) monthly installments.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"ins-10/p1_b4"}
+{"text":"Each installment is due on the 12th day of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"ins-10/p2_b1"}
+{"text":"The Customer may not move or sell the system until it is fully paid.","label":"ownership","labels":["ownership","other"],"lang":"en","context":"Each installment is due on the 12th day of the month.","source":"eval-fixture","ref":"ins-10/p2_b2"}
+{"text":"If the Customer misses two (2) installments, the Installer may disconnect the system after ten (10) days notice.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"ins-10/p2_b3"}
+{"text":"Ang kasunduang ito ay sa pagitan ni Maria Dela Cruz (\"Kliyente\") at Lutong Bahay Catering (\"Caterer\").","label":"party","labels":["party"],"lang":"fil","context":"KASUNDUAN SA SERBISYO","source":"eval-fixture","ref":"mix-01/p1_b2"}
+{"text":"Ang Caterer ay maghahanda ng pagkain para sa 100 bisita.","label":"deliverables","labels":["deliverables"],"lang":"fil","source":"eval-fixture","ref":"mix-01/p1_b3"}
+{"text":"Ang kabuuang bayad ay PHP 50,000.","label":"payment_amount","labels":["payment_amount"],"lang":"fil","source":"eval-fixture","ref":"mix-01/p1_b4"}
+{"text":"A down payment of PHP 20,000 is due upon signing; ang natitira ay babayaran sa araw ng event.","label":"payment_amount","labels":["payment_amount","payment_condition","due_date"],"lang":"taglish","context":"Ang kabuuang bayad ay PHP 50,000.","source":"eval-fixture","ref":"mix-01/p1_b5"}
+{"text":"Kung kakanselahin ng Kliyente sa loob ng pitong (7) araw bago ang event, hindi na ibabalik ang down payment.","label":"termination","labels":["termination","payment_condition"],"lang":"fil","source":"eval-fixture","ref":"mix-01/p1_b6"}
+{"text":"Ang kasunduang ito ay sa pagitan ng Selpon Center (\"Nagbebenta\") at Juan Santos (\"Mamimili\").","label":"party","labels":["party"],"lang":"fil","context":"KASUNDUAN SA HULUGAN","source":"eval-fixture","ref":"mix-02/p1_b2"}
+{"text":"Ang Mamimili ay magbabayad ng PHP 1,500 kada buwan sa loob ng labindalawang (12) buwan.","label":"payment_amount","labels":["payment_amount"],"lang":"fil","source":"eval-fixture","ref":"mix-02/p1_b3"}
+{"text":"Due date: tuwing ika-15 ng buwan.","label":"due_date","labels":["due_date"],"lang":"fil","source":"eval-fixture","ref":"mix-02/p1_b4"}
+{"text":"May multa na PHP 100 sa bawat late na hulog.","label":"late_fee","labels":["late_fee"],"lang":"fil","source":"eval-fixture","ref":"mix-02/p1_b5"}
+{"text":"Ang cellphone ay pag-aari pa ng Nagbebenta hanggang sa matapos ang lahat ng hulog.","label":"ownership","labels":["ownership"],"lang":"fil","source":"eval-fixture","ref":"mix-02/p1_b6"}
+{"text":"This is between Kape Kanto (\"Client\") at Nina Robles (\"Designer\").","label":"party","labels":["party"],"lang":"taglish","context":"SERVICE AGREEMENT","source":"eval-fixture","ref":"mix-03/p1_b2"}
+{"text":"Ang Designer ay gagawa ng menu design at limang (5) social media templates.","label":"deliverables","labels":["deliverables"],"lang":"fil","source":"eval-fixture","ref":"mix-03/p1_b3"}
+{"text":"Total fee: PHP 9,000. Babayaran ito pagkatapos aprubahan ng Client ang lahat ng designs.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"taglish","context":"Ang Designer ay gagawa ng menu design at limang (5) social media templates.","source":"eval-fixture","ref":"mix-03/p1_b4"}
+{"text":"Hanggang dalawang (2) revisions lang ang kasama sa fee.","label":"revisions","labels":["revisions"],"lang":"fil","source":"eval-fixture","ref":"mix-03/p1_b5"}
+{"text":"Ang mga final files ay magiging pag-aari ng Client pagkatapos ng full payment.","label":"ownership","labels":["ownership"],"lang":"taglish","source":"eval-fixture","ref":"mix-03/p1_b6"}
+{"text":"Ang kasunduang ito ay sa pagitan ni Aling Nena Torres (\"May-ari\") at Ben Lopez (\"Umuupa\").","label":"party","labels":["party"],"lang":"fil","context":"KASUNDUAN SA PAUPAHAN","source":"eval-fixture","ref":"mix-04/p1_b2"}
+{"text":"Ang buwanang upa ay PHP 6,500.","label":"payment_amount","labels":["payment_amount"],"lang":"fil","source":"eval-fixture","ref":"mix-04/p1_b3"}
+{"text":"Rent is due every 5th of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"mix-04/p1_b4"}
+{"text":"Kailangan ng isang (1) buwang deposit at isang (1) buwang advance bago lumipat.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"fil","source":"eval-fixture","ref":"mix-04/p1_b5"}
+{"text":"Ang Umuupa ay dapat magbigay ng abiso tatlumpung (30) araw bago umalis.","label":"notice_period","labels":["notice_period","termination"],"lang":"fil","source":"eval-fixture","ref":"mix-04/p1_b6"}
+{"text":"Ang kasunduang ito ay sa pagitan ng Alon Beach Resort (\"Kliyente\") at Pedro Gomez (\"Developer\").","label":"party","labels":["party"],"lang":"fil","context":"KASUNDUAN SA PAGGAWA NG WEBSITE","source":"eval-fixture","ref":"mix-05/p1_b2"}
+{"text":"The Developer shall build a five (5) page website with an online booking form.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"mix-05/p1_b3"}
+{"text":"Ang bayad ay PHP 35,000, hahatiin sa dalawa: 50% sa simula at 50% kapag tapos na.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"fil","source":"eval-fixture","ref":"mix-05/p1_b4"}
+{"text":"Kung hindi magbayad ang Kliyente sa loob ng labing-apat (14) na araw, maaaring itigil ng Developer ang trabaho.","label":"termination","labels":["termination","payment_condition"],"lang":"fil","source":"eval-fixture","ref":"mix-05/p1_b5"}
+{"text":"This Agreement is between Global Pinoy BPO (\"Client\") and Lara Ignacio (\"Translator\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"inj-01/p1_b2"}
+{"text":"The Translator shall translate a 40-page manual from English to Filipino.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"inj-01/p1_b3"}
+{"text":"The fee is PHP 400 per page.","label":"payment_amount","labels":["payment_amount"],"lang":"en","context":"The Translator shall translate a 40-page manual from English to Filipino.","source":"eval-fixture","ref":"inj-01/p1_b4"}
+{"text":"Payment will be released only after the Client's reviewers approve the full translation.","label":"payment_condition","labels":["payment_condition"],"lang":"en","source":"eval-fixture","ref":"inj-01/p1_b6"}
+{"text":"This contract is between Bilis Appliance (\"Seller\") and Dante Marquez (\"Buyer\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"inj-02/p1_b2"}
+{"text":"The Buyer shall pay a monthly installment of PHP 2,000 for twelve (12) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"inj-02/p1_b3"}
+{"text":"A fixed late fee of PHP 500 applies to each late installment.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"inj-02/p1_b5"}
+{"text":"Installments are due on the 3rd day of each month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"inj-02/p1_b6"}
+{"text":"This Agreement is between Bagwis Ventures (\"Client\") and Leo Manalo (\"Consultant\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"inj-03/p1_b2"}
+{"text":"The Consultant shall deliver a market study within forty-five (45) days.","label":"deliverables","labels":["deliverables","due_date"],"lang":"en","source":"eval-fixture","ref":"inj-03/p1_b3"}
+{"text":"The fee is PHP 90,000, payable only upon acceptance of the final report by the Client.","label":"payment_amount","labels":["payment_amount","payment_condition"],"lang":"en","source":"eval-fixture","ref":"inj-03/p1_b5"}
+{"text":"The Client may terminate without cause and pay only for work already accepted.","label":"termination","labels":["termination"],"lang":"en","source":"eval-fixture","ref":"inj-03/p1_b6"}
+{"text":"This Agreement is between Bituin Films (\"Producer\") and Kim Herrera (\"Crew Member\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"inj-04/p1_b2"}
+{"text":"The Crew Member will work as camera operator for ten (10) shooting days.","label":"deliverables","labels":["deliverables"],"lang":"en","source":"eval-fixture","ref":"inj-04/p1_b3"}
+{"text":"The day rate is PHP 5,000, paid within sixty (60) days after the last shooting day.","label":"payment_amount","labels":["payment_amount","due_date"],"lang":"en","source":"eval-fixture","ref":"inj-04/p1_b5"}
+{"text":"The Producer may cancel any shooting day with twenty-four (24) hours notice without pay.","label":"termination","labels":["termination","notice_period"],"lang":"en","source":"eval-fixture","ref":"inj-04/p1_b6"}
+{"text":"This contract is between Sagip Lending (\"Lender\") and Ella Navarro (\"Borrower\").","label":"party","labels":["party"],"lang":"en","source":"eval-fixture","ref":"inj-05/p1_b2"}
+{"text":"The Borrower shall pay PHP 2,750 every month for twelve (12) months.","label":"payment_amount","labels":["payment_amount"],"lang":"en","source":"eval-fixture","ref":"inj-05/p1_b3"}
+{"text":"A penalty of PHP 750 is charged for every missed payment.","label":"late_fee","labels":["late_fee"],"lang":"en","source":"eval-fixture","ref":"inj-05/p1_b5"}
+{"text":"Payments are due every 28th of the month.","label":"due_date","labels":["due_date"],"lang":"en","source":"eval-fixture","ref":"inj-05/p1_b6"}

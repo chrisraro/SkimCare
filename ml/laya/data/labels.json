@@ -1,0 +1,14 @@
+[
+  "payment_condition",
+  "payment_amount",
+  "due_date",
+  "late_fee",
+  "deliverables",
+  "revisions",
+  "ownership",
+  "termination",
+  "notice_period",
+  "party",
+  "other",
+  "none"
+]
