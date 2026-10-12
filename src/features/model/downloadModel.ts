@@ -18,7 +18,8 @@
  */
 import { File, Paths } from 'expo-file-system';
 import { getModelDownloader, type ModelDownloadModule, type NativeDownloadInfo } from '../../../modules/model-download';
-import type { ModelSpec } from '@/ai/llm/models';
+import { releaseClassifier } from '@/ai/classifier/onnxNative';
+import { classifierFiles, isClassifierPinned, type ClassifierSpec, type ModelSpec } from '@/ai/llm/models';
 import { errorMessage, modelsDir, safeDelete, STORAGE_MARGIN_BYTES, verifyAndInstall, type InstallFailure } from './importModel';
 
 export type DownloadVia = 'system' | 'app';
@@ -209,6 +210,47 @@ async function viaApp(spec: ModelSpec, cb: DownloadCallbacks, signal: AbortSigna
     }
   }
   return verify(spec, cb);
+}
+
+/**
+ * The clause classifier's pinned files (ONNX model + tokenizer), one after another, each
+ * through `downloadModel` (same `.part` file, size + MD5 check, delete on mismatch).
+ * Files already installed with the right size are skipped (they are MD5-checked again when
+ * loaded). Progress is reported over all files. Resolves (never rejects).
+ *
+ * GitHub release assets redirect to a signed CDN URL; Android DownloadManager and
+ * expo-file-system both follow redirects (the GGUF from Hugging Face already does).
+ */
+export async function downloadClassifierFiles(
+  spec: ClassifierSpec,
+  cb: DownloadCallbacks,
+  signal: AbortSignal,
+  opts: DownloadOptions = {},
+  native: ModelDownloadModule | null = getModelDownloader(),
+): Promise<DownloadOutcome> {
+  if (!isClassifierPinned(spec)) return { status: 'failed', reason: 'unknown' };
+  const files = classifierFiles(spec);
+  const total = files.reduce((n, f) => n + f.sizeBytes, 0);
+  const todo = files.filter((f) => {
+    const file = new File(modelsDir(), f.fileName);
+    return !(file.exists && file.info().size === f.sizeBytes);
+  });
+  let done = total - todo.reduce((n, f) => n + f.sizeBytes, 0);
+  // A loaded session may hold a file that is about to be replaced.
+  await releaseClassifier();
+  for (const f of todo) {
+    const outcome = await downloadModel(
+      f,
+      { ...cb, onProgress: (bytes, _t, waiting) => cb.onProgress(done + Math.min(bytes, f.sizeBytes), total, waiting) },
+      signal,
+      { ...opts, resumeId: undefined, description: opts.description ?? f.fileName },
+      native,
+    );
+    if (outcome.status !== 'done') return outcome;
+    done += f.sizeBytes;
+  }
+  cb.onProgress(total, total, false);
+  return { status: 'done' };
 }
 
 /**

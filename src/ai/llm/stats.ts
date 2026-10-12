@@ -61,6 +61,23 @@ export interface LlmRunStats {
   callMs: number;
   /** Wall time of the whole phase. */
   wallMs: number;
+  /** Type pass by the clause classifier (classifier/laya.ts). Counts and times only. */
+  classifier: ClassifierStats;
+}
+
+export interface ClassifierStats {
+  /** Blocks the classifier was asked about. */
+  asked: number;
+  /** Confident answers used instead of a language-model type call. */
+  used: number;
+  /** Of `used`: blocks it called "not a term" (no explain call). */
+  none: number;
+  /** Answers below the threshold, sent to the language model instead. */
+  belowThreshold: number;
+  /** Classifier errors (the language model decided those blocks). */
+  errors: number;
+  /** Wall time of classifier runs, measured in JS. */
+  ms: number;
 }
 
 export function emptyStats(phase: LlmRunStats['phase']): LlmRunStats {
@@ -79,6 +96,7 @@ export function emptyStats(phase: LlmRunStats['phase']): LlmRunStats {
     generationMs: 0,
     callMs: 0,
     wallMs: 0,
+    classifier: { asked: 0, used: 0, none: 0, belowThreshold: 0, errors: 0, ms: 0 },
   };
 }
 
@@ -108,7 +126,11 @@ export function formatStats(s: LlmRunStats): string {
     ? ` · prompt ${s.promptTokens} tok (+${s.cachedTokens} cached) ${secs(s.promptMs)} · generated ${s.generatedTokens} tok ${secs(s.generationMs)}` +
       (s.generationMs > 0 ? ` (${((s.generatedTokens * 1000) / s.generationMs).toFixed(1)} tok/s)` : '')
     : '';
-  return `${head}${tokens} · model ${secs(s.callMs)} · wall ${secs(s.wallMs)}`;
+  const c = s.classifier;
+  const sorter = c.asked
+    ? ` · sorter asked ${c.asked} used ${c.used} (none ${c.none}) low ${c.belowThreshold} errors ${c.errors} ${secs(c.ms)}`
+    : '';
+  return `${head}${tokens}${sorter} · model ${secs(s.callMs)} · wall ${secs(s.wallMs)}`;
 }
 
 /** Dev builds: one `[llm-stats]` line per extraction / quiz in the Metro or browser console. */

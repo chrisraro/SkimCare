@@ -8,10 +8,14 @@
  * Document text never leaves the browser. The ~400 MB model is downloaded only when
  * the user taps the button on the AI check screen (`prepare`).
  */
+import { classifierSelfCheck, getTriageClassifier, prepareClassifier } from './classifier/onnxNative.web';
+import { LAYA_SPEC } from './classifier/layaSpec';
+import { classifierReadinessCheck } from './classifier/readiness';
+import { isClassifierEnabled } from './classifier/setting';
 import { guessDocumentType } from './documentType';
 import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
-import { getModelSpec, type ModelSpec } from './llm/models';
+import { getModelSpec, isClassifierPinned, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { logStatsInDev } from './llm/stats';
 import type { InferenceEngine } from './engines';
@@ -40,8 +44,8 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
       license: spec.license,
       promptVersion: `${PROMPT_VERSION}+${COMPREHENSION_PROMPT_VERSION}`,
     },
-    checkReadiness: () =>
-      checkWebReadiness(spec, {
+    checkReadiness: async () => {
+      const report = await checkWebReadiness(spec, {
         cachedModel: async () => {
           const m = await findCachedModel(spec);
           return m ? { sizeBytes: m.size } : undefined;
@@ -51,11 +55,21 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
         ocrSelfTest: tesseractSelfTest,
         smokeTest: () => webSmokeTest(spec),
         runtime: webRuntimeInfo,
-      }),
+      });
+      // Optional: never changes offlineReady (the language model can sort clauses itself).
+      const sorter = classifierReadinessCheck(await classifierSelfCheck(isClassifierEnabled()), 'browser');
+      return { ...report, checks: [...report.checks, sorter] };
+    },
+    prepareClassifier: isClassifierPinned() ? (onProgress, signal) => prepareClassifier(onProgress, signal) : undefined,
     prepare: (onProgress, signal) => downloadModel(spec, onProgress, signal),
     classify: async (pages) => guessDocumentType(pages),
     ocr: createTesseractOcr(),
-    llm: createLocalLlmEngine(createWllamaRunner(spec), { onStats: logStatsInDev }),
+    llm: createLocalLlmEngine(createWllamaRunner(spec), {
+      onStats: logStatsInDev,
+      classifier: getTriageClassifier(),
+      classifierThreshold: LAYA_SPEC.threshold,
+      classifierEnabled: isClassifierEnabled,
+    }),
   };
 }
 

@@ -4,7 +4,7 @@
  * Started explicitly from the root layout (`initPersistence(openStorage)`), never
  * at module import, so tests and screens can use the stores in memory.
  *  1. Open storage. On failure, keep working in memory (status `unavailable`).
- *  2. Hydrate useDocuments and useSettings (locale, onboarded).
+ *  2. Hydrate useDocuments and useSettings (locale, onboarded, clauseSorter).
  *  3. Subscribe: document changes are written after a short debounce, only the
  *     records that changed; removed records are deleted with their page files.
  *     When no review is left, the whole vault is erased (including unreadable rows).
@@ -116,6 +116,7 @@ export async function startPersistence(
     if (stopped) return;
     if (state.locale !== prev.locale) void enqueue(() => repo.setSetting('locale', state.locale));
     if (state.onboarded !== prev.onboarded) void enqueue(() => repo.setSetting('onboarded', state.onboarded ? '1' : '0'));
+    if (state.clauseSorter !== prev.clauseSorter) void enqueue(() => repo.setSetting('clauseSorter', state.clauseSorter ? '1' : '0'));
   });
 
   return {
@@ -144,9 +145,10 @@ async function hydrate(repo: SqliteRepository) {
     return { byId, order };
   });
 
-  const patch: { locale?: Locale; onboarded?: boolean } = {};
+  const patch: { locale?: Locale; onboarded?: boolean; clauseSorter?: boolean } = {};
   if (isLocale(settings.locale)) patch.locale = settings.locale;
   if (settings.onboarded === '1') patch.onboarded = true;
+  if (settings.clauseSorter === '0') patch.clauseSorter = false;
   if (Object.keys(patch).length) useSettings.setState(patch);
 }
 

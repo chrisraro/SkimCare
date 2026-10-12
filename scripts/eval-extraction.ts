@@ -62,6 +62,7 @@ function addStats(s: LlmRunStats) {
   totals.calls.explain += s.calls.explain;
   totals.retries += s.retries;
   for (const k of ['timed', 'promptTokens', 'cachedTokens', 'promptMs', 'generatedTokens', 'generationMs', 'callMs', 'wallMs'] as const) totals[k] += s[k];
+  for (const k of ['asked', 'used', 'none', 'belowThreshold', 'errors', 'ms'] as const) totals.classifier[k] += s.classifier[k];
 }
 
 /**

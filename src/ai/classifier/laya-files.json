@@ -1,0 +1,12 @@
+{
+  "_comment": "Pinned files for the Laya clause classifier (src/ai/llm/models.ts and scripts/copy-web-assets.mjs both read this). TODO(lead): fill sizeBytes / sha256 / md5 from the laya-v1 release assets (asset names must equal fileName). While sizeBytes is 0 the classifier is 'not configured': nothing is downloaded and extraction uses the language model for the type pass.",
+  "id": "laya-v1",
+  "name": "Laya clause classifier",
+  "release": "https://github.com/chrisraro/SkimCare/releases/download/laya-v1",
+  "license": "TODO",
+  "files": {
+    "model": { "fileName": "laya-v1.int8.onnx", "sizeBytes": 0, "sha256": "", "md5": "" },
+    "tokenizer": { "fileName": "laya-v1.tokenizer.json", "sizeBytes": 0, "sha256": "", "md5": "" },
+    "tokenizerConfig": { "fileName": "laya-v1.tokenizer_config.json", "sizeBytes": 0, "sha256": "", "md5": "" }
+  }
+}

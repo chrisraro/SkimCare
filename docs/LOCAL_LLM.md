@@ -117,3 +117,21 @@ Any pinned model with an `md5` can be imported (0.6B Q4_K_M or Q4_0); readiness 
 3. Run the eval: `npm run eval:llm -- [--ids svc-01,ins-02] [--limit 10] [--verbose]`. `--verbose` prints gate rejections and any finding that cites injection text.
 
 The script refuses any `LLM_URL` that isn't localhost and only sends fictional fixtures. Never point it at real contracts. Record the results in `PROGRESS.md` with the `PROMPT_VERSION`.
+
+## Clause classifier (Laya) for the type pass
+
+Checked 2026-10-12. Pass 1 of extraction (one block → finding type or "none") can run on a small encoder classifier instead of Qwen. Pass 2 (explanations) stays on Qwen. Code: `src/ai/llm/triageClassifier.ts` (interface) and `src/ai/classifier/` (core, tokenizer, phone and web runtimes, readiness row, on/off switch). The engine uses the classifier's label only when it is installed, verified and confident (`LAYA_SPEC.threshold`). Otherwise Qwen decides as before, and after 3 classifier errors in one review Qwen decides the rest. Labels still go through `typeCheck.ts` and the evidence gate.
+
+| | |
+|---|---|
+| **Phone runtime** | `onnxruntime-react-native@1.24.3`, the latest on npm (the JS package has not been published past 1.24.3, while onnxruntime-web is at 1.30). It is a JSI host object installed through a legacy NativeModule. On RN 0.86 bridgeless, that goes through `getCatalystInstance()`, which still returns a `BridgelessCatalystInstance` and logs a warning |
+| **Autolinking fix** | The package ships a legacy `unimodule.json`, so Expo autolinking skipped it and `NativeModules.Onnxruntime` was null ("Cannot read property 'install' of null"). `react-native.config.js` at the repo root forces React Native autolinking. Check with `npx expo-modules-autolinking react-native-config --platform android --json` |
+| **Gradle patch** | `patches/onnxruntime-react-native+1.24.3.patch` pins `onnxruntime-android:1.24.3`. Upstream uses `latest.integration`, which would pull the 1.31.0 headers and libs at build time. The patch also drops `org.gradle.util.VersionNumber`, because Expo SDK 57 builds with Gradle 9.3.1 |
+| **APK size** | arm64-v8a `libonnxruntime.so` 1.24.3 is 25.8 MB raw / 9.4 MB zipped (1.31.0 would be 34.2 / 12.9 MB). The preview APK is arm64 only |
+| **Web runtime** | `onnxruntime-web@1.30.0`, wasm backend only: `ort.wasm.min.mjs` (50 KB) and `ort-wasm-simd-threaded.{mjs,wasm}` (14.2 MB), copied to `public/vendor/ort` by `scripts/copy-web-assets.mjs` (no CDN). Threads: `min(4, cores − 1)` when `crossOriginIsolated`, else 1. SIMD build only, which every current browser supports |
+| **Tokenizer** | `@huggingface/tokenizers@0.2.0`: pure JS, no dependencies, 37 KB minified, and it compiles with this project's `hermesc`. TextDecoder is polyfilled only when missing. The library has no truncation, so we add our own, and the context is cut first. Jest maps it to the CJS build (`package.json` `moduleNameMapper`) |
+| **Files** | Pins live in `src/ai/classifier/laya-files.json` (TODO: sizes, SHA-256, MD5) and become `LAYA_CLASSIFIER` in `models.ts`. The files are assets of the GitHub release `laya-v1` on chrisraro/SkimCare. **Phone:** downloaded with the GGUF downloader into `<documents>/models/`. DownloadManager follows GitHub's redirect; we check size and MD5, download to a `.part` file, and delete it on mismatch. **Web:** GitHub asset downloads send **no** `Access-Control-Allow-Origin`, on the 302 or on the final CDN response. So the Vercel build copies the files into `public/vendor/laya` (SHA-256 checked at build time). The browser then downloads them from our own origin into Cache Storage (`laya-classifier`) and verifies them again before loading. The service worker passes `/vendor/laya/` through |
+| **Readiness** | Row "Clause sorter (optional)" passes only after the files are present, the checksums match and one test classification runs. It never changes `offlineReady` |
+| **Switch** | Diagnostics → Clause sorter (persisted as setting `clauseSorter`). To turn it off for a whole build, set `EXPO_PUBLIC_CLAUSE_SORTER=off` |
+
+To verify on a device: make an EAS preview build (native module + Gradle 9), then check the readiness row and the `[llm-stats] … sorter asked N used M` line in the Metro log.

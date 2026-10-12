@@ -8,15 +8,19 @@
  * Digital PDFs use their text layer (src/ai/recognize.ts).
  */
 import { getLocalOcr, type LocalOcrModule } from '../../modules/local-ocr';
+import { classifierSelfCheck, getTriageClassifier } from './classifier/onnxNative';
+import { classifierReadinessCheck } from './classifier/readiness';
+import { LAYA_SPEC } from './classifier/layaSpec';
+import { isClassifierEnabled } from './classifier/setting';
 import { guessDocumentType } from './documentType';
 import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLlamaProbe, createLlamaRunner } from './llm/llamaRuntime';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
-import { getModelSpec, type ModelSpec } from './llm/models';
+import { getModelSpec, isClassifierPinned, LAYA_CLASSIFIER, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { checkLocalReadiness } from './llm/readiness';
 import { logStatsInDev } from './llm/stats';
-import type { InferenceEngine, OcrEngine } from './engines';
+import { AbortedError, type InferenceEngine, type OcrEngine } from './engines';
 import { createMlKitOcr } from './ocr/mlKitOcr';
 import { RecognizeError } from './recognize';
 
@@ -43,11 +47,37 @@ export function createLocalEngine(spec: ModelSpec, nativeOcr: LocalOcrModule | n
       license: spec.license,
       promptVersion: `${PROMPT_VERSION}+${COMPREHENSION_PROMPT_VERSION}`,
     },
-    checkReadiness: () => checkLocalReadiness(spec, probe),
+    checkReadiness: async () => {
+      const report = await checkLocalReadiness(spec, probe);
+      // Optional: never changes offlineReady (the language model can sort clauses itself).
+      const sorter = classifierReadinessCheck(await classifierSelfCheck(isClassifierEnabled()), 'phone');
+      return { ...report, checks: [...report.checks, sorter] };
+    },
+    prepareClassifier: isClassifierPinned() ? prepareClassifierOnPhone : undefined,
     classify: async (pages) => guessDocumentType(pages),
     ocr: nativeOcr ? createMlKitOcr(nativeOcr) : NO_OCR,
-    llm: createLocalLlmEngine(createLlamaRunner(spec), { onStats: logStatsInDev }),
+    llm: createLocalLlmEngine(createLlamaRunner(spec), {
+      onStats: logStatsInDev,
+      classifier: getTriageClassifier(),
+      classifierThreshold: LAYA_SPEC.threshold,
+      classifierEnabled: isClassifierEnabled,
+    }),
   };
+}
+
+/** Phone: the classifier files through the same downloader as the GGUF (DownloadManager, MD5). */
+async function prepareClassifierOnPhone(onProgress: (loaded: number, total: number) => void, signal?: AbortSignal): Promise<void> {
+  // Lazy: the download module imports this engine's runtime modules.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { downloadClassifierFiles } = require('@/features/model/downloadModel') as typeof import('@/features/model/downloadModel');
+  const outcome = await downloadClassifierFiles(
+    LAYA_CLASSIFIER,
+    { onProgress: (bytes, total) => onProgress(bytes, total), onVerifying: () => undefined },
+    signal ?? new AbortController().signal,
+    { title: 'SkimCare clause sorter' },
+  );
+  if (outcome.status === 'canceled') throw new AbortedError();
+  if (outcome.status === 'failed') throw new Error(`The clause sorter could not be downloaded (${outcome.reason}).`);
 }
 
 let instance: InferenceEngine | null = null;
