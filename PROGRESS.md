@@ -131,6 +131,16 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-12 — Claude (with Chris) — Honest review progress; swipe actions on Home cards
+- **Bug: "2/5" looked like document progress.** The review bar above the tab bar (`ReviewAccessory`) showed `Reviewing · 2/5` = pipeline *stage* 2 of 5, and stage 2 (reading terms with the model) is nearly all of the time, so it sat at "2/5" for minutes regardless of the document. Now:
+  - One bar for the whole review, weighted by real stage time (`reviewProgress()` in `src/ai/pipeline.ts`: reading terms = 85%); compact label `Reviewing · 43%`, full line `Reading terms · part 3 of 6`.
+  - Processing screen: `Part 3 of 6 checked · page 1 of 2` (page only for multi-page docs) and "N parts with no amounts, dates or duties were skipped (still in the source)" — counts come from the scanned document itself (draft blocks vs parts asked).
+  - The engine reports `0 of N` before the first (slow) model call and the page of each part (`onProgress(done, total, page)` through engines → pipeline → jobStore).
+  - Copy: "This can take up to a minute" was wrong for the real model → "can take a few minutes for each page" (EN + FIL).
+- **Swipe actions on Home recent cards** (`src/components/SwipeActions.tsx`, PanResponder + Animated — no new native dependency, same on Android/iOS/web): swipe left → **Rename** (cross-platform dialog; `Alert.prompt` is iOS-only) and **Delete** (same confirmation as My Documents). Works on the stacked back cards too (actions sit in their visible strip). Tap an open card to close it. Screen readers get both as `accessibilityActions`. Hint under the stack: "Swipe a card left to rename or delete it." Web: react-native-web fires onPress from the DOM click after mouse-up, so the row swallows that click in the capture phase.
+- Tests: `reviewProgress` (monotonic, extract dominates, empty doc) in `tests/progress.test.ts`; progress tests updated for the initial `0 of N`.
+- Verified: typecheck ✅, lint ✅, tests ✅ 301/301 (26 suites). Browser (Expo web, mobile viewport, Demo engine): swipe opens actions, release doesn't open the doc, tap closes, Rename saves, Delete confirms and removes, back-card swipe ✅. **Not seen on a phone yet** (needs the next APK); the per-part count only shows with the real model (the Demo engine doesn't report parts).
+
 ### 2026-10-10 — Claude (with Chris) — Public APK link in README and landing page
 - `README.md`: "Try it" table now links the Android APK (Google Drive).
 - `site/index.html`: header "Get the Android build", hero "Get the Android build" and the Signing-section button (was a "coming soon" placeholder) all open the APK link in a new tab; Signing copy now points to the in-app model download instead of "goes live with the first public release". `site/README.md` note updated.

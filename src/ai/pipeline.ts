@@ -26,6 +26,23 @@ export const STAGES: { id: StageId; label: string }[] = [
   { id: 'save', label: 'Saving privately on this phone' },
 ];
 
+/**
+ * Share of the whole review each stage takes, for one honest progress bar. Reading
+ * terms with the model is nearly all of the time on a phone; the other stages are code.
+ */
+const STAGE_WEIGHT: Record<StageId, number> = { organize: 0.05, extract: 0.85, validate: 0.04, explain: 0.03, save: 0.03 };
+
+/** Whole-review progress 0–1: finished stages plus the read share of the current one. */
+export function reviewProgress(stage: StageId, reading?: { done: number; total: number }): number {
+  let before = 0;
+  for (const s of STAGES) {
+    if (s.id === stage) break;
+    before += STAGE_WEIGHT[s.id];
+  }
+  const within = stage === 'extract' && reading ? Math.min(reading.done / Math.max(reading.total, 1), 1) : 0;
+  return Math.min(before + STAGE_WEIGHT[stage] * within, 1);
+}
+
 export interface RunOptions {
   engine: InferenceEngine;
   pages: DocumentPage[];
@@ -33,8 +50,8 @@ export interface RunOptions {
   documentType: DocumentType;
   language: 'en' | 'fil';
   onStage?: (stage: StageId) => void;
-  /** Extraction progress (blocks done / total) for engines that report it. */
-  onProgress?: (done: number, total: number) => void;
+  /** Extraction progress (parts asked / parts to ask, page of the last part) for engines that report it. */
+  onProgress?: (done: number, total: number, page?: number) => void;
   /**
    * Findings found so far, while extraction runs (engines that report per block).
    * Each batch passes the evidence gate first; called with the full accumulated list.

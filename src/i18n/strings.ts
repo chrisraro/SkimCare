@@ -127,7 +127,12 @@ const en = {
   prefs_start: 'Start review',
 
   processing_title: 'Reviewing on this phone',
-  processing_body: 'This can take up to a minute. You can keep the screen on; nothing is being uploaded.',
+  processing_body: 'Reading happens on this phone and can take a few minutes for each page. Nothing is uploaded — you can keep using the app.',
+  processing_parts: 'Part {done} of {total} checked',
+  processing_page: 'page {page} of {pages}',
+  processing_skipped: '{n} parts with no amounts, dates or duties were skipped (still in the source).',
+  review_percent: 'Reviewing · {pct}%',
+  review_reading: 'Reading terms · part {done} of {total}',
   processing_cancel: 'Cancel',
 
   // Overview / review
@@ -185,6 +190,7 @@ const en = {
   docs_empty: 'Nothing saved yet.',
   docs_delete: 'Delete',
   docs_rename: 'Rename',
+  home_swipe_hint: 'Swipe a card left to rename or delete it.',
   docs_delete_confirm: 'Delete this review and all its pages? This cannot be undone.',
 
   settings_title: 'Settings',
@@ -284,7 +290,14 @@ const fil: Partial<Record<StringKey, string>> = {
   verify_title: 'Suriin ang mahahalagang detalye',
   verify_looks_right: 'Tugma sa papel',
   verify_edit: 'Itama',
+  home_swipe_hint: 'I-swipe pakaliwa ang card para palitan ang pangalan o burahin.',
   processing_title: 'Sinusuri sa phone na ito',
+  processing_body: 'Sa phone na ito binabasa ang dokumento, at puwedeng umabot nang ilang minuto bawat pahina. Walang ina-upload — puwede mong gamitin ang app habang naghihintay.',
+  processing_parts: 'Bahagi {done} sa {total} ang nasuri',
+  processing_page: 'pahina {page} sa {pages}',
+  processing_skipped: '{n} bahaging walang halaga, petsa o obligasyon ang nilaktawan (nasa source pa rin).',
+  review_percent: 'Sinusuri · {pct}%',
+  review_reading: 'Binabasa ang mga tuntunin · bahagi {done} sa {total}',
   finding_source: 'Ang nakasulat sa dokumento',
   finding_meaning: 'Ang ibig sabihin',
   finding_unknown: 'Ang hindi sinasabi ng dokumento',

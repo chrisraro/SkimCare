@@ -56,7 +56,7 @@ export interface LocalLlmOptions {
   /** Output budget for an explain call (the type call uses TRIAGE_TOKENS). */
   maxTokens?: number;
   /** Called after each block, for progress UI. Counts only — never text. */
-  onProgress?: (done: number, total: number) => void;
+  onProgress?: (done: number, total: number, page?: number) => void;
   /** Counts and times for one extraction or quiz run (dev diagnostics, eval). Never text. */
   onStats?: (stats: LlmRunStats) => void;
 }
@@ -115,7 +115,12 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
         );
       };
 
-      for (const unit of prioritizeUnits(units)) {
+      // Report the total before the first (slow) call, so the screen never shows a blank count.
+      const order = prioritizeUnits(units);
+      req.onProgress?.(0, units.length, order[0]?.page);
+      opts.onProgress?.(0, units.length, order[0]?.page);
+
+      for (const unit of order) {
         throwIfAborted(signal);
         const kind = await triage(unit);
         let candidates: unknown[] = [];
@@ -132,8 +137,8 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
         else incompletePages.add(unit.page);
         done++;
         if (candidates.length) req.onCandidates?.(candidates);
-        req.onProgress?.(done, units.length);
-        opts.onProgress?.(done, units.length);
+        req.onProgress?.(done, units.length, unit.page);
+        opts.onProgress?.(done, units.length, unit.page);
       }
 
       stats.wallMs = now() - started;

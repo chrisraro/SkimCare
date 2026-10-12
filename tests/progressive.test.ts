@@ -71,7 +71,7 @@ describe('critical-first extraction order', () => {
     const seen: [number, number][] = [];
     await engineWith(fakeModel().run).llm.extract({ pages, documentType: 'service_agreement', language: 'en', onProgress: (d, t) => seen.push([d, t]) });
     const total = extractionUnits(pages).length;
-    expect(seen.map(([d]) => d)).toEqual(Array.from({ length: total }, (_, i) => i + 1));
+    expect(seen.map(([d]) => d)).toEqual(Array.from({ length: total + 1 }, (_, i) => i));
     expect(seen.every(([, t]) => t === total)).toBe(true);
   });
 });

@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { STAGES } from '@/ai/pipeline';
+import { reviewProgress, STAGES } from '@/ai/pipeline';
 import { useReviewJob } from '@/features/review/jobStore';
+import { fmt } from '@/i18n/strings';
+import { useT } from '@/i18n/useT';
 import { colors, palette, radius, space } from '@/theme/tokens';
 import { AppText } from './ui/AppText';
 
@@ -12,6 +14,7 @@ import { AppText } from './ui/AppText';
  * renders two copies (regular and inline), so everything comes from the job store.
  */
 export function ReviewAccessory({ compact }: { compact?: boolean }) {
+  const t = useT();
   const status = useReviewJob((s) => s.status);
   const stage = useReviewJob((s) => s.stage);
   const blocks = useReviewJob((s) => s.progress);
@@ -24,9 +27,11 @@ export function ReviewAccessory({ compact }: { compact?: boolean }) {
   const index = Math.max(0, STAGES.findIndex((s) => s.id === stage));
   const done = status === 'done';
   const failed = status === 'error';
-  const reading = stage === 'extract' && blocks ? blocks.done / Math.max(blocks.total, 1) : 0.5;
-  const progress = done ? 1 : (index + reading) / STAGES.length;
-  const stageLine = stage === 'extract' && blocks ? `${STAGES[index]!.label} · ${blocks.done}/${blocks.total}` : STAGES[index]!.label;
+  // One bar for the whole review, weighted by how long each stage really takes (not "stage 2 of 5").
+  const progress = done ? 1 : reviewProgress(STAGES[index]!.id, blocks);
+  const pct = Math.floor(progress * 100);
+  const stageLine =
+    stage === 'extract' && blocks ? fmt(t('review_reading'), { done: blocks.done, total: blocks.total }) : STAGES[index]!.label;
   const line = done ? 'Review ready — tap to open' : failed ? 'Review stopped — tap to retry' : stageLine;
 
   const open = () => {
@@ -58,7 +63,7 @@ export function ReviewAccessory({ compact }: { compact?: boolean }) {
       <View style={styles.text}>
         {compact ? (
           <AppText variant="small" numberOfLines={1} style={{ fontWeight: '700' }}>
-            {done ? 'Review ready' : failed ? 'Review stopped' : `Reviewing · ${index + 1}/${STAGES.length}`}
+            {done ? 'Review ready' : failed ? 'Review stopped' : fmt(t('review_percent'), { pct })}
           </AppText>
         ) : (
           <>

@@ -8,6 +8,7 @@ import { FindingCard } from '@/components/FindingCard';
 import { AppText, Banner, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { useDraft } from '@/features/review/draftStore';
 import { useReviewJob } from '@/features/review/jobStore';
+import { fmt } from '@/i18n/strings';
 import { useT } from '@/i18n/useT';
 import { colors, palette, space } from '@/theme/tokens';
 
@@ -24,7 +25,8 @@ export default function Processing() {
   const status = useReviewJob((s) => s.status);
   const error = useReviewJob((s) => s.error ?? null);
   const docId = useReviewJob((s) => s.docId);
-  const hasPages = useDraft((s) => s.recognized.length > 0);
+  const recognized = useDraft((s) => s.recognized);
+  const hasPages = recognized.length > 0;
   const { start, cancel, discard, setMinimized, clear } = useReviewJob.getState();
 
   // Opening this screen (first run, or reopened from the accessory) brings the review to the front.
@@ -59,6 +61,18 @@ export default function Processing() {
   }, []);
 
   const currentIndex = STAGES.findIndex((s) => s.id === stage);
+
+  // Counts from the scanned document itself: its pages, and the parts the model was not asked about.
+  const pageCount = recognized.length;
+  const blockCount = recognized.reduce((n, p) => n + p.blocks.length, 0);
+  const skipped = progress ? Math.max(blockCount - progress.total, 0) : 0;
+  const partsLine = (p: { done: number; total: number; page?: number }) =>
+    [
+      fmt(t('processing_parts'), { done: p.done, total: p.total }),
+      p.page && pageCount > 1 ? fmt(t('processing_page'), { page: p.page, pages: pageCount }) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
 
   return (
     <Screen title={t('processing_title')} back={false}
@@ -121,11 +135,14 @@ export default function Processing() {
                 </AppText>
                 {/* Per-section progress while the model reads (engines that report it). */}
                 {s.id === 'extract' && state === 'active' && progress ? (
-                  <View accessible accessibilityLabel={`Section ${progress.done} of ${progress.total}`}>
-                    <AppText variant="small" tone="muted">{`Section ${progress.done} of ${progress.total}`}</AppText>
+                  <View accessible accessibilityLabel={partsLine(progress)}>
+                    <AppText variant="small" tone="muted">{partsLine(progress)}</AppText>
                     <View style={styles.track}>
                       <View style={[styles.fill, { width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }]} />
                     </View>
+                    {skipped > 0 ? (
+                      <AppText variant="small" tone="muted">{fmt(t('processing_skipped'), { n: skipped })}</AppText>
+                    ) : null}
                   </View>
                 ) : null}
               </View>

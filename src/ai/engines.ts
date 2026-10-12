@@ -54,7 +54,7 @@ export interface ExtractionRequest {
   documentType: DocumentType;
   language: 'en' | 'fil';
   /** Progress for this request (blocks done / total). Counts only — never text. */
-  onProgress?: (done: number, total: number) => void;
+  onProgress?: (done: number, total: number, page?: number) => void;
   /**
    * Raw candidates from each block as soon as it is read, for progressive results.
    * Untrusted like everything else from the model: callers must pass them through

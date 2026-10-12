@@ -1,10 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
+import { confirmDestructive } from '@/components/confirm';
 import { EmptyState } from '@/components/EmptyState';
 import { ModelDownloadPill } from '@/components/ModelDownloadCard';
+import { SwipeActions } from '@/components/SwipeActions';
 import { AppText, Banner, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { TYPE_LABELS, type DocumentRecord } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
@@ -27,6 +29,16 @@ export default function Home() {
   const offlineReady = useSettings((s) => s.offlineReady);
   // Web on iOS Safari only: installing is what makes the browser app open offline from the home screen.
   const [installHint, setInstallHint] = useState(shouldShowInstallHint);
+  const [renaming, setRenaming] = useState<DocumentRecord | null>(null);
+
+  const confirmDelete = (doc: DocumentRecord) =>
+    confirmDestructive({
+      title: t('docs_delete'),
+      message: t('docs_delete_confirm'),
+      confirmLabel: t('delete'),
+      cancelLabel: t('cancel'),
+      onConfirm: () => useDocuments.getState().remove(doc.id),
+    });
 
   return (
     <Screen edges={['top']} tab>
@@ -113,16 +125,34 @@ export default function Home() {
       ) : (
         <View style={{ paddingBottom: space.lg }}>
           {/* Oldest at the back, newest in front — the one you most likely want is fully readable. */}
-          {[...recent].reverse().map((d, i, all) => (
-            <RecentCard key={d.id} doc={d} front={i === all.length - 1} first={i === 0} />
-          ))}
+          {[...recent].reverse().map((d, i, all) => {
+            const front = i === all.length - 1;
+            return (
+              <SwipeActions
+                key={d.id}
+                // Back cards show only their top strip, so their actions sit in that strip.
+                actionsHeight={front ? undefined : VISIBLE}
+                style={{ marginTop: i === 0 ? 0 : -(BACK_HEIGHT - VISIBLE) }}
+                actions={[
+                  { key: 'rename', label: t('docs_rename'), icon: 'pencil', onPress: () => setRenaming(d) },
+                  { key: 'delete', label: t('docs_delete'), icon: 'trash-outline', tone: 'danger', onPress: () => confirmDelete(d) },
+                ]}
+              >
+                <RecentCard doc={d} front={front} />
+              </SwipeActions>
+            );
+          })}
+          <AppText variant="small" tone="muted" center style={{ marginTop: space.md }}>
+            {t('home_swipe_hint')}
+          </AppText>
         </View>
       )}
+      <RenameDialog doc={renaming} onClose={() => setRenaming(null)} />
     </Screen>
   );
 }
 
-function RecentCard({ doc, front, first }: { doc: DocumentRecord; front: boolean; first: boolean }) {
+function RecentCard({ doc, front }: { doc: DocumentRecord; front: boolean }) {
   const findings = doc.analysis?.findings ?? [];
   const attention = findings.filter((f) => f.reviewStatus === 'needs_attention').length;
   const clarify = findings.filter((f) => f.reviewStatus === 'needs_clarification').length;
@@ -137,7 +167,7 @@ function RecentCard({ doc, front, first }: { doc: DocumentRecord; front: boolean
       onPress={() => router.push({ pathname: '/doc/[id]', params: { id: doc.id } })}
       style={({ pressed }) => [
         styles.recent,
-        { backgroundColor: front ? colors.quoteBg : colors.header, marginTop: first ? 0 : -(BACK_HEIGHT - VISIBLE) },
+        { backgroundColor: front ? colors.quoteBg : colors.header },
         front ? styles.recentFront : { height: BACK_HEIGHT },
         pressed && { transform: [{ scale: 0.98 }] },
       ]}
@@ -168,6 +198,41 @@ function RecentCard({ doc, front, first }: { doc: DocumentRecord; front: boolean
         </View>
       ) : null}
     </Pressable>
+  );
+}
+
+/** Cross-platform rename (Alert.prompt is iOS-only). Empty input keeps the old title. */
+function RenameDialog({ doc, onClose }: { doc: DocumentRecord | null; onClose: () => void }) {
+  const t = useT();
+  const [title, setTitle] = useState('');
+  const save = () => {
+    if (doc) useDocuments.getState().rename(doc.id, title.trim() || doc.title);
+    onClose();
+  };
+  return (
+    <Modal visible={doc !== null} transparent animationType="fade" onRequestClose={onClose} onShow={() => setTitle(doc?.title ?? '')}>
+      <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel={t('cancel')}>
+        <Pressable style={styles.dialog} onPress={() => undefined}>
+          <AppText variant="heading" accessibilityRole="header">
+            {t('docs_rename')}
+          </AppText>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            autoFocus
+            selectTextOnFocus
+            onSubmitEditing={save}
+            returnKeyType="done"
+            style={styles.input}
+            accessibilityLabel={t('docs_rename')}
+          />
+          <View style={styles.dialogButtons}>
+            <Button variant="ghost" label={t('cancel')} onPress={onClose} />
+            <Button label={t('docs_rename')} icon="checkmark" onPress={save} />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -213,6 +278,18 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
+  },
+  scrim: { flex: 1, backgroundColor: 'rgba(11, 23, 41, 0.45)', justifyContent: 'center', padding: space.lg },
+  dialog: { backgroundColor: colors.bg, borderRadius: radius.card, padding: space.lg, gap: space.md },
+  dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    fontSize: 17,
+    color: colors.text,
   },
   recentMeta: { flexDirection: 'row', justifyContent: 'space-between' },
   counts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: 'auto', paddingTop: space.md },

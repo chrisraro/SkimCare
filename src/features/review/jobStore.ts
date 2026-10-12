@@ -15,7 +15,8 @@ interface ReviewJobState {
   status: ReviewJobStatus;
   stage: StageId;
   /** Blocks read so far during extraction, when the engine reports it. */
-  progress?: { done: number; total: number };
+  /** Parts of the document sent to the model: asked so far / to ask, and the page of the last one. */
+  progress?: { done: number; total: number; page?: number };
   /** Findings that already passed the evidence gate while the review runs ("Found so far"). */
   partialFindings: Finding[];
   title: string;
@@ -85,8 +86,8 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
       onStage: (stage) => {
         if (!ac.signal.aborted) set({ stage });
       },
-      onProgress: (done, total) => {
-        if (!ac.signal.aborted) set({ progress: { done, total } });
+      onProgress: (done, total, page) => {
+        if (!ac.signal.aborted) set({ progress: { done, total, page } });
       },
       onFindings: (partialFindings) => {
         if (!ac.signal.aborted) set({ partialFindings });
