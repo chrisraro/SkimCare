@@ -50,7 +50,8 @@ export interface TriageClassifier {
 }
 
 /**
- * Below this confidence the language model decides instead. Placeholder until the
- * classifier's calibration is known (ml/laya/INFERENCE_SPEC.md); the spec may override it.
+ * Below this confidence the language model decides instead. The engines pass the
+ * classifier's own calibrated value (`LAYA_SPEC.threshold`, 0.85 for laya-v1); this is the
+ * default when none is given.
  */
 export const DEFAULT_TRIAGE_THRESHOLD = 0.85;

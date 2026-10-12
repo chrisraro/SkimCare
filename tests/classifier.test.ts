@@ -1,7 +1,10 @@
-import { describe, expect, it } from '@jest/globals';
-import { createHfEncoder } from '@/ai/classifier/hfTokenizer';
-import { checkClassifier, ClassifierLoadError, contextSegment, createLayaClassifier, decodeLogits, softmax, type LoadedClassifier } from '@/ai/classifier/laya';
-import { LAYA_SPEC, type LayaInferenceSpec } from '@/ai/classifier/layaSpec';
+import { beforeAll, describe, expect, it } from '@jest/globals';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { createLayaTokenizer } from '@/ai/classifier/hfTokenizer';
+import { buildLayaInput, checkClassifier, ClassifierLoadError, createLayaClassifier, decodeLogits, layaContext, layaState, normalizeLayaText, softmax, type LoadedClassifier } from '@/ai/classifier/laya';
+import { LAYA_SMOKE, LAYA_SPEC, specFromRelease, type LayaInferenceSpec } from '@/ai/classifier/layaSpec';
 import { webClassifierThreads } from '@/ai/classifier/onnxNative.web';
 import { wrapOrtSession, type OrtLikeSession } from '@/ai/classifier/ortSession';
 import { classifierReadinessCheck } from '@/ai/classifier/readiness';
@@ -10,13 +13,15 @@ import { demoEngine } from '@/ai/demoEngine';
 import type { InferenceEngine } from '@/ai/engines';
 import { extractionUnits } from '@/ai/llm/chunking';
 import { createLocalLlmEngine, type CompletionRequest, type LocalLlmOptions } from '@/ai/llm/localLlmEngine';
-import { classifierFiles, isClassifierPinned, LAYA_CLASSIFIER } from '@/ai/llm/models';
+import { classifierFiles, isClassifierPinned, LAYA_CLASSIFIER, layaWebPath } from '@/ai/llm/models';
 import { formatStats, type LlmRunStats } from '@/ai/llm/stats';
 import { TRIAGE_LABELS } from '@/ai/llm/triageClassifier';
 import { runAnalysis } from '@/ai/pipeline';
+import golden from '../ml/laya/golden/laya-v1.golden.json';
+import releaseManifest from '../ml/laya/release/release_manifest.json';
+import releaseSpec from '../ml/laya/release/laya-v1.spec.json';
 import { fakeClassifier, type FakeAnswer } from './helpers/fakeClassifier';
 import { blockTextOf, replyFor } from './helpers/twoPass';
-import wordpiece from './fixtures/tokenizer/wordpiece.json';
 
 const pages = serviceAgreement.pages;
 const units = extractionUnits(pages);
@@ -133,7 +138,7 @@ describe('extraction with the clause classifier (pass 1)', () => {
 
 // ---- runtime-independent classifier core ----
 
-const spec: LayaInferenceSpec = { ...LAYA_SPEC, labels: ['none', 'payment_condition', 'late_fee'], maxTokens: 16 };
+const spec: LayaInferenceSpec = { ...LAYA_SPEC, labels: ['none', 'payment_condition', 'late_fee'], temperature: 1, smoke: { text: 'x' } };
 
 describe('Laya classifier core', () => {
   it('turns logits into a label with probabilities that sum to 1', () => {
@@ -148,23 +153,58 @@ describe('Laya classifier core', () => {
   });
 
   it('knows every label the app uses', () => {
-    expect(LAYA_SPEC.labels).toEqual(TRIAGE_LABELS);
+    expect([...LAYA_SPEC.labels].sort()).toEqual([...TRIAGE_LABELS].sort());
     expect(() => createLayaClassifier({ name: 'x', spec: { ...spec, labels: ['nonsense' as never] }, load: async () => ({}) as LoadedClassifier })).toThrow();
   });
 
-  it('keeps only the end of a long context, and none when the spec says so', () => {
-    const long = `${'x'.repeat(400)}END`;
-    expect(contextSegment(LAYA_SPEC, { context: long })!.endsWith('END')).toBe(true);
-    expect(contextSegment(LAYA_SPEC, { context: long })!.length).toBe(LAYA_SPEC.contextChars);
-    expect(contextSegment({ ...LAYA_SPEC, context: 'none' }, { context: 'abc' })).toBeNull();
-    expect(contextSegment(LAYA_SPEC, { context: '  ' })).toBeNull();
+  it('divides the logits by the temperature before the softmax (calibrated confidence)', () => {
+    const c = golden.cases[0]!;
+    const r = decodeLogits(c.logits, LAYA_SPEC.labels, LAYA_SPEC.temperature);
+    expect(r.label).toBe(c.label);
+    expect(r.confidence).toBeCloseTo(c.confidence, 4);
+    LAYA_SPEC.labels.forEach((l, i) => expect(r.probs[l]).toBeCloseTo(c.probabilities[i]!, 4));
+    // argmax does not depend on the temperature; the confidence does.
+    expect(decodeLogits(c.logits, LAYA_SPEC.labels).confidence).toBeGreaterThan(r.confidence);
+  });
+
+  it('builds the state like the trainer: normalized block, then " || earlier text: " + context', () => {
+    const nbsp = String.fromCharCode(0xa0);
+    const ideographic = String.fromCharCode(0x3000);
+    expect(normalizeLayaText(`  a\t\n b${nbsp}c<mask>d${ideographic} `)).toBe('a b c d');
+    expect(layaState(LAYA_SPEC, ' The fee ', null)).toBe('The fee');
+    expect(layaState(LAYA_SPEC, 'The balance', ' \n ')).toBe('The balance');
+    expect(layaState(LAYA_SPEC, 'The balance', '…pay PHP 10,000')).toBe('The balance || earlier text: …pay PHP 10,000');
+    expect(layaState({ ...LAYA_SPEC, useContext: false }, 'The balance', 'x')).toBe('The balance');
+    for (const c of golden.cases) expect(layaState(LAYA_SPEC, c.text, c.context)).toBe(c.state);
+  });
+
+  it('gives the classifier the same context as the prompt (end of the previous block, only when the block refers back)', () => {
+    const previous = `${'word '.repeat(60)}the down payment is PHP 10,000.`;
+    const ctx = layaContext('The balance is due in 7 days.', { context: previous })!;
+    expect(ctx.startsWith('…')).toBe(true);
+    expect(ctx.endsWith('PHP 10,000.')).toBe(true);
+    expect(ctx.length).toBeLessThanOrEqual(201);
+    expect(layaContext('The Client pays PHP 5,000 on signing.', { context: previous })).toBeUndefined();
+    expect(layaContext('The balance is due.', {})).toBeUndefined();
+  });
+
+  it('puts the head first, keeps the START of the state (at most room tokens), and ends with sep', () => {
+    const tok = { encode: (t: string) => Array.from(t, (_, i) => 100 + i) };
+    const short = buildLayaInput(LAYA_SPEC, tok, 'abc');
+    expect(short.ids).toEqual([...LAYA_SPEC.headIds, 100, 101, 102, LAYA_SPEC.sepId]);
+    expect(short.mask).toEqual(short.ids.map(() => 1));
+    const long = buildLayaInput(LAYA_SPEC, tok, 'x'.repeat(500));
+    expect(long.ids).toHaveLength(LAYA_SPEC.maxLen);
+    expect(long.ids[LAYA_SPEC.headIds.length]).toBe(100);
+    expect(long.ids.at(-2)).toBe(100 + LAYA_SPEC.room - 1);
+    expect(long.ids.at(-1)).toBe(LAYA_SPEC.sepId);
   });
 
   const loaded = (logits: number[]) => {
     const runs: number[][] = [];
     let released = 0;
     const value: LoadedClassifier = {
-      tokenizer: { encode: (text) => ({ ids: [text.length], mask: [1], typeIds: [0] }) },
+      tokenizer: { encode: (text) => [text.length] },
       session: {
         run: async (input) => {
           runs.push(input.ids);
@@ -213,7 +253,7 @@ describe('Laya classifier core', () => {
     expect(loads).toBe(2);
   });
 
-  it('readiness check: passes only after a well-formed test classification', async () => {
+  it('readiness check: passes only after a well-formed test classification with the expected label', async () => {
     const ok = createLayaClassifier({ name: 't', spec, load: async () => loaded([0, 3, 0]).value });
     expect(await checkClassifier(ok, spec)).toMatchObject({ ok: true, label: 'payment_condition' });
     const wrongLabel = createLayaClassifier({ name: 't', spec, load: async () => loaded([3, 0, 0]).value });
@@ -228,6 +268,8 @@ describe('Laya classifier core', () => {
       },
     });
     expect(await checkClassifier(missing, spec)).toMatchObject({ ok: false, problem: 'missing' });
+    // The real smoke test is golden case 1 (payment_amount, 0.9936).
+    expect(LAYA_SPEC.smoke).toEqual({ text: golden.cases[0]!.text, expect: golden.cases[0]!.label });
   });
 });
 
@@ -235,7 +277,7 @@ describe('ONNX Runtime session adapter', () => {
   class FakeTensor {
     constructor(
       readonly type: string,
-      readonly data: BigInt64Array | Int32Array,
+      readonly data: BigInt64Array,
       readonly dims: readonly number[],
     ) {}
   }
@@ -250,59 +292,118 @@ describe('ONNX Runtime session adapter', () => {
     return { s, feeds };
   };
 
-  it('feeds int64 ids and mask of shape [1, n] and reads the logits', async () => {
+  it('feeds int64 input_ids and attention_mask of shape [1, n] (nothing else) and reads the logits', async () => {
     const { s, feeds } = session(['input_ids', 'attention_mask'], { logits: { data: Float32Array.from([1, 2, 3]) } });
     const run = wrapOrtSession(s, FakeTensor, spec);
-    const out = await run.run({ ids: [2, 7, 3], mask: [1, 1, 1], typeIds: [0, 0, 0] });
+    const out = await run.run({ ids: [2, 7, 1], mask: [1, 1, 1] });
     expect(Array.from(out)).toEqual([1, 2, 3]);
     const ids = feeds[0]!.input_ids as FakeTensor;
     expect(ids.type).toBe('int64');
     expect(ids.dims).toEqual([1, 3]);
-    expect(Array.from(ids.data as BigInt64Array)).toEqual([2n, 7n, 3n]);
-    expect(feeds[0]!.token_type_ids).toBeUndefined();
-  });
-
-  it('adds token type ids only when the spec names them and the model takes them; int32 when asked', async () => {
-    const { s, feeds } = session(['input_ids', 'attention_mask', 'token_type_ids'], { logits: { data: Float32Array.from([0]) } });
-    await wrapOrtSession(s, FakeTensor, { ...spec, inputs: { ...spec.inputs, typeIds: 'token_type_ids', dtype: 'int32' } }).run({ ids: [1], mask: [1], typeIds: [0] });
-    expect((feeds[0]!.token_type_ids as FakeTensor).type).toBe('int32');
+    expect(Array.from(ids.data)).toEqual([2n, 7n, 1n]);
+    expect(Object.keys(feeds[0]!)).toEqual(['input_ids', 'attention_mask']);
   });
 
   it('refuses a model whose inputs or outputs differ from the spec', () => {
     expect(() => wrapOrtSession(session(['ids'], { logits: { data: null } }).s, FakeTensor, spec)).toThrow(/input "input_ids"/);
+    expect(() => wrapOrtSession(session(['input_ids', 'attention_mask', 'token_type_ids'], { logits: { data: null } }).s, FakeTensor, spec)).toThrow(/token_type_ids/);
     expect(() => wrapOrtSession(session(['input_ids', 'attention_mask'], { scores: { data: null } }).s, FakeTensor, spec)).toThrow(/output "logits"/);
   });
 });
 
-describe('tokenizer (@huggingface/tokenizers + truncation)', () => {
-  const enc = createHfEncoder(wordpiece, {});
+// ---- laya-v1 against its golden vectors (ml/laya/golden/laya-v1.golden.json) ----
 
-  it('gives the WordPiece ids for this vocabulary (hand-derived; the real golden ids come with the spec)', () => {
-    // [CLS] the client shall pay php 18 , 000 . [SEP]
-    expect(enc.encode('The Client shall pay PHP 18,000.', null, 64)).toEqual({
-      ids: [2, 4, 5, 6, 7, 8, 9, 10, 11, 15, 3],
-      mask: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      typeIds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+const root = join(__dirname, '..');
+// Tokenizer: Laya (Apache-2.0, Convai Innovations), pruned from mmBERT (MIT); see tests/fixtures/laya/NOTICE.
+const tokenizerJson = JSON.parse(readFileSync(join(__dirname, 'fixtures/laya/laya-v1.tokenizer.json'), 'utf8')) as object;
+const tokenizerConfig = JSON.parse(readFileSync(join(root, 'ml/laya/release/laya-v1.tokenizer_config.json'), 'utf8')) as object;
+
+describe('laya-v1 spec and golden token ids', () => {
+  it('uses the release spec.json exactly', () => {
+    expect(LAYA_SPEC).toMatchObject({
+      version: releaseSpec.release,
+      labels: releaseSpec.labels,
+      noneLabel: releaseSpec.none_label,
+      headIds: releaseSpec.head_ids,
+      sepId: releaseSpec.sep_id,
+      maxLen: releaseSpec.max_len,
+      room: releaseSpec.room,
+      useContext: releaseSpec.use_context,
+      contextSep: releaseSpec.context_sep,
+      temperature: releaseSpec.temperature,
+      threshold: releaseSpec.threshold,
+      inputs: { ids: 'input_ids', mask: 'attention_mask' },
+      output: 'logits',
     });
-    expect(enc.encode('payment', null, 64).ids).toEqual([2, 7, 16, 3]);
-    expect(enc.encode('unknownword', null, 64).ids).toEqual([2, 1, 3]);
+    expect(LAYA_SPEC.headIds).toHaveLength(44);
+    expect(LAYA_SPEC.labels.at(-1)).toBe('none');
+    // The golden file was made with the same values.
+    expect(golden.labels).toEqual(releaseSpec.labels);
+    expect(golden.head_ids).toEqual(releaseSpec.head_ids);
+    expect([golden.temperature, golden.threshold]).toEqual([releaseSpec.temperature, releaseSpec.threshold]);
   });
 
-  it('encodes the context as the second segment with its own type id', () => {
-    expect(enc.encode('pay within seven days', 'the invoice', 64)).toMatchObject({
-      ids: [2, 7, 12, 13, 14, 3, 4, 17, 3],
-      typeIds: [0, 0, 0, 0, 0, 0, 1, 1, 1],
-    });
+  it('refuses a spec the runtime cannot follow', () => {
+    expect(() => specFromRelease({ ...releaseSpec, labels: [...releaseSpec.labels.slice(0, -1), 'fee'] }, LAYA_SMOKE)).toThrow(/unknown label/);
+    expect(() => specFromRelease({ ...releaseSpec, room: 300 }, LAYA_SMOKE)).toThrow(/max_len/);
+    expect(() => specFromRelease({ ...releaseSpec, onnx: { ...releaseSpec.onnx, inputs: { ...releaseSpec.onnx.inputs, token_type_ids: 'int64 [batch, seq]' } } }, LAYA_SMOKE)).toThrow(/inputs/);
   });
 
-  it('truncates the context first (keeping its end), then the block (keeping its start)', () => {
-    // 4 block tokens + 3 specials = 7; budget 9 leaves 2 context tokens: the last two.
-    expect(enc.encode('pay within seven days', 'the client shall pay the invoice', 9).ids).toEqual([2, 7, 12, 13, 14, 3, 4, 17, 3]);
-    // No room for context: it is dropped, and the block is cut to fit.
-    expect(enc.encode('pay within seven days', 'the invoice', 5).ids).toEqual([2, 7, 12, 13, 3]);
+  const tokenizer = createLayaTokenizer(tokenizerJson, tokenizerConfig);
+
+  it.each(golden.cases.map((c) => [c.note, c] as const))('token ids match the Python tokenizer: %s', (_note, c) => {
+    expect(tokenizer.encode(c.state)).toEqual(c.state_ids);
+    expect(buildLayaInput(LAYA_SPEC, tokenizer, c.text, c.context).ids).toEqual(c.input_ids);
   });
 
-  it.todo('matches the golden ids and logits from ml/laya/INFERENCE_SPEC.md (when the spec and tokenizer land)');
+  it('never needs <unk>: unseen characters become byte-fallback tokens (golden case 5)', () => {
+    const ids = tokenizer.encode(golden.cases[4]!.text);
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids).not.toContain(3);
+  });
+});
+
+/**
+ * Full parity: the app's own input building (tokenizer → buildLayaInput) and decoding
+ * (decodeLogits with the temperature and threshold) around the real q4g model, run by
+ * onnxruntime-web on WASM (the browser runtime) with the same feeds as ortSession.ts.
+ * ONNX Runtime runs in a child Node process (tests/helpers/ortWebLogits.mjs): its WASM glue
+ * needs a dynamic import that Jest's VM does not allow.
+ * Runs only where the release file is present locally (it is not in git):
+ *   LAYA_RELEASE_DIR=<dir with laya-v1.q4g.onnx>, else ml/laya/exports/release-laya-v1/.
+ */
+const releaseDir = process.env.LAYA_RELEASE_DIR ?? join(root, 'ml/laya/exports/release-laya-v1');
+const modelPath = join(releaseDir, releaseSpec.model_file);
+const haveModel = existsSync(modelPath) && statSync(modelPath).size === LAYA_CLASSIFIER.model.sizeBytes;
+if (!haveModel) {
+  console.info(`[classifier.test] SKIPPING laya-v1 logits parity: ${modelPath} not found or wrong size (set LAYA_RELEASE_DIR to a folder with the release files).`);
+}
+
+(haveModel ? describe : describe.skip)('laya-v1 golden logits through ONNX Runtime Web (local model file)', () => {
+  const tokenizer = createLayaTokenizer(tokenizerJson, tokenizerConfig);
+  const inputs = golden.cases.map((c) => buildLayaInput(LAYA_SPEC, tokenizer, c.text, c.context).ids);
+  let out: { inputNames: string[]; outputNames: string[]; logits: number[][]; ms: number[] };
+
+  beforeAll(() => {
+    const stdout = execFileSync(process.execPath, [join(__dirname, 'helpers/ortWebLogits.mjs'), modelPath, '1'], { input: JSON.stringify(inputs), maxBuffer: 1 << 24 });
+    out = JSON.parse(stdout.toString('utf8')) as typeof out;
+  }, 180_000);
+
+  it('has exactly the inputs and output the spec names', () => {
+    expect(out.inputNames).toEqual([LAYA_SPEC.inputs.ids, LAYA_SPEC.inputs.mask]);
+    expect(out.outputNames).toEqual([LAYA_SPEC.output]);
+  });
+
+  it.each(golden.cases.map((c, i) => [c.note, c, i] as const))('logits within 1e-3 and the same label: %s', (_note, c, i) => {
+    const logits = out.logits[i]!;
+    const maxDiff = Math.max(...logits.map((v, k) => Math.abs(v - c.logits[k]!)));
+    expect(maxDiff).toBeLessThan(1e-3);
+    const r = decodeLogits(logits, LAYA_SPEC.labels, LAYA_SPEC.temperature);
+    expect(r.label).toBe(c.label);
+    expect(r.confidence).toBeCloseTo(c.confidence, 3);
+    expect(r.confidence >= LAYA_SPEC.threshold).toBe(c.accepted);
+    console.info(`[classifier.test] golden "${c.note}": max|dlogit| ${maxDiff.toExponential(2)}, ${r.label} ${r.confidence.toFixed(4)}, ${out.ms[i]!.toFixed(0)} ms (1 thread)`);
+  });
 });
 
 describe('web threads', () => {
@@ -327,12 +428,22 @@ describe('classifier readiness row and pinning', () => {
     }
   });
 
-  it('downloads nothing until the lead pins real sizes and checksums', () => {
-    // TODO(lead): flip this when laya-files.json is filled in for the laya-v1 release.
-    expect(isClassifierPinned()).toBe(false);
-    for (const f of classifierFiles(LAYA_CLASSIFIER)) {
+  it('pins the laya-v1 release files (names, sizes, SHA-256, MD5 from release_manifest.json)', () => {
+    expect(isClassifierPinned()).toBe(true);
+    const pinned = { model: LAYA_CLASSIFIER.model, tokenizer: LAYA_CLASSIFIER.tokenizer, tokenizerConfig: LAYA_CLASSIFIER.tokenizerConfig! };
+    for (const [key, f] of Object.entries(pinned)) {
+      expect({ fileName: f.fileName, sizeBytes: f.sizeBytes, sha256: f.sha256, md5: f.md5 }).toEqual(releaseManifest[key as keyof typeof pinned]);
       expect(f.sourceUrl).toBe(`https://github.com/chrisraro/SkimCare/releases/download/laya-v1/${f.fileName}`);
     }
-    expect(isClassifierPinned({ ...LAYA_CLASSIFIER, tokenizerConfig: undefined, model: { ...LAYA_CLASSIFIER.model, sizeBytes: 1, sha256: 'a'.repeat(64), md5: 'b'.repeat(32) }, tokenizer: { ...LAYA_CLASSIFIER.tokenizer, sizeBytes: 1, sha256: 'c'.repeat(64), md5: 'd'.repeat(32) } })).toBe(true);
+    expect(LAYA_CLASSIFIER.model.fileName).toBe(releaseSpec.model_file);
+    expect(classifierFiles(LAYA_CLASSIFIER)).toHaveLength(3);
+    expect(isClassifierPinned({ ...LAYA_CLASSIFIER, model: { ...LAYA_CLASSIFIER.model, sizeBytes: 0 } })).toBe(false);
+  });
+
+  it('serves the web files from this site unless EXPO_PUBLIC_LAYA_URL moves them', () => {
+    expect(LAYA_CLASSIFIER.webPath).toBe('/vendor/laya');
+    expect(layaWebPath(undefined)).toBe('/vendor/laya');
+    expect(layaWebPath('  ')).toBe('/vendor/laya');
+    expect(layaWebPath('https://models.example.org/laya-v1/')).toBe('https://models.example.org/laya-v1');
   });
 });

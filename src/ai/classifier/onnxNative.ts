@@ -14,7 +14,7 @@
 import { File, Paths } from 'expo-file-system';
 import { AppState, type NativeEventSubscription } from 'react-native';
 import { classifierFiles, isClassifierPinned, LAYA_CLASSIFIER, type ClassifierSpec, type ModelSpec } from '../llm/models';
-import { createHfEncoder } from './hfTokenizer';
+import { createLayaTokenizer } from './hfTokenizer';
 import { checkClassifier, ClassifierLoadError, createLayaClassifier, type ClassifierCheck, type LayaClassifier, type LoadedClassifier } from './laya';
 import { LAYA_SPEC, type LayaInferenceSpec } from './layaSpec';
 import { wrapOrtSession, type OrtLikeSession, type OrtTensorCtor } from './ortSession';
@@ -56,7 +56,7 @@ async function load(spec: ClassifierSpec, inference: LayaInferenceSpec): Promise
   // The native MD5 is synchronous; yield so a progress UI can render first.
   await new Promise((r) => setTimeout(r, 0));
   const [model, tokenizer, config] = [spec.model, spec.tokenizer, spec.tokenizerConfig].map((f) => (f ? verifyClassifierFile(f) : undefined));
-  const encoder = createHfEncoder(JSON.parse(await tokenizer!.text()) as object, config ? (JSON.parse(await config.text()) as object) : {});
+  const encoder = createLayaTokenizer(JSON.parse(await tokenizer!.text()) as object, config ? (JSON.parse(await config.text()) as object) : {});
   const ort = onnxRuntime();
   const session = await ort.InferenceSession.create(decodeURI(model!.uri), {
     executionProviders: ['cpu'],

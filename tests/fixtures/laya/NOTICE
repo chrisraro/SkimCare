@@ -1,0 +1,10 @@
+laya-v1.tokenizer.json is an unmodified copy of the laya-v1 release asset (SHA-256
+5a6d8079dcaeec0d8982ed75c78a73d5cc00e1d2192020e1e454d6952def15f4), used only by
+tests/classifier.test.ts to check token ids against ml/laya/golden/laya-v1.golden.json.
+
+It is the vocabulary-pruned tokenizer of the SkimCare fine-tune of Laya:
+- Laya (convaiinnovations/laya-multilingual), Copyright Convai Innovations,
+  licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+- Base encoder and tokenizer: mmBERT (jhu-clsp/mmBERT-base), licensed under the MIT License.
+
+See ml/laya/MODEL_NOTES.md for provenance.

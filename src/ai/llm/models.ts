@@ -85,9 +85,10 @@ export function getModelSpec(id: string = DEFAULT_MODEL_ID): ModelSpec | undefin
  * downloads send no CORS headers, so the web build serves copies from its own origin
  * (`webPath`), copied and checksum-verified at build time by scripts/copy-web-assets.mjs.
  *
- * TODO(lead): sizes and checksums in laya-files.json are placeholders until the release
- * exists. While they are empty, `isClassifierPinned` is false: nothing is downloaded, the
- * readiness row says "not set up", and extraction uses the language model for every block.
+ * Sizes and checksums in laya-files.json are the laya-v1 release's (ml/laya/release/
+ * release_manifest.json). If a file is ever unpinned (size 0), `isClassifierPinned` is false:
+ * nothing is downloaded, the readiness row says "not set up", and extraction uses the
+ * language model for every block.
  */
 export interface ClassifierSpec {
   id: string;
@@ -97,7 +98,7 @@ export interface ClassifierSpec {
   tokenizer: ModelSpec;
   /** tokenizer_config.json (special-token flags). */
   tokenizerConfig?: ModelSpec;
-  /** Same-origin URL prefix the web build reads the files from. */
+  /** URL prefix the web build reads the files from (same origin by default, see `layaWebPath`). */
   webPath: string;
 }
 
@@ -122,14 +123,26 @@ function layaFile(f: LayaFile, quantization: string): ModelSpec {
   };
 }
 
+/**
+ * Where the web build downloads the classifier files from. Default: this site
+ * (`/vendor/laya`, copied at build time). EXPO_PUBLIC_LAYA_URL moves them to another host
+ * (e.g. if a static host caps file or deployment size); that host must send
+ * `Access-Control-Allow-Origin` for this site, because the page is cross-origin isolated
+ * (COEP require-corp) and fetches in CORS mode. The files are SHA-256-checked either way.
+ */
+export function layaWebPath(override: string | undefined): string {
+  const url = override?.trim().replace(/\/+$/, '');
+  return url || '/vendor/laya';
+}
+
 export const LAYA_CLASSIFIER: ClassifierSpec = {
   id: layaFiles.id,
   name: layaFiles.name,
   license: layaFiles.license,
-  model: layaFile(layaFiles.files.model, 'INT8'),
+  model: layaFile(layaFiles.files.model, 'q4g (4-bit weights)'),
   tokenizer: layaFile(layaFiles.files.tokenizer, 'tokenizer'),
   tokenizerConfig: layaFile(layaFiles.files.tokenizerConfig, 'tokenizer'),
-  webPath: '/vendor/laya',
+  webPath: layaWebPath(process.env.EXPO_PUBLIC_LAYA_URL),
 };
 
 export const classifierFiles = (spec: ClassifierSpec): ModelSpec[] => [spec.model, spec.tokenizer, ...(spec.tokenizerConfig ? [spec.tokenizerConfig] : [])];

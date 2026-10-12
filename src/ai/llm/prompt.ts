@@ -159,10 +159,21 @@ function tail(text: string, max: number): string {
   return `…${space >= 0 ? cut.slice(space + 1) : cut}`;
 }
 
+/**
+ * The context a block is given: the end of the previous block (≤ CONTEXT_CHARS, "…" when
+ * cut), only when the block refers back. Shared by the prompt and the clause classifier,
+ * which was trained on exactly this string (ml/laya/scripts/common.ts appContext).
+ */
+export function blockContext(text: string, previous: string | undefined): string | undefined {
+  if (!previous || !needsContext(text)) return undefined;
+  return tail(sanitize(previous), CONTEXT_CHARS);
+}
+
 /** Shared start of both user messages for a block: document type, optional context, the block. */
 function blockMessage(unit: ExtractionUnit, documentType: DocumentType): string {
   const lines = [`Document type: ${TYPE_LABELS[documentType]}.`];
-  if (unit.context && needsContext(unit.block.text)) lines.push(`Earlier text, for context only: ${tail(sanitize(unit.context), CONTEXT_CHARS)}`);
+  const context = blockContext(unit.block.text, unit.context);
+  if (context) lines.push(`Earlier text, for context only: ${context}`);
   lines.push('<block>', sanitize(unit.block.text), '</block>');
   return lines.join('\n');
 }

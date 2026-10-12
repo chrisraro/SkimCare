@@ -19,6 +19,7 @@ import { getModelSpec, isClassifierPinned, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { logStatsInDev } from './llm/stats';
 import type { InferenceEngine } from './engines';
+import { registerClassifierBench } from './web/classifierBench';
 import { checkWebReadiness } from './web/readiness';
 import { createTesseractOcr, tesseractSelfTest } from './web/tesseractOcr';
 import { cachedModelSha256, createWllamaRunner, downloadModel, findCachedModel, webRuntimeInfo, webSmokeTest } from './web/wllamaRuntime';
@@ -32,6 +33,8 @@ async function freeStorageBytes(): Promise<number | undefined> {
 }
 
 export function createLocalEngine(spec: ModelSpec): InferenceEngine {
+  // Dev builds: `await __skimcareClassifierBench()` in the console (counts and times only).
+  if (typeof __DEV__ !== 'undefined' && __DEV__) registerClassifierBench();
   return {
     info: {
       kind: 'local',

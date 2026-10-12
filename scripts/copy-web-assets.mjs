@@ -17,6 +17,8 @@
  *
  * Build-time downloads are cached in node_modules/.cache/skimcare-web-assets.
  * Set SKIMCARE_OFFLINE_BUILD=1 to forbid them (missing optional files are then skipped and noted in the manifest).
+ * Set SKIMCARE_LAYA_DIR=<dir> to take the Laya files from a local copy of the release instead (same checks).
+ * Set SKIMCARE_LAYA_SHIP=0 to leave them out of public/ (when they are hosted elsewhere, see EXPO_PUBLIC_LAYA_URL).
  */
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -130,21 +132,38 @@ for (const f of ['ort.wasm.min.mjs', 'ort-wasm-simd-threaded.mjs', 'ort-wasm-sim
 // the app then reports the clause sorter as "not set up" and uses the language model.
 const laya = JSON.parse(readFileSync(join(root, 'src/ai/classifier/laya-files.json'), 'utf8'));
 const layaFiles = Object.values(laya.files);
+const layaDir = process.env.SKIMCARE_LAYA_DIR ? resolve(process.env.SKIMCARE_LAYA_DIR) : null;
 let layaShipped = false;
-if (layaFiles.every((f) => f.sizeBytes > 0 && /^[0-9a-f]{64}$/i.test(f.sha256))) {
+const layaElsewhere = process.env.SKIMCARE_LAYA_SHIP === '0' || Boolean(process.env.EXPO_PUBLIC_LAYA_URL?.trim());
+if (layaElsewhere) {
+  log(`Laya classifier files not shipped: the app reads them from ${process.env.EXPO_PUBLIC_LAYA_URL?.trim() || '(EXPO_PUBLIC_LAYA_URL not set!)'}.`);
+} else if (layaFiles.every((f) => f.sizeBytes > 0 && /^[0-9a-f]{64}$/i.test(f.sha256))) {
   const sha256hex = (buf) => createHash('sha256').update(buf).digest('hex');
   const bufs = [];
   for (const f of layaFiles) {
     const url = `${laya.release}/${f.fileName}`;
     const cached = join(cache, `laya-${f.sha256.toLowerCase()}`);
+    const ok = (b) => b.length === f.sizeBytes && sha256hex(b) === f.sha256.toLowerCase();
     let buf = existsSync(cached) ? readFileSync(cached) : null;
-    if (buf && sha256hex(buf) !== f.sha256.toLowerCase()) buf = null;
+    if (buf && !ok(buf)) buf = null;
+    // Developer override: a local copy of the release (checked exactly like a download).
+    const local = layaDir ? join(layaDir, f.fileName) : null;
+    if (!buf && local && existsSync(local)) {
+      buf = readFileSync(local);
+      if (!ok(buf)) throw new Error(`size/SHA-256 mismatch for ${local}`);
+      log(`using local ${local}`);
+    }
     if (!buf && !offline) {
       log(`fetching ${url}`);
       const res = await fetch(url); // follows GitHub's redirect to its asset CDN
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      // Optional feature: a missing release asset must not fail the whole site build (the app then
+      // says the clause sorter is not available). A file that downloads but does not match still fails.
+      if (!res.ok) {
+        log(`WARNING: HTTP ${res.status} for ${url}`);
+        break;
+      }
       buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length !== f.sizeBytes || sha256hex(buf) !== f.sha256.toLowerCase()) throw new Error(`size/SHA-256 mismatch for ${url}`);
+      if (!ok(buf)) throw new Error(`size/SHA-256 mismatch for ${url}`);
       mkdirSync(cache, { recursive: true });
       writeFileSync(cached, buf);
     }
@@ -155,7 +174,7 @@ if (layaFiles.every((f) => f.sizeBytes > 0 && /^[0-9a-f]{64}$/i.test(f.sha256)))
     for (const [name, buf] of bufs) write(join(out, 'laya', name), buf);
     layaShipped = true;
   } else {
-    log('WARNING: Laya classifier files not available offline — skipped.');
+    log('WARNING: Laya classifier files not available (offline build or release asset missing) — skipped.');
   }
 } else {
   log('Laya classifier not pinned yet (laya-files.json) — skipped.');

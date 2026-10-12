@@ -12,7 +12,7 @@ import { isClassifierPinned, LAYA_CLASSIFIER, type ClassifierSpec, type ModelSpe
 import { sha256OfBlob } from '../web/sha256';
 import { downloadClassifierToBrowser, storedClassifierFile } from '../web/classifierStore';
 import { absoluteUrl, importVendor, VENDOR } from '../web/vendor';
-import { createHfEncoder } from './hfTokenizer';
+import { createLayaTokenizer } from './hfTokenizer';
 import { checkClassifier, ClassifierLoadError, createLayaClassifier, type ClassifierCheck, type LayaClassifier, type LoadedClassifier } from './laya';
 import { LAYA_SPEC, type LayaInferenceSpec } from './layaSpec';
 import { wrapOrtSession, type OrtLikeSession, type OrtTensorCtor } from './ortSession';
@@ -57,7 +57,7 @@ async function load(spec: ClassifierSpec, inference: LayaInferenceSpec): Promise
   const model = await verified(spec, spec.model);
   const tokenizer = await verified(spec, spec.tokenizer);
   const config = spec.tokenizerConfig ? await verified(spec, spec.tokenizerConfig) : undefined;
-  const encoder = createHfEncoder(JSON.parse(await tokenizer.text()) as object, config ? (JSON.parse(await config.text()) as object) : {});
+  const encoder = createLayaTokenizer(JSON.parse(await tokenizer.text()) as object, config ? (JSON.parse(await config.text()) as object) : {});
   const ort = await ortWeb();
   const session = await ort.InferenceSession.create(new Uint8Array(await model.arrayBuffer()), {
     executionProviders: ['wasm'],
