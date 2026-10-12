@@ -6,6 +6,7 @@
     "@expo-google-fonts/instrument-sans": "^0.4.2",
     "@expo-google-fonts/newsreader": "^0.4.1",
     "@expo/vector-icons": "^15.0.2",
+    "@huggingface/tokenizers": "0.2.0",
     "@wllama/wllama": "^3.8.1",
     "expo": "~57.0.27",
     "expo-blur": "~57.0.3",
@@ -27,6 +28,8 @@
     "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "llama.rn": "0.12.9",
+    "onnxruntime-react-native": "1.24.3",
+    "onnxruntime-web": "1.30.0",
     "pdfjs-dist": "^6.4.299",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -65,7 +68,10 @@
     "preset": "jest-expo",
     "testMatch": [
       "<rootDir>/tests/**/*.test.ts?(x)"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@huggingface/tokenizers$": "<rootDir>/node_modules/@huggingface/tokenizers/dist/tokenizers.cjs"
+    }
   },
   "private": true
 }

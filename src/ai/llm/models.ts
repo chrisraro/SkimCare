@@ -13,6 +13,8 @@
  * no identifiers and no telemetry. The downloaded file is checked against `sizeBytes`
  * and `md5` before it is used.
  */
+import layaFiles from '../classifier/laya-files.json';
+
 export interface ModelSpec {
   id: string;
   name: string;
@@ -70,3 +72,73 @@ export const DEFAULT_MODEL_ID = 'qwen3-0.6b-q4_k_m';
 export function getModelSpec(id: string = DEFAULT_MODEL_ID): ModelSpec | undefined {
   return MODEL_CANDIDATES.find((m) => m.id === id);
 }
+
+// ---- Laya clause classifier (pass 1, the type pass) ----
+
+/**
+ * The small encoder that replaces the language model's type pass when it is installed,
+ * verified and confident (src/ai/classifier). Each file is a `ModelSpec`, so the phone
+ * downloads and verifies it with the same code as the GGUF (downloadModel.ts: pinned size
+ * + MD5, `.part` file, deleted on mismatch); the web build checks SHA-256.
+ *
+ * Hosting: assets of the GitHub release `laya-v1` on chrisraro/SkimCare. GitHub asset
+ * downloads send no CORS headers, so the web build serves copies from its own origin
+ * (`webPath`), copied and checksum-verified at build time by scripts/copy-web-assets.mjs.
+ *
+ * TODO(lead): sizes and checksums in laya-files.json are placeholders until the release
+ * exists. While they are empty, `isClassifierPinned` is false: nothing is downloaded, the
+ * readiness row says "not set up", and extraction uses the language model for every block.
+ */
+export interface ClassifierSpec {
+  id: string;
+  name: string;
+  license: string;
+  model: ModelSpec;
+  tokenizer: ModelSpec;
+  /** tokenizer_config.json (special-token flags). */
+  tokenizerConfig?: ModelSpec;
+  /** Same-origin URL prefix the web build reads the files from. */
+  webPath: string;
+}
+
+interface LayaFile {
+  fileName: string;
+  sizeBytes: number;
+  sha256: string;
+  md5: string;
+}
+
+function layaFile(f: LayaFile, quantization: string): ModelSpec {
+  return {
+    id: `${layaFiles.id}:${f.fileName}`,
+    name: layaFiles.name,
+    fileName: f.fileName,
+    quantization,
+    sizeBytes: f.sizeBytes,
+    sha256: f.sha256.toLowerCase(),
+    md5: f.md5 ? f.md5.toLowerCase() : undefined,
+    license: layaFiles.license,
+    sourceUrl: `${layaFiles.release}/${f.fileName}`,
+  };
+}
+
+export const LAYA_CLASSIFIER: ClassifierSpec = {
+  id: layaFiles.id,
+  name: layaFiles.name,
+  license: layaFiles.license,
+  model: layaFile(layaFiles.files.model, 'INT8'),
+  tokenizer: layaFile(layaFiles.files.tokenizer, 'tokenizer'),
+  tokenizerConfig: layaFile(layaFiles.files.tokenizerConfig, 'tokenizer'),
+  webPath: '/vendor/laya',
+};
+
+export const classifierFiles = (spec: ClassifierSpec): ModelSpec[] => [spec.model, spec.tokenizer, ...(spec.tokenizerConfig ? [spec.tokenizerConfig] : [])];
+
+const isPinned = (f: ModelSpec) => f.sizeBytes > 0 && /^[0-9a-f]{64}$/.test(f.sha256) && /^[0-9a-f]{32}$/.test(f.md5 ?? '');
+
+/** True once every file has a real size, SHA-256 and MD5 (the phone verifies MD5, the web SHA-256). */
+export function isClassifierPinned(spec: ClassifierSpec = LAYA_CLASSIFIER): boolean {
+  return classifierFiles(spec).every(isPinned);
+}
+
+export const classifierSizeBytes = (spec: ClassifierSpec = LAYA_CLASSIFIER) => classifierFiles(spec).reduce((n, f) => n + f.sizeBytes, 0);

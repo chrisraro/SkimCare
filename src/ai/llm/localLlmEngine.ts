@@ -2,6 +2,8 @@
  * Real LlmEngine, independent of the runtime. Per source block (see chunking.ts),
  * critical blocks first:
  *   1. a fast "type" call (a few output tokens): is this a term, and which type?
+ *      When a clause classifier is installed, verified and confident (triageClassifier.ts),
+ *      its label is used instead and this call is skipped; otherwise the language model decides.
  *   2. only for terms, an "explain" call; the finding is reported (onCandidates)
  *      as soon as it is explained, so results appear while the review runs.
  * Both calls for a block run back to back, so the runtime's KV cache already holds
@@ -13,13 +15,15 @@
  * diagnostics are counts and times (`LlmRunStats`).
  */
 import type { FindingType } from '@/domain/schema';
-import { throwIfAborted, type ComprehensionRequest, type ExtractionRequest, type LlmEngine, type RawExtraction } from '../engines';
+import { AbortedError, throwIfAborted, type ComprehensionRequest, type ExtractionRequest, type LlmEngine, type RawExtraction } from '../engines';
 import { findBlock } from '../evidenceGate';
 import { extractionUnits, prioritizeUnits, type ExtractionUnit } from './chunking';
 import { buildComprehensionMessages, COMPREHENSION_JSON_SCHEMA, parseComprehensionOutput, selectQuizFindings } from './comprehension';
 import { parseExplainOutput, parseTriageOutput, type ParseResult, type TriageResult } from './parse';
 import { buildExplainMessages, buildTriageMessages, EXPLAIN_JSON_SCHEMA, TRIAGE_JSON_SCHEMA, type ChatMessage } from './prompt';
 import { addCall, emptyStats, type CallTimings, type LlmRunStats } from './stats';
+import { DEFAULT_TRIAGE_THRESHOLD, type TriageClassifier } from './triageClassifier';
+import { checkFindingType } from './typeCheck';
 
 export type CallKind = 'triage' | 'explain' | 'quiz';
 
@@ -59,12 +63,22 @@ export interface LocalLlmOptions {
   onProgress?: (done: number, total: number, page?: number) => void;
   /** Counts and times for one extraction or quiz run (dev diagnostics, eval). Never text. */
   onStats?: (stats: LlmRunStats) => void;
+  /** Optional clause classifier for the type pass; the language model decides whenever it cannot. */
+  classifier?: TriageClassifier;
+  /** Minimum confidence for using the classifier's label (default DEFAULT_TRIAGE_THRESHOLD). */
+  classifierThreshold?: number;
+  /** Read at the start of each extraction; false → language model only (setting / kill switch). */
+  classifierEnabled?: () => boolean;
 }
+
+/** After this many classifier errors in one review, the rest of the review uses the language model. */
+const MAX_CLASSIFIER_ERRORS = 3;
 
 const now = () => Date.now();
 
 export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOptions = {}): LlmEngine {
   const explainTokens = opts.maxTokens ?? EXPLAIN_TOKENS;
+  const threshold = opts.classifierThreshold ?? DEFAULT_TRIAGE_THRESHOLD;
 
   /** Runs one call and records its counts/times. */
   async function call(stats: LlmRunStats, req: CompletionRequest): Promise<string> {
@@ -102,7 +116,7 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
       const incompletePages = new Set<number>();
       let done = 0;
 
-      const triage = (unit: ExtractionUnit): Promise<TriageResult> => {
+      const askModel = (unit: ExtractionUnit): Promise<TriageResult> => {
         const messages = buildTriageMessages(unit, req.documentType, req.language);
         return withRetry(stats, signal, TRIAGE_TOKENS, async (maxTokens) =>
           parseTriageOutput(await call(stats, { messages, jsonSchema: TRIAGE_JSON_SCHEMA, maxTokens, kind: 'triage', signal }), unit.block.text),
@@ -119,6 +133,43 @@ export function createLocalLlmEngine(run: CompletionRunner, opts: LocalLlmOption
       const order = prioritizeUnits(units);
       req.onProgress?.(0, units.length, order[0]?.page);
       opts.onProgress?.(0, units.length, order[0]?.page);
+
+      // Pass 1 by the classifier when it is on, loaded and verified (ready() never throws).
+      let sorter: TriageClassifier | null = null;
+      if (opts.classifier && units.length && (opts.classifierEnabled?.() ?? true)) {
+        sorter = (await opts.classifier.ready()) ? opts.classifier : null;
+        throwIfAborted(signal);
+      }
+      let sorterErrors = 0;
+      /** The classifier's answer, or null when the language model should decide this block. */
+      const askClassifier = async (unit: ExtractionUnit): Promise<TriageResult | null> => {
+        if (!sorter) return null;
+        const c = stats.classifier;
+        c.asked++;
+        const started = now();
+        try {
+          const r = await sorter.classify(unit.block.text, { context: unit.context, documentType: req.documentType, language: req.language }, signal);
+          c.ms += now() - started;
+          if (!(r.confidence >= threshold)) {
+            c.belowThreshold++;
+            return null;
+          }
+          c.used++;
+          if (r.label === 'none') {
+            c.none++;
+            return { ok: true, type: null };
+          }
+          // Same check as the language model's answer: a type the block contradicts is relabelled.
+          return { ok: true, type: checkFindingType(r.label, unit.block.text) };
+        } catch (e) {
+          c.ms += now() - started;
+          if (e instanceof AbortedError || signal?.aborted) throw e;
+          c.errors++;
+          if (++sorterErrors >= MAX_CLASSIFIER_ERRORS) sorter = null;
+          return null;
+        }
+      };
+      const triage = async (unit: ExtractionUnit): Promise<TriageResult> => (await askClassifier(unit)) ?? askModel(unit);
 
       for (const unit of order) {
         throwIfAborted(signal);

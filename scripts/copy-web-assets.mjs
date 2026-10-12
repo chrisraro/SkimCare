@@ -9,6 +9,11 @@
  *   Tesseract.js worker + LSTM core  node_modules/tesseract.js, tesseract.js-core
  *   Tesseract eng + fil data         node_modules/@tesseract.js-data/<lang>, else fetched at BUILD time (pinned SHA-256)
  *   pdf.js (legacy build) + worker   node_modules/pdfjs-dist
+ *   ONNX Runtime Web (wasm, SIMD+threads) node_modules/onnxruntime-web (clause classifier)
+ *   Laya classifier files            GitHub release laya-v1, fetched at BUILD time when pinned in
+ *                                    src/ai/classifier/laya-files.json (SHA-256 verified). GitHub
+ *                                    release downloads send no CORS headers, so the cross-origin-
+ *                                    isolated site must serve them itself.
  *
  * Build-time downloads are cached in node_modules/.cache/skimcare-web-assets.
  * Set SKIMCARE_OFFLINE_BUILD=1 to forbid them (missing optional files are then skipped and noted in the manifest).
@@ -115,5 +120,46 @@ copy(join(nm, 'pdfjs-dist/cmaps'), join(out, 'pdfjs/cmaps'));
 copy(join(nm, 'pdfjs-dist/standard_fonts'), join(out, 'pdfjs/standard_fonts'));
 copy(join(nm, 'pdfjs-dist/wasm'), join(out, 'pdfjs/wasm'));
 
-writeFileSync(join(out, 'manifest.json'), JSON.stringify({ wllamaVersion, wllamaCompat, tesseractLangs }, null, 2));
-log(`done → public/vendor (wllama ${wllamaVersion}, compat ${wllamaCompat ? 'yes' : 'NO'}, OCR ${tesseractLangs.join('+')})`);
+// ONNX Runtime Web for the clause classifier: the wasm-only ESM entry and its SIMD+threads build.
+const ortVersion = JSON.parse(readFileSync(join(nm, 'onnxruntime-web/package.json'), 'utf8')).version;
+for (const f of ['ort.wasm.min.mjs', 'ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm']) {
+  copy(join(nm, 'onnxruntime-web/dist', f), join(out, 'ort', f));
+}
+
+// Laya classifier files, only when pinned (sizes + SHA-256 in laya-files.json). Not pinned → skipped;
+// the app then reports the clause sorter as "not set up" and uses the language model.
+const laya = JSON.parse(readFileSync(join(root, 'src/ai/classifier/laya-files.json'), 'utf8'));
+const layaFiles = Object.values(laya.files);
+let layaShipped = false;
+if (layaFiles.every((f) => f.sizeBytes > 0 && /^[0-9a-f]{64}$/i.test(f.sha256))) {
+  const sha256hex = (buf) => createHash('sha256').update(buf).digest('hex');
+  const bufs = [];
+  for (const f of layaFiles) {
+    const url = `${laya.release}/${f.fileName}`;
+    const cached = join(cache, `laya-${f.sha256.toLowerCase()}`);
+    let buf = existsSync(cached) ? readFileSync(cached) : null;
+    if (buf && sha256hex(buf) !== f.sha256.toLowerCase()) buf = null;
+    if (!buf && !offline) {
+      log(`fetching ${url}`);
+      const res = await fetch(url); // follows GitHub's redirect to its asset CDN
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length !== f.sizeBytes || sha256hex(buf) !== f.sha256.toLowerCase()) throw new Error(`size/SHA-256 mismatch for ${url}`);
+      mkdirSync(cache, { recursive: true });
+      writeFileSync(cached, buf);
+    }
+    if (!buf) break;
+    bufs.push([f.fileName, buf]);
+  }
+  if (bufs.length === layaFiles.length) {
+    for (const [name, buf] of bufs) write(join(out, 'laya', name), buf);
+    layaShipped = true;
+  } else {
+    log('WARNING: Laya classifier files not available offline — skipped.');
+  }
+} else {
+  log('Laya classifier not pinned yet (laya-files.json) — skipped.');
+}
+
+writeFileSync(join(out, 'manifest.json'), JSON.stringify({ wllamaVersion, wllamaCompat, tesseractLangs, ortVersion, laya: layaShipped ? laya.id : null }, null, 2));
+log(`done → public/vendor (wllama ${wllamaVersion}, compat ${wllamaCompat ? 'yes' : 'NO'}, OCR ${tesseractLangs.join('+')}, ort ${ortVersion}, laya ${layaShipped ? laya.id : 'no'})`);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getEngine } from '@/ai/demoEngine';
 import type { CheckStatus, ReadinessReport } from '@/ai/engines';
+import { classifierSizeBytes } from '@/ai/llm/models';
 import { pdfTextAvailable } from '@/ai/sources/pdfTextLayer';
 import { scannerAvailable } from '@/features/capture/scanner';
 import { AppText, Banner, Button, Card, Screen } from '@/components/ui';
@@ -66,6 +67,30 @@ export default function Readiness() {
       if (!controller.signal.aborted) setDownloadError(e instanceof Error ? e.message : 'The download failed.');
     }
   };
+  // Optional clause sorter (src/ai/classifier): offered only when its files are pinned and it is not working yet.
+  const [sorterDownload, setSorterDownload] = useState<{ loaded: number; total: number } | null>(null);
+  const [sorterError, setSorterError] = useState<string | null>(null);
+  const sorterAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => sorterAbort.current?.abort(), []);
+  const sorterCheck = report?.checks.find((c) => c.id === 'classifier');
+  const offerSorter = Boolean(engine.prepareClassifier) && (sorterDownload !== null || (sorterCheck !== undefined && sorterCheck.status !== 'pass' && !/Turned off/.test(sorterCheck.detail)));
+  const startSorterDownload = async () => {
+    if (!engine.prepareClassifier) return;
+    const controller = new AbortController();
+    sorterAbort.current = controller;
+    setSorterError(null);
+    setSorterDownload({ loaded: 0, total: 0 });
+    try {
+      await engine.prepareClassifier((loaded, total) => setSorterDownload({ loaded, total }), controller.signal);
+      setSorterDownload(null);
+      recheck();
+    } catch (e) {
+      setSorterDownload(null);
+      if (!controller.signal.aborted) setSorterError(e instanceof Error ? e.message : 'The download failed.');
+    }
+  };
+  const sorterPct = sorterDownload && sorterDownload.total > 0 ? Math.min(100, Math.round((sorterDownload.loaded / sorterDownload.total) * 100)) : 0;
+
   const downloadPct = download && download.total > 0 ? Math.min(100, Math.round((download.loaded / download.total) * 100)) : 0;
 
   const proceed = () => {
@@ -171,6 +196,35 @@ export default function Readiness() {
       {/* Phone: download (or import) the model. Shown while a download runs even if the checks pass. */}
       {report?.checks.some((c) => (c.id === 'model_present' || c.id === 'checksum') && c.status === 'fail') || phoneDownloadPhase !== 'idle' ? (
         <ModelDownloadCard onInstalled={recheck} />
+      ) : null}
+
+      {offerSorter ? (
+        <Card>
+          <AppText variant="label" tone="muted">
+            CLAUSE SORTER (OPTIONAL)
+          </AppText>
+          <AppText>
+            {`A small extra model (≈${Math.round(classifierSizeBytes() / 1048576)} MB) decides which blocks need an explanation, so reviews finish faster. It runs on this device only. Without it, the language model does this step.`}
+          </AppText>
+          {sorterDownload ? (
+            <View
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel="Clause sorter download"
+              accessibilityValue={{ min: 0, max: 100, now: sorterPct }}
+              style={{ gap: space.xs }}
+            >
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${sorterPct}%` }]} />
+              </View>
+              <AppText variant="small" tone="muted">{`Downloading · ${sorterPct}%`}</AppText>
+              <Button label="Cancel download" variant="ghost" icon="close" onPress={() => sorterAbort.current?.abort()} />
+            </View>
+          ) : (
+            <Button label="Download the clause sorter" icon="download-outline" variant="ghost" onPress={startSorterDownload} disabled={!report} />
+          )}
+          {sorterError ? <Banner tone="warning">{`Download not finished · ${sorterError}`}</Banner> : null}
+        </Card>
       ) : null}
 
       <Card>

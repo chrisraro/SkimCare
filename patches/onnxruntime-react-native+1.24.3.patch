@@ -1,0 +1,21 @@
+diff --git a/node_modules/onnxruntime-react-native/android/build.gradle b/node_modules/onnxruntime-react-native/android/build.gradle
+index 41b4359..cfa8a51 100644
+--- a/node_modules/onnxruntime-react-native/android/build.gradle
++++ b/node_modules/onnxruntime-react-native/android/build.gradle
+@@ -242,12 +242,13 @@ dependencies {
+   implementation "junit:junit:4.12"
+ 
+   if (useQnn) {
+-    extractLibs "com.microsoft.onnxruntime:onnxruntime-android-qnn:latest.integration@aar"
++    extractLibs "com.microsoft.onnxruntime:onnxruntime-android-qnn:1.24.3@aar"
+   } else {
+-    extractLibs "com.microsoft.onnxruntime:onnxruntime-android:latest.integration@aar"
++    extractLibs "com.microsoft.onnxruntime:onnxruntime-android:1.24.3@aar"
+   }
+ 
+-  if (VersionNumber.parse(REACT_NATIVE_VERSION) < VersionNumber.parse("0.71")) {
++  // SkimCare patch: org.gradle.util.VersionNumber cannot be relied on with Gradle 9 (Expo SDK 57 uses 9.3.1).
++  if (REACT_NATIVE_MINOR_VERSION < 71) {
+     extractLibs "com.facebook.fbjni:fbjni:+:headers"
+     extractLibs "com.facebook.fbjni:fbjni:+"
+   }

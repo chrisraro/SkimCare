@@ -22,7 +22,7 @@ export interface EngineInfo {
 export type CheckStatus = 'pass' | 'warn' | 'fail';
 
 export interface ReadinessCheck {
-  id: 'model_present' | 'checksum' | 'storage' | 'ocr' | 'inference' | 'network_independent';
+  id: 'model_present' | 'checksum' | 'storage' | 'ocr' | 'inference' | 'network_independent' | 'classifier';
   label: string;
   status: CheckStatus;
   detail: string;
@@ -97,6 +97,11 @@ export interface InferenceEngine {
    * this browser's storage). Never called automatically. Progress is bytes only.
    */
   prepare?(onProgress: (loaded: number, total: number) => void, signal?: AbortSignal): Promise<void>;
+  /**
+   * Optional, user-started: download and verify the clause classifier's pinned files
+   * (src/ai/classifier). Present only when the files are pinned (models.ts). Bytes only.
+   */
+  prepareClassifier?(onProgress: (loaded: number, total: number) => void, signal?: AbortSignal): Promise<void>;
   classify(pages: DocumentPage[]): Promise<{ type: DocumentType; confidence: number }>;
 }
 

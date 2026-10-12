@@ -75,6 +75,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // The clause classifier's files (~100 MB+) are stored by the app itself after a checksum check.
+  if (url.pathname.startsWith('/vendor/laya/')) return;
 
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req));
