@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-12 — Claude (with Chris) — Published the Laya `laya-v1` release
+- GitHub release https://github.com/chrisraro/SkimCare/releases/tag/laya-v1 (created by Claude with gh, signed in as chrisraro): `laya-v1.q4g.onnx` (99,393,827 B), `laya-v1.tokenizer.json`, `laya-v1.tokenizer_config.json`, `laya-v1.spec.json`. Re-downloaded from the public URLs: all four SHA-256 match `laya-files.json` / `release_manifest.json`.
+- Effect: phone builds can download the classifier from Readiness; the next Vercel build copies it into `/vendor/laya/` (build-time fetch + checksum).
+- GitHub CLI 2.102.0 installed on this PC (winget) for releases.
+
 ### 2026-10-12 — Claude (with Chris) — Laya laya-v1 trained, exported, and wired into the app
 - **Model** (`ml/laya`, scripts + docs `MODEL_NOTES.md`, `INFERENCE_SPEC.md`; weights git-ignored): fine-tuned `convaiinnovations/laya-multilingual` (Apache-2.0; base mmBERT-base, MIT) with the official `laya` 0.4.4 code on the RTX 3060 (~7 min, 2.5 GB VRAM). Vocabulary pruned 256k → 43.4k tokens *before* training (pruning after cost 2.6 pts). Short 44-token question head; input = block + " || earlier text: " + context.
   - Scores (shipped 4-bit `q4g`): eval (30 fixtures, 161 blocks) **acc 0.950, term recall 0.994 (1 term lost)**; dev (537 synthetic) acc 0.888, term recall 0.987, none-precision 0.962; en 0.886 / fil 0.951 / taglish 0.846. Zero-shot base: 0.603 / 0.857.
