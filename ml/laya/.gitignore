@@ -1,0 +1,15 @@
+# Laya fine-tuning: never commit weights, venvs or generated data.
+.venv/
+checkpoints/
+exports/
+runs/
+_hf/
+__pycache__/
+*.onnx
+*.onnx_data
+*.ort
+*.safetensors
+*.bin
+*.pt
+# placeholder smoke-test data built from tests/fixtures (NOT real training data)
+data/placeholder/

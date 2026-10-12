@@ -1,0 +1,26 @@
+{
+ "model": {
+  "fileName": "laya-v1.q4g.onnx",
+  "sizeBytes": 99393827,
+  "sha256": "e7d3f186514905b05dbdebc5da1cda15aa41aea7e9ef8016377d44cf0d34ecec",
+  "md5": "c0bfa57ff8a46cf044396d580bb7194b"
+ },
+ "tokenizer": {
+  "fileName": "laya-v1.tokenizer.json",
+  "sizeBytes": 2508750,
+  "sha256": "5a6d8079dcaeec0d8982ed75c78a73d5cc00e1d2192020e1e454d6952def15f4",
+  "md5": "b1f34543d35a4314689315b6601fd862"
+ },
+ "tokenizerConfig": {
+  "fileName": "laya-v1.tokenizer_config.json",
+  "sizeBytes": 239,
+  "sha256": "f639700696789f5d36e0bcfa0ee647eeef9ca162a261de6ef3ef3a49e972256e",
+  "md5": "d1462fd313772e64360cc12abd71416e"
+ },
+ "spec": {
+  "fileName": "laya-v1.spec.json",
+  "sizeBytes": 1540,
+  "sha256": "38120df60f0315fd70293c07bd00a1052ef9b249a4e407e7ae446d471a16972a",
+  "md5": "4be70b9be5a5fdcc05ef3db4beea22e0"
+ }
+}
