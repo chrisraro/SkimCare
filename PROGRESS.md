@@ -131,6 +131,11 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-12 — Claude (with Chris) — Laya live on the web app
+- Vercel Git deploy after the release: the build fetched + checksum-checked the classifier into `/vendor/laya/` (model 99,393,827 B, tokenizer 2,508,750 B, ORT wasm 14,239,897 B served from our origin) — no size-limit problem.
+- https://skimcare-app.vercel.app/readiness → "Download the clause sorter" → **Passed** in ~12 s (download + SHA-256 + test sentence sorted in 607 ms), cross-origin isolated, no console errors.
+- Still open: Laya on a phone (needs the next APK: ORT RN 1.24.3 + 4-bit ops, latency, memory next to Qwen); a full web review with Qwen + Laya.
+
 ### 2026-10-12 — Claude (with Chris) — Published the Laya `laya-v1` release
 - GitHub release https://github.com/chrisraro/SkimCare/releases/tag/laya-v1 (created by Claude with gh, signed in as chrisraro): `laya-v1.q4g.onnx` (99,393,827 B), `laya-v1.tokenizer.json`, `laya-v1.tokenizer_config.json`, `laya-v1.spec.json`. Re-downloaded from the public URLs: all four SHA-256 match `laya-files.json` / `release_manifest.json`.
 - Effect: phone builds can download the classifier from Readiness; the next Vercel build copies it into `/vendor/laya/` (build-time fetch + checksum).
