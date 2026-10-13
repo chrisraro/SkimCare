@@ -8,6 +8,7 @@
  * with the same field names. `cache_n` is how many prompt tokens were reused from the
  * KV cache (not evaluated again).
  */
+import { create } from 'zustand';
 
 /** llama.cpp `timings` fields we use (llama.rn, wllama, llama-server). */
 export interface LlamaTimings {
@@ -136,4 +137,16 @@ export function formatStats(s: LlmRunStats): string {
 /** Dev builds: one `[llm-stats]` line per extraction / quiz in the Metro or browser console. */
 export function logStatsInDev(s: LlmRunStats): void {
   if (typeof __DEV__ !== 'undefined' && __DEV__) console.log(`[llm-stats] ${formatStats(s)}`);
+}
+
+/**
+ * The newest finished extraction, kept in memory only (never saved, never sent anywhere), so the
+ * Diagnostics screen can show where the time went on this device in any build. Counts and times only.
+ */
+export const useLastExtractStats = create<{ last: LlmRunStats | null }>(() => ({ last: null }));
+
+/** Engine hook: remember an extraction's numbers for Diagnostics, and log them in dev builds. */
+export function reportStats(s: LlmRunStats): void {
+  if (s.phase === 'extract') useLastExtractStats.setState({ last: s });
+  logStatsInDev(s);
 }

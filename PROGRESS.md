@@ -131,6 +131,13 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-13 — Claude (with Chris) — Diagnostics: "Speed of the last review" (real numbers from the phone)
+- **Why:** Chris wants the review faster; the speed fix + Laya are in the APK but only dev builds recorded where the time goes, so there was nothing to optimize against from the phone.
+- Diagnostics (Settings → Inference diagnostics) now shows, in any build, the newest extraction: parts in the document / skipped / sent to the AI, terms found, AI calls (type / explain / retries), clause-sorter used / not-terms / passed on / errors + time, AI reading speed (tokens, time, reused-from-cache), AI writing speed (tokens, time, tok/s), AI time, whole review. Kept in memory only (`useLastExtractStats`, `reportStats` in `src/ai/llm/stats.ts`), never saved or sent; counts and times only, no text. Both engines use `reportStats`.
+- Test: `reportStats` keeps extract runs, ignores quiz runs.
+- Verified: typecheck ✅, lint ✅, tests ✅ 346 (28 suites). Not seen on a phone yet (needs the next APK).
+- **Next:** Chris runs the same one-page contract on the new APK and sends a screenshot of this panel → pick the optimization from the numbers (Laya share vs explain time, tok/s, cache reuse, CPU threads/Q4_0).
+
 ### 2026-10-13 — Claude (with Chris) — Fix: "Try a sample agreement" was broken on the real-engine builds (live site + APK)
 - **Bug (red flag, found by Chris):** after `EXPO_PUBLIC_ENGINE=local` went live, tapping a built-in sample failed — first with "Page 1 has no image. Retake it and try again." (the real OCR tried to scan sample pages that have no image), and, past that, with "The language model is not in this browser yet…" (the real engine needs the ~400 MB model). The README sends judges to exactly this path.
 - **Fix 1 — no OCR for samples:** `recognizeDocument({ samplePages })` returns the sample's known text (copy) with `source: 'sample'` and a note ("built-in fictional sample… nothing was scanned"); preview passes the active fixture when the draft source is `sample`. `TextSource` gains `'sample'`.

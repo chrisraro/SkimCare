@@ -19,7 +19,7 @@ import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, isClassifierPinned, LAYA_CLASSIFIER, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
 import { checkLocalReadiness } from './llm/readiness';
-import { logStatsInDev } from './llm/stats';
+import { reportStats } from './llm/stats';
 import { AbortedError, type InferenceEngine, type OcrEngine } from './engines';
 import { createMlKitOcr } from './ocr/mlKitOcr';
 import { RecognizeError } from './recognize';
@@ -58,7 +58,7 @@ export function createLocalEngine(spec: ModelSpec, nativeOcr: LocalOcrModule | n
     classify: async (pages) => guessDocumentType(pages),
     ocr: nativeOcr ? createMlKitOcr(nativeOcr) : NO_OCR,
     llm: createLocalLlmEngine(createLlamaRunner(spec), {
-      onStats: logStatsInDev,
+      onStats: reportStats,
       classifier: getTriageClassifier(),
       classifierThreshold: LAYA_SPEC.threshold,
       classifierEnabled: isClassifierEnabled,

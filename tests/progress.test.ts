@@ -62,3 +62,18 @@ describe('reviewProgress (one bar for the whole review)', () => {
     expect(reviewProgress('extract', { done: 0, total: 0 })).toBeCloseTo(0.05);
   });
 });
+
+describe('reportStats (Diagnostics "Speed of the last review")', () => {
+  it('keeps the newest extraction for Diagnostics, but not quiz runs', async () => {
+    const { emptyStats, reportStats, useLastExtractStats } = await import('@/ai/llm/stats');
+    useLastExtractStats.setState({ last: null });
+
+    const extract = emptyStats('extract');
+    extract.asked = 7;
+    reportStats(extract);
+    expect(useLastExtractStats.getState().last?.asked).toBe(7);
+
+    reportStats(emptyStats('quiz'));
+    expect(useLastExtractStats.getState().last?.asked).toBe(7);
+  });
+});

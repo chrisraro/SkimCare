@@ -4,6 +4,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { CLASSIFIER_BUILD_OFF } from '@/ai/classifier/setting';
 import { LAYA_SPEC } from '@/ai/classifier/layaSpec';
 import { getEngine } from '@/ai/demoEngine';
+import { useLastExtractStats, totalCalls, type LlmRunStats } from '@/ai/llm/stats';
 import { AppText, Card, Screen, SectionLabel } from '@/components/ui';
 import { useDocuments } from '@/features/documents/store';
 import { useSettings } from '@/features/settings/store';
@@ -23,6 +24,31 @@ function Row({ k, v }: { k: string; v: string }) {
   );
 }
 
+const secs = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+
+/** Plain-language rows for one extraction: counts and times only. */
+function speedRows(s: LlmRunStats): [string, string][] {
+  const c = s.classifier;
+  const rows: [string, string][] = [
+    ['Parts in the document', `${s.blocks} (${s.blocks - s.asked} skipped, no amounts, dates or duties)`],
+    ['Parts sent to the AI', String(s.asked)],
+    ['Terms found', String(s.relevant)],
+    ['AI calls', `${totalCalls(s)} (type ${s.calls.triage}, explain ${s.calls.explain}, retries ${s.retries})`],
+  ];
+  if (c.asked) {
+    rows.push(['Clause sorter', `${c.used} of ${c.asked} sorted by it (${c.none} not terms), ${c.belowThreshold} passed on to the AI, ${c.errors} errors`]);
+    rows.push(['Clause sorter time', secs(c.ms)]);
+  } else {
+    rows.push(['Clause sorter', 'not used in this review']);
+  }
+  if (s.timed) {
+    rows.push(['AI reading speed', `${s.promptTokens} tokens in ${secs(s.promptMs)}${s.cachedTokens ? ` (+${s.cachedTokens} reused)` : ''}`]);
+    rows.push(['AI writing speed', `${s.generatedTokens} tokens in ${secs(s.generationMs)}${s.generationMs > 0 ? ` (${((s.generatedTokens * 1000) / s.generationMs).toFixed(1)} tok/s)` : ''}`]);
+  }
+  rows.push(['AI time', secs(s.callMs)], ['Whole review', secs(s.wallMs)]);
+  return rows;
+}
+
 /** F17 Inference diagnostics — model, runtime and last-run provenance (no document content). */
 export default function Diagnostics() {
   const t = useT();
@@ -38,6 +64,7 @@ export default function Diagnostics() {
   }, [bench, info.kind]);
   const clauseSorter = useSettings((s) => s.clauseSorter);
   const setClauseSorter = useSettings((s) => s.setClauseSorter);
+  const lastStats = useLastExtractStats((s) => s.last);
   const lastRun = useDocuments((s) => {
     const id = s.order[0];
     return id ? s.byId[id]?.analysis : undefined;
@@ -77,6 +104,17 @@ export default function Diagnostics() {
           </Card>
         </>
       ) : null}
+
+      <SectionLabel>Speed of the last review</SectionLabel>
+      {lastStats ? (
+        <Card>
+          {speedRows(lastStats).map(([k, v]) => (
+            <Row key={k} k={k} v={v} />
+          ))}
+        </Card>
+      ) : (
+        <AppText tone="muted">Run a review with the on-device model to see where the time goes. Numbers stay on this device and never include document text.</AppText>
+      )}
 
       <SectionLabel>Last analysis run</SectionLabel>
       {lastRun ? (

@@ -17,7 +17,7 @@ import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, isClassifierPinned, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
-import { logStatsInDev } from './llm/stats';
+import { reportStats } from './llm/stats';
 import type { InferenceEngine } from './engines';
 import { registerClassifierBench } from './web/classifierBench';
 import { checkWebReadiness } from './web/readiness';
@@ -69,7 +69,7 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
     classify: async (pages) => guessDocumentType(pages),
     ocr: createTesseractOcr(),
     llm: createLocalLlmEngine(createWllamaRunner(spec), {
-      onStats: logStatsInDev,
+      onStats: reportStats,
       classifier: getTriageClassifier(),
       classifierThreshold: LAYA_SPEC.threshold,
       classifierEnabled: isClassifierEnabled,
