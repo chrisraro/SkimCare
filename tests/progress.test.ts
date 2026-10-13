@@ -4,6 +4,7 @@ import { demoEngine } from '@/ai/demoEngine';
 import type { InferenceEngine } from '@/ai/engines';
 import { extractionUnits } from '@/ai/llm/chunking';
 import { createLocalLlmEngine } from '@/ai/llm/localLlmEngine';
+import { emptyStats, reportStats, useLastExtractStats } from '@/ai/llm/stats';
 import { reviewProgress, runAnalysis } from '@/ai/pipeline';
 
 const pages = serviceAgreement.pages;
@@ -64,8 +65,7 @@ describe('reviewProgress (one bar for the whole review)', () => {
 });
 
 describe('reportStats (Diagnostics "Speed of the last review")', () => {
-  it('keeps the newest extraction for Diagnostics, but not quiz runs', async () => {
-    const { emptyStats, reportStats, useLastExtractStats } = await import('@/ai/llm/stats');
+  it('keeps the newest extraction for Diagnostics, but not quiz runs', () => {
     useLastExtractStats.setState({ last: null });
 
     const extract = emptyStats('extract');
