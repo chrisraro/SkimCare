@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { getEngine } from '@/ai/demoEngine';
+import { getDemoFixture, getEngine } from '@/ai/demoEngine';
 import { ocrStats } from '@/ai/ocr/devStats';
 import { recognizeDocument, RecognizeError } from '@/ai/recognize';
 import { DemoBanner } from '@/components/DemoBanner';
@@ -42,7 +42,12 @@ export default function Preview() {
     try {
       const engine = getEngine();
       const started = Date.now();
-      const result = await recognizeDocument({ engine, captured: pages, pdfUri });
+      const result = await recognizeDocument({
+        engine,
+        captured: pages,
+        pdfUri,
+        samplePages: source === 'sample' ? getDemoFixture().pages : undefined,
+      });
       if (!stillHere()) return;
       const ms = Date.now() - started;
       setRecognized(result.pages, result.source, result.note);

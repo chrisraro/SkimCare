@@ -102,6 +102,8 @@ export interface InferenceEngine {
    * (src/ai/classifier). Present only when the files are pinned (models.ts). Bytes only.
    */
   prepareClassifier?(onProgress: (loaded: number, total: number) => void, signal?: AbortSignal): Promise<void>;
+  /** Cheap check (no inference): is the language model file installed here? Used to pick the engine for built-in samples. */
+  isModelInstalled?(): Promise<boolean>;
   classify(pages: DocumentPage[]): Promise<{ type: DocumentType; confidence: number }>;
 }
 

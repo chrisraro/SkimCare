@@ -131,6 +131,15 @@ Branch `feat/local-llm-engine`, merged to `main` (PRs #1, #2). Details are in th
 
 ## Log
 
+### 2026-10-13 — Claude (with Chris) — Fix: "Try a sample agreement" was broken on the real-engine builds (live site + APK)
+- **Bug (red flag, found by Chris):** after `EXPO_PUBLIC_ENGINE=local` went live, tapping a built-in sample failed — first with "Page 1 has no image. Retake it and try again." (the real OCR tried to scan sample pages that have no image), and, past that, with "The language model is not in this browser yet…" (the real engine needs the ~400 MB model). The README sends judges to exactly this path.
+- **Fix 1 — no OCR for samples:** `recognizeDocument({ samplePages })` returns the sample's known text (copy) with `source: 'sample'` and a note ("built-in fictional sample… nothing was scanned"); preview passes the active fixture when the draft source is `sample`. `TextSource` gains `'sample'`.
+- **Fix 2 — the right engine per review:** new `getReviewEngine({ isSample })` (`demoEngine.ts`) + optional `InferenceEngine.isModelInstalled()` (phone: model file exists; web: cached in browser). Own documents always use the real engine. A sample uses the real engine once the model is installed; before that it runs on the instant Demo engine (pre-written findings) instead of dead-ending on the download. `jobStore` picks per review and records `engineKind`.
+- **Honesty (CLAUDE.md "never present Demo output as real"):** `DemoBanner` now reads the review's own engine (saved run `engine.kind`, or the running job) — a sample on the Demo engine in a real-engine build shows "Sample preview — these findings are pre-written for this fictional agreement, not read by the AI" + a **Set up the AI** button to Readiness (EN + FIL). Real-engine reviews show no banner as before.
+- Tests: sample bypass (never calls OCR, returns a copy) in `tests/recognize.test.ts`; engine choice (not installed / installed / own document / check fails / demo build) in new `tests/reviewEngine.test.ts`.
+- Verified: typecheck ✅, lint ✅, tests ✅ 345/345 (28 suites). Browser (local-engine web build, clean storage, no model): Try sample → Read the text → verify → Start review → finished review in ~6 s with the Sample preview banner. **Not seen on the phone yet** (needs the next APK).
+- **Follow-up:** with the model installed, a sample goes through real Qwen + Laya — confirm timing on the phone.
+
 ### 2026-10-12 — Claude (with Chris) — Laya live on the web app
 - Vercel Git deploy after the release: the build fetched + checksum-checked the classifier into `/vendor/laya/` (model 99,393,827 B, tokenizer 2,508,750 B, ORT wasm 14,239,897 B served from our origin) — no size-limit problem.
 - https://skimcare-app.vercel.app/readiness → "Download the clause sorter" → **Passed** in ~12 s (download + SHA-256 + test sentence sorted in 607 ms), cross-origin isolated, no console errors.

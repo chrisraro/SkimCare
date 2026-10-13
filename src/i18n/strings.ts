@@ -207,6 +207,8 @@ const en = {
   settings_storage_web: 'On the web, reviews are kept only until you close the tab.',
 
   demo_banner: 'Demo engine — showing sample findings, not your document.',
+  demo_banner_sample: 'Sample preview — these findings are pre-written for this fictional agreement, not read by the AI. Install the on-device model to see the real thing.',
+  demo_sample_action: 'Set up the AI',
   cancel: 'Cancel',
   save: 'Save',
   delete: 'Delete',
@@ -317,6 +319,8 @@ const fil: Partial<Record<StringKey, string>> = {
     'Hindi pa maise-save ang mga review sa phone na ito ngayon. Mawawala ang mga ito pagsara mo ng app.',
   settings_storage_web: 'Sa web, nananatili lang ang mga review hanggang isara mo ang tab.',
   demo_banner: 'Demo engine — halimbawang resulta, hindi ang iyong dokumento.',
+  demo_banner_sample: 'Preview ng halimbawa — nakasulat na ang mga resultang ito para sa kathang-isip na kasunduang ito; hindi binasa ng AI. I-install ang on-device model para makita ang totoo.',
+  demo_sample_action: 'I-set up ang AI',
   cancel: 'Kanselahin',
   save: 'I-save',
   delete: 'Burahin',

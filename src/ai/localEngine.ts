@@ -14,7 +14,7 @@ import { LAYA_SPEC } from './classifier/layaSpec';
 import { isClassifierEnabled } from './classifier/setting';
 import { guessDocumentType } from './documentType';
 import { COMPREHENSION_PROMPT_VERSION } from './llm/comprehension';
-import { createLlamaProbe, createLlamaRunner } from './llm/llamaRuntime';
+import { createLlamaProbe, createLlamaRunner, modelFile } from './llm/llamaRuntime';
 import { createLocalLlmEngine } from './llm/localLlmEngine';
 import { getModelSpec, isClassifierPinned, LAYA_CLASSIFIER, type ModelSpec } from './llm/models';
 import { PROMPT_VERSION } from './llm/prompt';
@@ -54,6 +54,7 @@ export function createLocalEngine(spec: ModelSpec, nativeOcr: LocalOcrModule | n
       return { ...report, checks: [...report.checks, sorter] };
     },
     prepareClassifier: isClassifierPinned() ? prepareClassifierOnPhone : undefined,
+    isModelInstalled: async () => modelFile(spec).exists,
     classify: async (pages) => guessDocumentType(pages),
     ocr: nativeOcr ? createMlKitOcr(nativeOcr) : NO_OCR,
     llm: createLocalLlmEngine(createLlamaRunner(spec), {

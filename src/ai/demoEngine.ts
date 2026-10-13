@@ -99,3 +99,19 @@ export const demoEngine: InferenceEngine = {
 export function getEngine(): InferenceEngine {
   return process.env.EXPO_PUBLIC_ENGINE === 'local' ? getLocalEngine() : demoEngine;
 }
+
+/**
+ * Engine for one review. Your own documents always use the real engine. A built-in
+ * fictional sample uses it too once the model is installed; before that it runs on the
+ * Demo engine (instant, pre-written findings, labelled as such) instead of dead-ending
+ * on a 400 MB download the first time someone taps "Try a sample agreement".
+ */
+export async function getReviewEngine(opts: { isSample: boolean }): Promise<InferenceEngine> {
+  const engine = getEngine();
+  if (!opts.isSample || engine.info.kind !== 'local') return engine;
+  try {
+    return (await engine.isModelInstalled?.()) ? engine : demoEngine;
+  } catch {
+    return demoEngine;
+  }
+}

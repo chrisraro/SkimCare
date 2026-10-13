@@ -3,7 +3,7 @@
  * going when the person minimizes it, and the tab bar accessory can show progress.
  */
 import { create } from 'zustand';
-import { getEngine } from '@/ai/demoEngine';
+import { getReviewEngine } from '@/ai/demoEngine';
 import { runAnalysis, type StageId } from '@/ai/pipeline';
 import type { Finding } from '@/domain/schema';
 import { useDocuments } from '@/features/documents/store';
@@ -20,6 +20,8 @@ interface ReviewJobState {
   /** Findings that already passed the evidence gate while the review runs ("Found so far"). */
   partialFindings: Finding[];
   title: string;
+  /** Which engine this review runs on (a built-in sample runs on the Demo engine until the model is installed). */
+  engineKind?: 'demo' | 'local';
   /** Set once the finished review is saved. */
   docId?: string;
   error?: string;
@@ -75,25 +77,30 @@ export const useReviewJob = create<ReviewJobState>((set, get) => ({
     controller = ac;
     const now = new Date().toISOString();
     const id = `doc_${Date.now().toString(36)}`;
-    set({ status: 'running', stage: 'organize', progress: undefined, partialFindings: [], title, docId: undefined, error: undefined, draftSessionId: draft.sessionId });
+    set({ status: 'running', stage: 'organize', progress: undefined, partialFindings: [], title, docId: undefined, error: undefined, draftSessionId: draft.sessionId, engineKind: undefined });
 
-    runAnalysis({
-      engine: getEngine(),
-      pages: draft.recognized,
-      ocrRevision: 0,
-      documentType: draft.documentType ?? 'other',
-      language: draft.language,
-      onStage: (stage) => {
-        if (!ac.signal.aborted) set({ stage });
-      },
-      onProgress: (done, total, page) => {
-        if (!ac.signal.aborted) set({ progress: { done, total, page } });
-      },
-      onFindings: (partialFindings) => {
-        if (!ac.signal.aborted) set({ partialFindings });
-      },
-      signal: ac.signal,
-    })
+    getReviewEngine({ isSample: draft.source === 'sample' })
+      .then((engine) => {
+        if (ac.signal.aborted) throw new Error('Cancelled');
+        set({ engineKind: engine.info.kind });
+        return runAnalysis({
+          engine,
+          pages: draft.recognized,
+          ocrRevision: 0,
+          documentType: draft.documentType ?? 'other',
+          language: draft.language,
+          onStage: (stage) => {
+            if (!ac.signal.aborted) set({ stage });
+          },
+          onProgress: (done, total, page) => {
+            if (!ac.signal.aborted) set({ progress: { done, total, page } });
+          },
+          onFindings: (partialFindings) => {
+            if (!ac.signal.aborted) set({ partialFindings });
+          },
+          signal: ac.signal,
+        });
+      })
       .then((run) => {
         if (ac.signal.aborted) return;
         useDocuments.getState().save({

@@ -65,6 +65,7 @@ export function createLocalEngine(spec: ModelSpec): InferenceEngine {
     },
     prepareClassifier: isClassifierPinned() ? (onProgress, signal) => prepareClassifier(onProgress, signal) : undefined,
     prepare: (onProgress, signal) => downloadModel(spec, onProgress, signal),
+    isModelInstalled: async () => Boolean(await findCachedModel(spec)),
     classify: async (pages) => guessDocumentType(pages),
     ocr: createTesseractOcr(),
     llm: createLocalLlmEngine(createWllamaRunner(spec), {

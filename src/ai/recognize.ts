@@ -9,7 +9,7 @@ import type { DocumentPage } from '@/domain/schema';
 import type { CapturedPage, InferenceEngine } from './engines';
 import { extractPdfTextLayer } from './sources/pdfTextLayer';
 
-export type TextSource = 'pdf_text' | 'ocr';
+export type TextSource = 'pdf_text' | 'ocr' | 'sample';
 
 export interface RecognizeResult {
   pages: DocumentPage[];
@@ -36,8 +36,21 @@ export async function recognizeDocument(opts: {
   engine: InferenceEngine;
   captured: CapturedPage[];
   pdfUri?: string;
+  /**
+   * A built-in fictional sample: its text is already known, so there is nothing to scan.
+   * Without this, a real engine tried to OCR sample pages that have no image and failed
+   * ("Page 1 has no image"), which broke the "Try a sample agreement" demo.
+   */
+  samplePages?: DocumentPage[];
   signal?: AbortSignal;
 }): Promise<RecognizeResult> {
+  if (opts.samplePages) {
+    return {
+      pages: structuredClone(opts.samplePages),
+      source: 'sample',
+      note: 'This is a built-in fictional sample, so its text is already known — nothing was scanned. Your own documents are read on this device.',
+    };
+  }
   const { ocr } = opts.engine;
   if (opts.pdfUri) {
     const uri = opts.pdfUri;

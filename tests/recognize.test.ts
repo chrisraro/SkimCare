@@ -116,3 +116,27 @@ describe('PDF errors on the local engine (QA #7)', () => {
     expect(photosOnly).not.toHaveBeenCalled();
   });
 });
+
+describe('recognizeDocument — built-in samples', () => {
+  const realEngine = (recognize: OcrEngine['recognize']): InferenceEngine =>
+    ({ ...demoEngine, info: { ...demoEngine.info, kind: 'local' }, ocr: { recognize } }) as InferenceEngine;
+
+  it('never scans sample pages: the real engine used to fail with "Page 1 has no image"', async () => {
+    const ocr = jest.fn<OcrEngine['recognize']>().mockRejectedValue(new RecognizeError('Page 1 has no image. Retake it and try again.'));
+    const samplePages: DocumentPage[] = [{ number: 1, blocks: pageTextToBlocks(1, 'The fee is PHP 5,000.') }];
+
+    const result = await recognizeDocument({ engine: realEngine(ocr), captured: [{ id: 'pg1', rotation: 0 }], samplePages });
+
+    expect(ocr).not.toHaveBeenCalled();
+    expect(result.source).toBe('sample');
+    expect(result.pages[0]?.blocks[0]?.text).toContain('PHP 5,000');
+    expect(result.note).toMatch(/fictional sample/i);
+  });
+
+  it('returns a copy, so editing the review cannot change the built-in sample', async () => {
+    const samplePages: DocumentPage[] = [{ number: 1, blocks: pageTextToBlocks(1, 'The fee is PHP 5,000.') }];
+    const result = await recognizeDocument({ engine: demoEngine, captured: [], samplePages });
+    result.pages[0]!.blocks[0]!.text = 'changed';
+    expect(samplePages[0]!.blocks[0]!.text).toContain('PHP 5,000');
+  });
+});
